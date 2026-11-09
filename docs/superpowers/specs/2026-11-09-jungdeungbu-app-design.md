@@ -62,6 +62,7 @@
 핵심 원칙 둘.
 학생은 **추측 불가능한 ID를 안다는 것 자체가 권한**이다(링크 토큰, 반 ID).
 교사는 **Google 로그인 UID로 역할을 확인**한다.
+학생이 **쓰기**(기도 제목)를 할 때는 익명 인증 UID를 쓴다. 공개 문서에 토큰을 넣으면 같은 반 누구나 토큰을 수집할 수 있기 때문이다. 학생 앱은 링크를 열 때 익명 로그인하고 `studentSessions/{uid}`에 토큰을 묶는다.
 
 | 컬렉션 | 문서 ID | 주요 필드 | 용도 |
 |---|---|---|---|
@@ -73,8 +74,9 @@
 | `bulletins/{yyyy-mm-dd}` | 주일 날짜 | date, order[]({type,title,detail}), hymns[], scripture, sermonTitle, published, updatedBy, updatedAt | 주보 |
 | `sermons/{yyyy-mm-dd}` | 주일 날짜 | date, title, scripture, summary, body, questions[] | 설교 요약. 주보와 같은 날짜로 연결 |
 | `announcements/{id}` | 자동 | title, body, startDate, endDate, pinned, createdAt | 광고. 주보 광고란은 그 주일이 [startDate, endDate] 안에 드는 광고를 가져온다 |
-| `classes/{classId}/prayers/{id}` | 자동 | studentToken, studentName, text, hidden, createdAt | **우리 반 공개** 기도 제목 |
-| `prayers/{id}` | 자동 | studentToken, studentName, classId, text, createdAt | **선생님만** 보는 기도 제목 |
+| `studentSessions/{uid}` | 학생 기기의 익명 인증 UID | token | 학생 링크를 열면 Firebase 익명 로그인 뒤 자기 토큰을 여기에 묶는다. 본인만 읽는다 |
+| `classes/{classId}/prayers/{id}` | 자동 | authorUid, studentName, text, createdAt | **우리 반 공개** 기도 제목. 토큰은 저장하지 않는다 |
+| `prayers/{id}` | 자동 | authorUid, studentName, classId, text, createdAt | **선생님만** 보는 기도 제목 |
 
 ### 파생 값
 
@@ -85,19 +87,20 @@
 
 | 대상 | 읽기 | 쓰기 |
 |---|---|---|
-| `students/{token}` | get: 누구나(토큰을 알면). list: 교사만 | 관리자. `streak`·`lastPresent`만은 그 반 교사도 |
+| `students/{token}` | get: `active == true`인 문서를 토큰을 아는 사람, 교사는 모두. list: 교사만 | 관리자. `streak`·`lastPresent`만은 그 반 교사도 |
 | `students/{token}/attendance/*` | 토큰을 아는 사람 + 교사(컬렉션 그룹 포함) | 그 반 교사 또는 관리자 |
 | `bulletins` `sermons` `announcements` | 누구나 | 관리자 |
 | `classes/{classId}` | 누구나(get). list: 교사만 | 관리자 |
-| `classes/{classId}/prayers/*` | 반 ID를 아는 사람 | 생성: `students/{studentToken}`이 존재하고 그 학생의 classId가 경로의 classId와 같고 studentName이 일치할 때. 삭제: 교사 또는 같은 studentToken을 가진 요청(본인 글) |
+| `classes/{classId}/prayers/*` | 반 ID를 아는 사람 | 생성: 로그인(익명)되어 있고 `authorUid == request.auth.uid`, `studentSessions/{uid}.token`이 가리키는 학생이 활성이며 그 classId가 경로와 같고 studentName이 일치할 때. 수정 없음. 삭제: 교사 또는 `authorUid == request.auth.uid`(본인 글) |
 | `prayers/*` | 교사만 | 생성 조건은 위와 같음(classId 필드와 학생 문서 일치). 삭제: 교사 |
 | `teachers/{uid}` | 본인 + 관리자 | 생성: `request.auth.uid == uid`이고 `invites/{request.auth.token.email}`의 role·classIds와 일치할 때. 수정·삭제: 관리자 |
 | `invites/{email}` | 본인 이메일 문서 + 관리자 | 관리자 |
 
 - "교사" 판정은 `exists(teachers/{uid})`, "관리자"는 `teachers/{uid}.role == 'admin'`, "그 반 교사"는 `classId in teachers/{uid}.classIds` 또는 관리자.
-- 학생이 본인 기도 제목을 삭제할 때는 로그인이 없으므로, 삭제 요청 쪽에서 `studentToken`을 증명할 수 없다. 1차에서는 **학생 삭제를 "삭제 요청 표시"(필드 `hidden: true` 설정)로 구현**하고, 규칙은 `hidden` 필드만 바뀌는 update를 누구나 할 수 있게 둔다. 화면에는 hidden 글을 숨긴다. 실제 삭제는 교사가 한다.
+- 학생은 익명 인증 UID로 본인 글을 **삭제**할 수 있다. `hidden` 필드는 없다.
+- 교사를 내보낼 때는 `teachers/{uid}`와 `invites/{email}`을 **같은 배치로** 지운다. 초대가 남아 있으면 다시 로그인해 권한을 되살릴 수 있다.
 - 첫 관리자는 Firebase 콘솔에서 `invites/{이승열 P 이메일}`에 `role: admin` 문서를 손으로 만든다. 그 뒤로는 앱에서 관리한다.
-- 학생 링크 유출 시 관리자 화면의 **링크 재발급**(새 토큰 문서를 만들고 출석 기록을 복사한 뒤 옛 문서를 `active: false`로)으로 대응한다.
+- 학생 링크 유출 시 관리자 화면의 **링크 재발급**(새 토큰 문서를 만들고 출석 기록을 복사한 뒤 옛 문서를 `active: false`로)으로 대응한다. 비활성 문서와 그 출석 기록은 토큰으로 읽을 수 없으므로 옛 링크는 즉시 죽는다.
 - 공개 데이터는 로그인 없이 읽히므로 `robots.txt`와 `noindex` 메타로 검색 색인을 막는다.
 
 ## 5. 화면
@@ -111,11 +114,12 @@
 | 홈 | 이번 주 주보 요약 카드(날짜·설교 제목·본문), 이번 주 광고, 축하 배너(생일 주간 / 연속출석 4·8·12·…주 고비) |
 | 주보 | 이번 주 주보 전체: 예배 순서 → 찬양 → 본문 → 설교 제목 → 광고. 지난 주보는 날짜 목록 |
 | 말씀 | 설교 요약 목록 → 제목·본문·요약·적용 질문 |
-| 기도 | 우리 반 기도 제목 + "기도 제목 올리기"(공개 범위 우리 반 / 선생님만). 우리 반 글 중 내 글은 숨기기 가능. "선생님만" 글은 올린 뒤 "선생님께 전했어요" 확인만 보이고 목록에는 남지 않는다(학생은 `prayers`를 읽을 수 없다) |
+| 기도 | 우리 반 기도 제목 + "기도 제목 올리기"(공개 범위 우리 반 / 선생님만). 우리 반 글 중 내 글(`authorUid` 일치)은 삭제 가능. "선생님만" 글은 올린 뒤 "선생님께 전했어요" 확인만 보이고 목록에는 남지 않는다(학생은 `prayers`를 읽을 수 없다) |
 | 나 | 이름·반, 출석 달력(이번 학기), 연속출석 주수, 생일 |
 
 - 토큰이 잘못됐거나 `active: false`면 "선생님께 링크를 다시 받아주세요" 한 화면만 보인다. 두 경우를 구분해 알려주지 않는다.
 - 학생 화면에 교사용 요소는 없다.
+- 학생 링크를 열면 앱이 조용히 Firebase 익명 로그인을 하고 `studentSessions/{uid}`에 링크의 토큰을 쓴다(같은 기기에서 다른 링크를 열면 덮어쓴다). 익명 로그인이 실패해도 읽기 화면은 그대로 보이고, 기도 제목 올리기만 "잠시 뒤 다시 시도해 주세요"로 막힌다.
 
 ### 반 교사 (`#/t`, role = teacher)
 
@@ -157,7 +161,7 @@
 
 | 종류 | 도구 | 내용 |
 |---|---|---|
-| 보안 규칙 | Firebase 에뮬레이터 + `@firebase/rules-unit-testing` | 학생 토큰으로 다른 학생 읽기 불가 / 반 교사가 다른 반 출석 쓰기 불가 / 초대 없는 Google 계정 교사 등록 불가 / 학생이 다른 반 기도 컬렉션 쓰기 불가 / 비교사는 `students` list 불가 |
+| 보안 규칙 | Firebase 에뮬레이터 + `@firebase/rules-unit-testing` | 학생 토큰으로 다른 학생 읽기 불가 / 반 교사가 다른 반 출석 쓰기 불가 / 초대 없는 Google 계정 교사 등록 불가 / 학생이 다른 반 기도 컬렉션 쓰기 불가 / 비교사는 `students` list 불가 / 반 ID로 기도 문서를 읽어도 토큰이 없음 / 비활성 토큰으로 학생·출석 읽기 불가 / 다른 학생의 세션 UID로 글 쓰기 불가 / 본인 글만 삭제 |
 | 단위 | Vitest | 가장 가까운 주일 계산, 연속출석 계산, 토큰 생성·형식 검증, 일괄 등록 파서, 광고 유효기간 필터 |
 | 화면 | Playwright(에뮬레이터 상대) | ① 관리자가 학생 추가 → 링크로 학생 홈 열림 ② 교사 출석 토글 → 학생 "나" 탭 반영 ③ 학생 기도 제목 → 교사 기도 탭에 보임 |
 | 수동 | 실기기 | iPhone·갤럭시 카톡 인앱 브라우저에서 학생 링크 열기(배포 후 이승열 P) |

@@ -24,6 +24,15 @@
 - 공개 페이지는 `robots.txt` Disallow + `<meta name="robots" content="noindex">`.
 - 잘못된 학생 링크 안내 문구는 "선생님께 링크를 다시 받아주세요" 하나. 없음/비활성 구분 금지.
 
+## Amendments (2026-11-09, Task 6 리뷰 뒤)
+
+- 기도 문서에 `studentToken`을 넣지 않는다. 학생 앱은 익명 로그인 → `studentSessions/{uid} = { token }`. 기도 문서는 `authorUid`. `hidden` 필드 폐기, 학생은 본인 글 삭제.
+- `students/{token}` get과 attendance read는 `active == true`일 때만(교사는 모두).
+- Task 7: `addPrayer(db, uid, ...)`, `bindStudentSession(db, uid, token)`, `deletePrayer` 본인/교사, `removeTeacher(db, uid, email)`가 teachers+invites 한 배치. `listClassPrayers`는 hidden 필터 없음.
+- Task 8/10: StudentApp이 `signInAnonymously` 후 세션 바인딩. PrayerTab "숨기기" → "삭제".
+- Task 12: TeacherPrayerTab에서 hidden 흐리게 표시 삭제.
+- 상세는 스펙 3·4·5절.
+
 ## Review Focus
 
 1. **토요일 밤 11시 59분과 일요일 0시 사이 날짜 경계**: `nearestSunday`가 로컬 시간 기준으로 토요일은 다음 날, 일요일은 당일을 돌려야 한다 → Task 2 시험에 포함.

@@ -1,0 +1,11 @@
+.me { padding: var(--space-6) var(--space-5); }
+.name { font-size: var(--text-xl); }
+.facts { margin: 0; display: flex; flex-direction: column; }
+.facts > div { display: flex; gap: var(--space-4); align-items: baseline; padding: var(--space-2) 0; }
+.facts > div + div { border-top: 1px solid var(--line); }
+.facts dt { flex-shrink: 0; width: 3em; color: var(--muted); font-size: var(--text-sm); }
+.facts dd { margin: 0; font-weight: var(--weight-medium); }
+
+.streak { font-size: var(--text-md); }
+.streak strong { color: var(--accent-text); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
+.count { color: var(--muted); font-size: var(--text-sm); }

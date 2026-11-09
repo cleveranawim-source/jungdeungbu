@@ -1,0 +1,18 @@
+.list { list-style: none; margin: 0; padding: 0; }
+.list li + li { border-top: 1px solid var(--line); }
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 60px;
+  padding: var(--space-2) 0;
+  color: var(--ink);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+.row > svg { color: var(--muted); }
+.row:active .name { color: var(--accent-text); }
+.text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.name { font-weight: var(--weight-bold); line-height: var(--leading-tight); }
+.meta { margin-top: 2px; color: var(--muted); font-size: var(--text-sm); line-height: var(--leading-tight); font-variant-numeric: tabular-nums; }
+.cake { display: grid; color: var(--accent-text); }
