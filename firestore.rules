@@ -63,6 +63,18 @@ service cloud.firestore {
       return get(studentPath(token));
     }
 
+    // 출석 문서: { date, present, by: 쓴 사람 uid, at: serverTimestamp() }.
+    // 관리자는 재발급 때 원래 기록(by·at)을 그대로 복사할 수 있다.
+    function validAttendance(date) {
+      let d = request.resource.data;
+      return isDateId(date)
+        && d.keys().hasOnly(['date', 'present', 'by', 'at'])
+        && d.date == date
+        && d.present is bool
+        && ((d.by == request.auth.uid && d.at == request.time)
+            || (isAdmin() && d.by is string && d.at is timestamp));
+    }
+
     function changedOnly(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
     }
@@ -108,6 +120,22 @@ service cloud.firestore {
             && request.resource.data.streak is int
             && request.resource.data.streak >= 0
             && (request.resource.data.lastPresent == null || isDateId(request.resource.data.lastPresent)));
+
+      // ---------- attendance ----------
+      // 읽기: 토큰(경로)을 아는 누구나. 쓰기: 그 반 교사 또는 관리자.
+      // 관리자를 먼저 따지는 이유: 링크 재발급 배치에서는 새 학생 문서가 아직 없어서(get()은 배치 전 상태)
+      // studentOf(token)를 볼 수 없다.
+      match /attendance/{date} {
+        allow read: if true;
+        allow create, update: if (isAdmin() || teachesClass(studentOf(token).data.classId))
+          && validAttendance(date);
+        allow delete: if isAdmin() || teachesClass(studentOf(token).data.classId);
+      }
+    }
+
+    // 교사 출석 화면: collectionGroup('attendance') where date == 주일
+    match /{path=**}/attendance/{date} {
+      allow read: if isTeacher();
     }
   }
 }
