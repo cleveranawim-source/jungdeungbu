@@ -55,30 +55,34 @@ export function StatsAdmin({ thisSunday }: { thisSunday: string }) {
   const dates = useMemo(() => sundaysBetween(from, to), [from, to]);
   const att = useLoader(useCallback(async () => {
     const maps = await Promise.all(dates.map((d) => listAttendanceByDate(db, d)));
-    return new Map(dates.map((d, i) => [d, maps[i]]));
+    return { dates, byDate: new Map(dates.map((d, i) => [d, maps[i]])) };
   }, [dates]));
 
+  // 읽은 기간(att.data.dates)과 고른 기간(dates)이 같고 읽는 중도 아닐 때만 숫자를 보여 주고 내보낸다
+  const fresh = !!att.data && att.data.dates === dates && !att.loading && !att.error;
   const stats: Stats | null = useMemo(
-    () => (roster.data && att.data ? computeStats(roster.data.students, roster.data.classes, att.data, dates) : null),
-    [roster.data, att.data, dates],
+    () => (roster.data && att.data ? computeStats(roster.data.students, roster.data.classes, att.data.byDate, att.data.dates) : null),
+    [roster.data, att.data],
   );
 
   const pick = (nextFrom: string, nextTo: string) => {
-    if (weeksBetween(nextFrom, nextTo) + 1 > MAX_WEEKS) { show('한 번에 30주까지 볼 수 있어요'); return; }
+    if (weeksBetween(nextFrom, nextTo) + 1 > MAX_WEEKS) { show(`한 번에 ${MAX_WEEKS}주까지 볼 수 있어요`); return; }
     setFrom(nextFrom);
     setTo(nextTo);
   };
 
-  const failed = roster.error || att.error;
+  const retry = () => { void roster.reload(); void att.reload(); };
   if (!roster.data || !att.data || !stats) {
-    if (failed) return <LoadError error={failed} onRetry={() => { void roster.reload(); void att.reload(); }} />;
+    const failed = roster.error || att.error;
+    if (failed) return <LoadError error={failed} onRetry={retry} />;
     return <Loading />;
   }
   const { students, classes } = roster.data;
+  const failed = roster.error || att.error;
 
   const exportCsv = () => {
     try {
-      download(`출석_${from}_${to}.csv`, attendanceCsv(students, classes, att.data!, dates));
+      download(`출석_${from}_${to}.csv`, attendanceCsv(students, classes, att.data!.byDate, att.data!.dates));
       show('CSV를 내려받았어요');
     } catch (e) {
       show(describeError(e), 'error');
@@ -92,37 +96,51 @@ export function StatsAdmin({ thisSunday }: { thisSunday: string }) {
           latest={to} onChange={(v) => pick(v, to)} />
         <SundayStepper label="끝 주일" showLabel compact value={to} thisSunday={thisSunday}
           earliest={from} latest={thisSunday} onChange={(v) => pick(from, v)} />
-        <p className={s.summary} role="status">
-          {dates.length}주 동안 전체 평균 출석률 <strong>{pct(stats.overall)}</strong>
-        </p>
+        {fresh && (
+          <p className={s.summary} role="status">
+            {dates.length}주 동안 전체 평균 출석률 <strong>{pct(stats.overall)}</strong>
+          </p>
+        )}
       </Card>
 
-      {students.length === 0 ? (
+      {failed ? (
+        <LoadError error={failed} onRetry={retry} />
+      ) : !fresh ? (
+        <Loading>{`${dates.length}주 출석을 불러오는 중이에요`}</Loading>
+      ) : students.length === 0 ? (
         <EmptyState icon="list" title="등록된 학생이 없어요">학생 명단에서 학생을 먼저 등록해 주세요.</EmptyState>
       ) : (
         <>
           <Card title="주일별 출석">
-            <ul className={s.rows} aria-label="주일별 출석">
-              {stats.perDate.map((d) => (
-                <li key={d.date} className={s.row}>
-                  <span className={s.name}>{formatMonthDay(d.date)}</span>
-                  <span className={s.value}>{d.present}/{d.total}명 · <strong>{pct(d.rate)}</strong></span>
-                  <Meter rate={d.rate} />
-                </li>
-              ))}
-            </ul>
+            <table className={s.table}>
+              <caption className="sr-only">주일별 출석</caption>
+              <thead><tr><th scope="col">주일</th><th scope="col">출석/전체</th><th scope="col">비율</th></tr></thead>
+              <tbody>
+                {stats.perDate.map((d) => (
+                  <tr key={d.date}>
+                    <th scope="row">{formatMonthDay(d.date)}</th>
+                    <td className={s.num}>{d.present}/{d.total}명</td>
+                    <td className={s.rate}><strong>{pct(d.rate)}</strong><Meter rate={d.rate} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </Card>
 
           <Card title="반별 평균">
-            <ul className={s.rows} aria-label="반별 평균 출석률">
-              {stats.perClass.map((c) => (
-                <li key={c.id} className={s.row}>
-                  <span className={s.name}>{c.name}</span>
-                  <span className={s.value}>학생 {c.students}명 · <strong>{pct(c.rate)}</strong></span>
-                  <Meter rate={c.rate} />
-                </li>
-              ))}
-            </ul>
+            <table className={s.table}>
+              <caption className="sr-only">반별 평균 출석률</caption>
+              <thead><tr><th scope="col">반</th><th scope="col">학생 수</th><th scope="col">평균 출석률</th></tr></thead>
+              <tbody>
+                {stats.perClass.map((c) => (
+                  <tr key={c.id}>
+                    <th scope="row">{c.name}</th>
+                    <td className={s.num}>{c.students}명</td>
+                    <td className={s.rate}><strong>{pct(c.rate)}</strong><Meter rate={c.rate} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </Card>
 
           <Card>
@@ -144,7 +162,7 @@ export function StatsAdmin({ thisSunday }: { thisSunday: string }) {
         </>
       )}
 
-      <Button block icon={<Icon name="download" />} onClick={exportCsv} disabled={students.length === 0}>
+      <Button block icon={<Icon name="download" />} onClick={exportCsv} disabled={!fresh || students.length === 0}>
         CSV 내보내기
       </Button>
     </div>
