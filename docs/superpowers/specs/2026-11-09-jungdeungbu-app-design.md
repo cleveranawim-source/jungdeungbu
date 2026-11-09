@@ -73,7 +73,7 @@
 | `bulletins/{yyyy-mm-dd}` | 주일 날짜 | date, order[]({type,title,detail}), hymns[], scripture, sermonTitle, published, updatedBy, updatedAt | 주보 |
 | `sermons/{yyyy-mm-dd}` | 주일 날짜 | date, title, scripture, summary, body, questions[] | 설교 요약. 주보와 같은 날짜로 연결 |
 | `announcements/{id}` | 자동 | title, body, startDate, endDate, pinned, createdAt | 광고. 주보 광고란은 그 주일이 [startDate, endDate] 안에 드는 광고를 가져온다 |
-| `classes/{classId}/prayers/{id}` | 자동 | studentToken, studentName, text, createdAt | **우리 반 공개** 기도 제목 |
+| `classes/{classId}/prayers/{id}` | 자동 | studentToken, studentName, text, hidden, createdAt | **우리 반 공개** 기도 제목 |
 | `prayers/{id}` | 자동 | studentToken, studentName, classId, text, createdAt | **선생님만** 보는 기도 제목 |
 
 ### 파생 값
@@ -111,7 +111,7 @@
 | 홈 | 이번 주 주보 요약 카드(날짜·설교 제목·본문), 이번 주 광고, 축하 배너(생일 주간 / 연속출석 4·8·12·…주 고비) |
 | 주보 | 이번 주 주보 전체: 예배 순서 → 찬양 → 본문 → 설교 제목 → 광고. 지난 주보는 날짜 목록 |
 | 말씀 | 설교 요약 목록 → 제목·본문·요약·적용 질문 |
-| 기도 | 우리 반 기도 제목 + "기도 제목 올리기"(공개 범위 우리 반 / 선생님만). 내 글은 숨기기 가능 |
+| 기도 | 우리 반 기도 제목 + "기도 제목 올리기"(공개 범위 우리 반 / 선생님만). 우리 반 글 중 내 글은 숨기기 가능. "선생님만" 글은 올린 뒤 "선생님께 전했어요" 확인만 보이고 목록에는 남지 않는다(학생은 `prayers`를 읽을 수 없다) |
 | 나 | 이름·반, 출석 달력(이번 학기), 연속출석 주수, 생일 |
 
 - 토큰이 잘못됐거나 `active: false`면 "선생님께 링크를 다시 받아주세요" 한 화면만 보인다. 두 경우를 구분해 알려주지 않는다.
