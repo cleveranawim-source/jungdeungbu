@@ -2,8 +2,9 @@
 import { onAuthStateChanged, signOut as fbSignOut, type User } from 'firebase/auth';
 import { useCallback, useEffect, useState } from 'react';
 import { ensureTeacher, signInAsEmulatorUser, signInWithGoogle } from '../data/teachers';
-import { auth, db } from '../lib/firebase';
+import { auth, clearLocalCache, db } from '../lib/firebase';
 import type { Teacher } from '../types';
+import { teacherHref } from './router';
 import { describeError } from './Toast';
 
 export type AuthStatus = 'loading' | 'signedOut' | 'notInvited' | 'ready';
@@ -53,7 +54,14 @@ export function useAuthRole(): AuthRole {
 
   const signIn = useCallback(() => signInWithGoogle(auth), []);
   const signInEmu = useCallback((email: string, name: string) => signInAsEmulatorUser(auth, email, name), []);
-  const signOut = useCallback(() => fbSignOut(auth), []);
+  // 로그아웃 → 이 기기의 Firestore 캐시 지우기 → 교사 로그인 화면으로 새로 불러오기(지운 db 는 다시 쓸 수 없다).
+  // 해시만 바꾸면 새로 불러오지 않으므로 주소를 바꾼 뒤 reload 한다.
+  const signOut = useCallback(async () => {
+    await fbSignOut(auth);
+    await clearLocalCache();
+    history.replaceState(null, '', teacherHref());
+    location.reload();
+  }, []);
 
   return { ...state, signIn, signInEmu, signOut };
 }

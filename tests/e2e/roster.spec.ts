@@ -115,6 +115,8 @@ test('초대한 교사는 담당 반으로 들어오고 관리 탭이 없다', a
   await expect(page.getByText('teacher@example.com')).toBeVisible();
 
   await page.getByRole('button', { name: '로그아웃' }).click();
+  // 로그아웃은 캐시를 지우고 화면을 새로 불러온다: 로그인 화면이 다시 뜬 뒤 다른 계정으로
+  await expect(page.getByRole('button', { name: '에뮬레이터 로그인' })).toBeVisible();
   await loginAsEmu(page, 'teacher@example.com', '김선생');
   await expect(page.getByRole('tab', { name: '우리 반' })).toBeVisible();
   await expect(page.getByRole('tab', { name: '관리' })).toHaveCount(0);

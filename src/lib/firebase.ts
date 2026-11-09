@@ -3,10 +3,12 @@
 import { initializeApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import {
+  clearIndexedDbPersistence,
   connectFirestoreEmulator,
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
+  terminate,
 } from 'firebase/firestore';
 import { USING_EMULATOR } from './env';
 
@@ -36,4 +38,18 @@ export const db = initializeFirestore(app, {
 if (USING_EMULATOR) {
   connectFirestoreEmulator(db, '127.0.0.1', 8080);
   connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+}
+
+/**
+ * 이 기기에 남은 Firestore 오프라인 캐시(IndexedDB)를 지운다. 교회 공용 기기에서 선생님이 로그아웃한 뒤
+ * 학생 명단·기도 제목이 남지 않게. 지운 뒤 db 는 더 쓸 수 없으므로 부른 쪽이 화면을 새로 불러와야 한다.
+ * 다른 탭이 열려 있으면 지우기가 실패할 수 있다(failed-precondition) — 조용히 넘어간다.
+ */
+export async function clearLocalCache(): Promise<void> {
+  try {
+    await terminate(db);
+    await clearIndexedDbPersistence(db);
+  } catch {
+    // 지우지 못해도 로그아웃은 이미 끝났다
+  }
 }
