@@ -113,7 +113,7 @@ test('관리자가 주보를 게시하면 학생 홈에 보인다', async ({ pag
   await openAdmin(page, '설교 작성');
   await page.getByLabel('설교 제목').fill(WALK);
   await page.getByLabel('성경 본문').fill('누가복음 24:13-35');
-  await page.getByLabel('요약', { exact: true }).fill('엠마오로 가는 길에 예수님이 함께 걸으셨어요.');
+  await page.getByLabel('한 줄 요약').fill('엠마오로 가는 길에 예수님이 함께 걸으셨어요.');
   await page.getByLabel('적용 질문 1').fill('이번 주 누구와 함께 걸을까요?');
   await page.getByRole('button', { name: '저장', exact: true }).click();
   await expectToast(page, '설교를 저장했어요');
