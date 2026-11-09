@@ -133,6 +133,29 @@ service cloud.firestore {
       }
     }
 
+    // ---------- 콘텐츠: 주보 · 설교 · 광고 · 설정 ----------
+    // 공개 콘텐츠라 누구나 읽고, 관리자만 쓴다. 주보·설교 문서 ID는 주일 날짜(yyyy-mm-dd).
+
+    match /bulletins/{date} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() && isDateId(date);
+    }
+
+    match /sermons/{date} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() && isDateId(date);
+    }
+
+    match /announcements/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /settings/{id} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
     // 교사 출석 화면: collectionGroup('attendance') where date == 주일
     match /{path=**}/attendance/{date} {
       allow read: if isTeacher();
