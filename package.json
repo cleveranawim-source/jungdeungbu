@@ -1,0 +1,32 @@
+{
+  "name": "jungdeungbu",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test:unit": "vitest run tests/unit",
+    "test:rules": "bash scripts/with-java.sh npx firebase emulators:exec --only firestore --project demo-jungdeungbu \"vitest run tests/rules tests/data\"",
+    "test:e2e": "bash scripts/with-java.sh npx firebase emulators:exec --only firestore,auth --project demo-jungdeungbu \"playwright test\"",
+    "emu": "bash scripts/with-java.sh npx firebase emulators:start --project demo-jungdeungbu"
+  },
+  "dependencies": {
+    "firebase": "^13.2.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "@playwright/test": "1.65",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "firebase-tools": "^15.35.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
+  }
+}
