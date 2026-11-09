@@ -14,6 +14,7 @@ import { Loading } from '../ui/Loading';
 import { EditorBar, EditorHead, StateBadge } from './EditorBar';
 import { useEditorDraft } from './useEditorDraft';
 import { newKey, useNow, useSavedBy } from './editorUtils';
+import ed from './editor.module.css';
 import s from './BulletinEditor.module.css';
 
 // 화면용 폼: 줄마다 움직여도 입력칸이 따라가도록 key 를 붙인다(저장할 때 뺀다)
@@ -246,29 +247,29 @@ function OrderEditor({ rows, onChange }: { rows: Row[]; onChange(rows: Row[]): v
             const id = `order-${r.k}`;
             return (
               <li key={r.k} className={s.row} data-row={r.k}>
-                <span className={s.num} aria-hidden="true">{n}</span>
+                <span className={`${ed.num} ${s.numCell}`} aria-hidden="true">{n}</span>
                 <div className={s.typeCell}>
-                  <label className={s.mini} htmlFor={`${id}-type`}><span className="sr-only">{n}번 </span>순서 이름</label>
-                  <input id={`${id}-type`} data-part="type" className={s.input} autoComplete="off" value={r.type}
+                  <label className={ed.mini} htmlFor={`${id}-type`}><span className="sr-only">{n}번 </span>순서 이름</label>
+                  <input id={`${id}-type`} data-part="type" className={ed.input} autoComplete="off" value={r.type}
                     onChange={(e) => set(i, { type: e.target.value })} />
                 </div>
                 <div className={s.acts}>
-                  <button type="button" className={s.icon} data-part="up" aria-label={`${n}번 순서 위로`}
+                  <button type="button" className={ed.icon} data-part="up" aria-label={`${n}번 순서 위로`}
                     disabled={i === 0} onClick={() => move(i, -1)}><Icon name="chevronUp" /></button>
-                  <button type="button" className={s.icon} data-part="down" aria-label={`${n}번 순서 아래로`}
+                  <button type="button" className={ed.icon} data-part="down" aria-label={`${n}번 순서 아래로`}
                     disabled={i === rows.length - 1} onClick={() => move(i, 1)}><Icon name="chevronDown" /></button>
-                  <button type="button" className={s.icon} aria-label={`${n}번 순서 지우기`}
+                  <button type="button" className={ed.icon} aria-label={`${n}번 순서 지우기`}
                     onClick={() => remove(i)}><Icon name="trash" size={20} /></button>
                 </div>
                 <div className={s.pair}>
                   <div className={s.cell}>
-                    <label className={s.mini} htmlFor={`${id}-title`}><span className="sr-only">{n}번 </span>내용</label>
-                    <input id={`${id}-title`} className={s.input} autoComplete="off" value={r.title}
+                    <label className={ed.mini} htmlFor={`${id}-title`}><span className="sr-only">{n}번 </span>내용</label>
+                    <input id={`${id}-title`} className={ed.input} autoComplete="off" value={r.title}
                       onChange={(e) => set(i, { title: e.target.value })} />
                   </div>
                   <div className={s.cell}>
-                    <label className={s.mini} htmlFor={`${id}-detail`}><span className="sr-only">{n}번 </span>맡은 사람</label>
-                    <input id={`${id}-detail`} className={s.input} autoComplete="off" value={r.detail}
+                    <label className={ed.mini} htmlFor={`${id}-detail`}><span className="sr-only">{n}번 </span>맡은 사람</label>
+                    <input id={`${id}-detail`} className={ed.input} autoComplete="off" value={r.detail}
                       onChange={(e) => set(i, { detail: e.target.value })} />
                   </div>
                 </div>
@@ -277,7 +278,7 @@ function OrderEditor({ rows, onChange }: { rows: Row[]; onChange(rows: Row[]): v
           })}
         </ol>
       )}
-      <Button ref={addRef} variant="ghost" size="sm" className={s.add} icon={<Icon name="plus" size={18} />} onClick={add}>
+      <Button ref={addRef} variant="ghost" size="sm" className={ed.add} icon={<Icon name="plus" size={18} />} onClick={add}>
         순서 추가
       </Button>
     </>
@@ -309,21 +310,21 @@ function HymnEditor({ hymns, onChange }: { hymns: Hymn[]; onChange(h: Hymn[]): v
 
   return (
     <>
-      <ul className={s.hymns} ref={listRef}>
+      <ul className={ed.lines} ref={listRef}>
         {hymns.map((h, i) => (
-          <li key={h.k} className={s.hymn}>
-            <label className={s.num} htmlFor={`hymn-${h.k}`}><span className="sr-only">찬양 </span>{i + 1}</label>
-            <input id={`hymn-${h.k}`} data-hymn={h.k} className={s.input} autoComplete="off" value={h.text}
+          <li key={h.k} className={ed.line}>
+            <label className={ed.num} htmlFor={`hymn-${h.k}`}><span className="sr-only">찬양 </span>{i + 1}</label>
+            <input id={`hymn-${h.k}`} data-hymn={h.k} className={ed.input} autoComplete="off" value={h.text}
               placeholder={i === 0 ? '찬송가 288장' : undefined}
               onChange={(e) => onChange(hymns.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)))} />
-            <button type="button" className={s.icon} aria-label={`${i + 1}번째 찬양 지우기`}
+            <button type="button" className={ed.icon} aria-label={`${i + 1}번째 찬양 지우기`}
               disabled={hymns.length === 1 && !h.text} onClick={() => remove(i)}>
               <Icon name="trash" size={20} />
             </button>
           </li>
         ))}
       </ul>
-      <Button variant="ghost" size="sm" className={s.add} icon={<Icon name="plus" size={18} />} onClick={add}>
+      <Button variant="ghost" size="sm" className={ed.add} icon={<Icon name="plus" size={18} />} onClick={add}>
         찬양 추가
       </Button>
     </>

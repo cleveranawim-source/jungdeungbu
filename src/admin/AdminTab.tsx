@@ -6,6 +6,7 @@ import { Icon } from '../ui/icons';
 import { BulletinEditor } from './BulletinEditor';
 import { ClassesTeachersAdmin } from './ClassesTeachersAdmin';
 import { RosterAdmin } from './RosterAdmin';
+import { SermonEditor } from './SermonEditor';
 import { ADMIN_SECTIONS, findAdminSection } from './sections';
 import s from './AdminTab.module.css';
 
@@ -32,6 +33,7 @@ export function AdminTab({ sub, myUid, thisSunday }: AdminTabProps) {
         </LinkButton>
       </div>
       {section.key === 'bulletin' && <BulletinEditor myUid={myUid} thisSunday={thisSunday} />}
+      {section.key === 'sermon' && <SermonEditor thisSunday={thisSunday} />}
       {section.key === 'roster' && <RosterAdmin />}
       {section.key === 'classes' && <ClassesTeachersAdmin myUid={myUid} />}
       {!section.ready && (

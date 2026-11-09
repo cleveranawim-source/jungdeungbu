@@ -1,0 +1,7 @@
+.stack { display: flex; flex-direction: column; gap: var(--space-4); }
+.fields { display: flex; flex-direction: column; gap: var(--space-4); }
+/* 설교 원고는 길게: 휴대폰에서도 한 화면의 반 넘게 보이도록 */
+.body { min-height: 45vh; }
+/* 질문은 두 줄 칸이라 번호·지우기를 위쪽에 맞춘다 */
+.question { align-items: flex-start; }
+.question > label { margin-top: 10px; }
