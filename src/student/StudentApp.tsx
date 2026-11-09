@@ -1,5 +1,5 @@
 // 학생 화면: 토큰으로 학생 문서를 한 번 읽고, 뒤에서 익명 세션을 묶고, 탭마다 화면을 그린다.
-import { useCallback, type ReactNode } from 'react';
+import { useCallback, useEffect, type ReactNode } from 'react';
 import { InvalidLink } from '../app/InvalidLink';
 import { studentHref, type StudentTab } from '../app/router';
 import { TabBar, type TabItem } from '../app/TabBar';
@@ -7,6 +7,7 @@ import { useLoader } from '../app/useLoader';
 import { useTodaySunday } from '../app/useTodaySunday';
 import { getStudent } from '../data/students';
 import { db } from '../lib/firebase';
+import { clearLastStudentToken, setLastStudentToken } from '../lib/lastStudentToken';
 import { Icon } from '../ui/icons';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
@@ -40,6 +41,13 @@ export function StudentApp({ token, tab, sub }: StudentAppProps) {
   const session = useStudentSession(token, student?.active === true);
   // "이번 주" = 가장 가까운 주일. 날이 바뀌거나 화면이 다시 보일 때만 다시 계산
   const sundayId = useTodaySunday();
+
+  // 홈 화면 앱(start_url)이 링크를 잃어도 랜딩에서 다시 들어오게 기억한다. 닫힌 링크면 잊는다
+  const known = student === undefined ? undefined : student?.active === true;
+  useEffect(() => {
+    if (known === true) setLastStudentToken(token);
+    else if (known === false) clearLastStudentToken(undefined, token);
+  }, [known, token]);
 
   if (student === undefined) {
     if (error) return <Screen><LoadError error={error} onRetry={reload} audience="student" /></Screen>;

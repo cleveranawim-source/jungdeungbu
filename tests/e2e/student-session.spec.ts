@@ -99,3 +99,44 @@ test('등록된 선생님 기기에서 학생 링크를 열면 선생님 로그�
   await page.goto('#/t');
   await expect(page.getByRole('tablist', { name: '교사 메뉴' })).toBeVisible();
 });
+
+test('홈 화면 앱처럼 링크 없이 첫 화면으로 열면 "내 화면 열기"로 다시 들어간다', async ({ page }) => {
+  // 처음엔 학생 링크 기록이 없다
+  await page.goto('#/');
+  await expect(page.getByRole('link', { name: '선생님 로그인' })).toBeVisible();
+  await expect(page.getByRole('link', { name: '내 화면 열기' })).toHaveCount(0);
+
+  await page.goto(`#/s/${TOKEN}`);
+  await expect(page.getByRole('tablist', { name: '학생 메뉴' })).toBeVisible();
+
+  // start_url(./) 로 다시 연 것과 같다: 새로 불러온 첫 화면
+  await page.goto('./');
+  await page.reload();
+  const resume = page.getByRole('link', { name: '내 화면 열기' });
+  await expect(resume).toBeVisible();
+  await resume.click();
+  await expect(page).toHaveURL(new RegExp(`#/s/${TOKEN}$`));
+  await expect(page.getByRole('tab', { name: '홈' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByText('김하늘')).toBeVisible();
+
+  // "다른 링크로 들어왔어요" 를 누르면 잊는다(다시 불러와도 없음)
+  await page.goto('#/');
+  await page.getByRole('button', { name: '다른 링크로 들어왔어요' }).click();
+  await expect(page.getByRole('link', { name: '내 화면 열기' })).toHaveCount(0);
+  await expect(page.getByText('학생은 선생님이 보내준 링크로 들어와요')).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('link', { name: '내 화면 열기' })).toHaveCount(0);
+});
+
+test('닫힌(재발급·비활성) 링크는 첫 화면에서 다시 권하지 않는다', async ({ page }) => {
+  await page.goto(`#/s/${TOKEN}`);
+  await expect(page.getByRole('tablist', { name: '학생 메뉴' })).toBeVisible();
+  await seed((db) => setDoc(doc(db, 'students', TOKEN), {
+    name: '김하늘', classId: 'classA', birthday: null, active: false, streak: 0, lastPresent: null,
+  }));
+  await page.reload();
+  await expect(page.getByText('선생님께 링크를 다시 받아주세요')).toBeVisible();
+  await page.goto('#/');
+  await expect(page.getByRole('link', { name: '선생님 로그인' })).toBeVisible();
+  await expect(page.getByRole('link', { name: '내 화면 열기' })).toHaveCount(0);
+});
