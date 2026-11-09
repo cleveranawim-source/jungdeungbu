@@ -39,7 +39,7 @@ const toDoc = (f: Form): Doc => ({
 const isForm = (x: unknown): x is Form =>
   hasStrings(x, ['title', 'scripture', 'summary', 'body']) && isRows((x as Form).questions, ['text']);
 
-/** 관리 → 설교 작성. 주일을 고르고 제목·본문·요약·원고·적용 질문을 써서 저장. 학생 "말씀" 탭에 보인다. */
+/** 관리 → 설교 작성. 주일을 고르고 제목·본문·요약·말씀 내용(요약, 전문 아님)·적용 질문을 써서 저장. 학생 "말씀" 탭에 보인다. */
 export function SermonEditor({ thisSunday }: { thisSunday: string }) {
   const { show } = useToast();
   const [date, setDate] = useState(thisSunday);
@@ -106,8 +106,8 @@ export function SermonEditor({ thisSunday }: { thisSunday: string }) {
           <TextArea label="요약" rows={3} maxLength={300} showCount value={form.summary}
             hint="말씀 첫머리에 보이는 두세 문장"
             onChange={(e) => update({ summary: e.target.value })} />
-          <TextArea label="설교 원고" rows={14} className={s.body} value={form.body}
-            hint="빈 줄로 문단을 나눠요"
+          <TextArea label="말씀 내용(요약)" rows={14} className={s.body} value={form.body}
+            hint="학생이 다시 읽을 요약이에요. 전문은 올리지 않아요. 빈 줄로 문단을 나눠요"
             onChange={(e) => update({ body: e.target.value })} />
         </div>
       </Card>
