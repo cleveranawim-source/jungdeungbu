@@ -48,3 +48,24 @@ export function semesterStart(sundayId: string): string {
   if (m >= 3 && m <= 8) return `${y}-03-01`;
   return `${m >= 9 ? y : y - 1}-09-01`;
 }
+
+/** "2026-11-08" → "11월 8일" */
+export function formatMonthDay(dateId: string): string {
+  const [, m, d] = dateId.split('-').map(Number);
+  return `${m}월 ${d}일`;
+}
+
+/** 생일 "03-05" → "3월 5일" */
+export function formatBirthday(mmdd: string): string {
+  const [m, d] = mmdd.split('-').map(Number);
+  return `${m}월 ${d}일`;
+}
+
+/** from 이후 첫 주일부터 to 까지의 주일 날짜(양끝 포함, 오름차순). */
+export function sundaysBetween(from: string, to: string): string[] {
+  const start = fromDateId(from);
+  let cur = addDays(start, (7 - start.getDay()) % 7);
+  const out: string[] = [];
+  for (let id = toDateId(cur); id <= to; cur = addDays(cur, 7), id = toDateId(cur)) out.push(id);
+  return out;
+}

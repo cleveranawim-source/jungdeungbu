@@ -1,0 +1,58 @@
+/* 종이 주보 한 장 */
+.paper { padding: var(--space-6) var(--space-5); }
+
+.head { padding-bottom: var(--space-4); border-bottom: 2px solid var(--ink); }
+.date { font-size: var(--text-lg); }
+.kind { margin-top: var(--space-1); color: var(--muted); font-size: var(--text-sm); }
+
+.section { padding: var(--space-5) 0 0; }
+.section + .section { margin-top: var(--space-5); border-top: 1px solid var(--line); }
+.heading {
+  margin-bottom: var(--space-3);
+  color: var(--accent-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+}
+
+/* 예배 순서: 순서 이름 ······ 맡은 사람·제목 */
+.order { list-style: none; margin: 0; padding: 0; }
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  line-height: var(--leading-tight);
+}
+.type { flex-shrink: 0; font-weight: var(--weight-bold); }
+/* 점선 이음: 두 줄짜리 항목에서도 첫 줄 글자 바닥에 맞춘다 */
+.leader {
+  flex: 1 1 var(--space-4);
+  min-width: var(--space-4);
+  height: 0.95em;
+  border-bottom: 2px dotted var(--line-strong);
+}
+.what {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  max-width: 68%;
+  text-align: right;
+}
+.stepTitle { line-height: var(--leading-tight); }
+.detail { margin-top: 2px; color: var(--muted); font-size: var(--text-sm); line-height: var(--leading-tight); }
+
+.hymns { margin: 0; padding: 0; list-style: none; }
+.hymns li { padding: var(--space-1) 0; }
+
+.word { margin: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.word > div { display: flex; gap: var(--space-4); align-items: baseline; }
+.word dt { flex-shrink: 0; width: 3em; color: var(--muted); font-size: var(--text-sm); }
+.word dd { margin: 0; font-weight: var(--weight-bold); }
+/* 터치 대상: 줄 높이를 44px 로 */
+.sermonLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-min);
+  margin: calc((var(--touch-min) - 1lh) / -2) 0;
+  border-radius: var(--radius-sm);
+}

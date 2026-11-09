@@ -147,6 +147,9 @@
 - `OfflineBar`(`src/app/OfflineBar.tsx`): App 이 맨 위에 한 번 둔다. 화면에서 따로 넣지 않는다. `useOnline()` 도 내보낸다.
 - `InvalidLink`(`src/app/InvalidLink.tsx`): "선생님께 링크를 다시 받아주세요" 한 화면. 학생 문서가 없거나 비활성일 때도 이걸 그대로 쓴다.
 - `EmuLogin`(`src/app/EmuLogin.tsx`): 에뮬레이터 로그인 폼. `USING_EMULATOR` 가 아니면 아무것도 그리지 않으므로 조건 없이 넣는다.
+- `BulletinView`(`src/ui/BulletinView.tsx`): 주보 한 장. 종이 주보처럼 카드 하나 안에 예배 순서(순서 이름 ······ 맡은 사람, 점선 이음)·찬양·말씀·광고. 빈 구역은 그리지 않는다. 설교 링크는 선택 prop `sermonHref` 가 있을 때만.
+- `AttendanceCalendar`(`src/ui/AttendanceCalendar.tsx`): 학기 주일만, 달마다 한 줄. 출석 = 귤빛 해(날짜가 안에), 결석·기록 없음 = 같은 옅은 점(탓하지 않게 겉모습은 같고, 화면 읽기 이름만 다르다). 누르는 칸이 아니다.
+- `CelebrationBanner`(`src/ui/CelebrationBanner.tsx`): 생일 주간·연속 출석 4주마다. 해 빛무리(`--sun-halo`) 테두리 띠 하나, 움직임 없음. 축하 문구 안 이모지(🎂 🔥)만 허용. 규칙은 `src/lib/celebrate.ts`.
 - 아이콘: `src/ui/icons.tsx` 의 `<Icon name />` 만. 24 격자·선 2px·둥근 끝(Lucide 모양). 새 아이콘도 같은 규칙으로 여기에 추가. 글자 옆 아이콘은 화면 읽기에서 숨겨지고(기본), 아이콘만으로 뜻을 전하면 `label` 을 준다. **이모지를 아이콘으로 쓰지 않는다**(축하 문구 안 이모지는 괜찮다).
 
 ## 5. 문구 톤
