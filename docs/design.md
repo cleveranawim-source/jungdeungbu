@@ -60,7 +60,7 @@
 | 토큰 | 값 | 쓰임 |
 |---|---|---|
 | `--font-body` | `-apple-system, "Apple SD Gothic Neo", "Malgun Gothic", …` | 본문 전부 |
-| `--font-display` | `"Jua"`, 없으면 본문 글꼴 | **h1 만**(화면 제목·랜딩·안내 화면 제목). Google Fonts `display=swap` |
+| `--font-display` | `"Jua"`, 없으면 본문 글꼴 | **h1 만**(화면 제목·랜딩·안내 화면 제목). `@fontsource/jua` 로 직접 싣는다(외부 요청 없음, `display=swap`) |
 | `--text-xs` | 13px | 탭 라벨·배지 |
 | `--text-sm` | 15px | 힌트·날짜·라벨·토스트 |
 | `--text-md` | 17px | 본문 기본 |
