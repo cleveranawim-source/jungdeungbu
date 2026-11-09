@@ -1,0 +1,59 @@
+// 교사 로그인 상태와 역할. Firebase 익명 사용자(학생 기기)는 교사 기준으로 '로그인 안 함'이다.
+import { onAuthStateChanged, signOut as fbSignOut, type User } from 'firebase/auth';
+import { useCallback, useEffect, useState } from 'react';
+import { ensureTeacher, signInAsEmulatorUser, signInWithGoogle } from '../data/teachers';
+import { auth, db } from '../lib/firebase';
+import type { Teacher } from '../types';
+import { describeError } from './Toast';
+
+export type AuthStatus = 'loading' | 'signedOut' | 'notInvited' | 'ready';
+
+export interface AuthUser { uid: string; email: string; name: string }
+
+export interface AuthRole {
+  status: AuthStatus;
+  user: AuthUser | null;
+  teacher: Teacher | null;
+  /**
+   * 교사 확인(ensureTeacher)이 오류로 끝났을 때의 안내 문장(describeError). 이때 status 는 'signedOut'.
+   * 브리프 모양에 더한 필드다. 오류가 아니면 null.
+   */
+  error: string | null;
+  signIn(): Promise<void>;
+  signInEmu(email: string, name: string): Promise<void>;
+  signOut(): Promise<void>;
+}
+
+type State = Pick<AuthRole, 'status' | 'user' | 'teacher' | 'error'>;
+
+const SIGNED_OUT: State = { status: 'signedOut', user: null, teacher: null, error: null };
+
+export function useAuthRole(): AuthRole {
+  const [state, setState] = useState<State>({ status: 'loading', user: null, teacher: null, error: null });
+
+  useEffect(() => {
+    let seq = 0; // 늦게 끝난 이전 사용자의 확인 결과가 덮어쓰지 않게
+    const unsub = onAuthStateChanged(auth, (u: User | null) => {
+      const my = ++seq;
+      if (!u || u.isAnonymous) { setState(SIGNED_OUT); return; }
+      const user: AuthUser = { uid: u.uid, email: u.email ?? '', name: u.displayName ?? '' };
+      if (!user.email) { setState({ status: 'notInvited', user, teacher: null, error: null }); return; }
+      setState({ status: 'loading', user, teacher: null, error: null });
+      ensureTeacher(db, user).then(
+        (teacher) => {
+          if (my === seq) setState({ status: teacher ? 'ready' : 'notInvited', user, teacher, error: null });
+        },
+        (e: unknown) => {
+          if (my === seq) setState({ status: 'signedOut', user, teacher: null, error: describeError(e) });
+        },
+      );
+    });
+    return () => { seq++; unsub(); };
+  }, []);
+
+  const signIn = useCallback(() => signInWithGoogle(auth), []);
+  const signInEmu = useCallback((email: string, name: string) => signInAsEmulatorUser(auth, email, name), []);
+  const signOut = useCallback(() => fbSignOut(auth), []);
+
+  return { ...state, signIn, signInEmu, signOut };
+}
