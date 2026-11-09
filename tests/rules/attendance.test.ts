@@ -108,6 +108,27 @@ describe('attendance 쓰기', () => {
     expect(copied.size).toBe(2)
   })
 
+  test('1년치(52주) 출석을 옮기는 재발급 배치도 조회 한도(20)에 걸리지 않는다', async () => {
+    const dates = Array.from({ length: 52 }, (_, i) =>
+      new Date(Date.UTC(2025, 10, 16) + i * 7 * 86400000).toISOString().slice(0, 10),
+    )
+    await seed(env(), async (db) => {
+      const at = Timestamp.fromDate(new Date('2026-01-01T00:00:00Z'))
+      await Promise.all(
+        dates.map((date) => setDoc(doc(db, att(TOKEN_A, date)), { date, present: true, by: 'tA', at })),
+      )
+    })
+    const admin = asUser(env(), ADMIN)
+    const NEW_TOKEN = 'Tok3n_R-reissued000052'
+    const old = await getDocs(collection(admin, `students/${TOKEN_A}/attendance`))
+    expect(old.size).toBe(52)
+    const batch = writeBatch(admin)
+    batch.set(doc(admin, `students/${NEW_TOKEN}`), STUDENT_A)
+    for (const d of old.docs) batch.set(doc(admin, `students/${NEW_TOKEN}/attendance/${d.id}`), d.data())
+    batch.update(doc(admin, `students/${TOKEN_A}`), { active: false })
+    await assertSucceeds(batch.commit())
+  })
+
   test('교사는 원래 기록을 흉내 낸 복사(by·at 임의 값)를 못 한다', async () => {
     const a = asUser(env(), TEACHER_A)
     const past = Timestamp.fromDate(new Date('2026-11-01T01:00:00Z'))

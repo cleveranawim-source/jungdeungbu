@@ -3,8 +3,9 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ---------- 공통 함수 ----------
-    // 한 요청의 get()/exists() 한도(단일 문서 10, 배치 20)를 넘지 않도록 같은 문서만 되풀이해 본다
-    // (같은 문서 조회는 한 번으로 계산된다).
+    // 한 요청의 get()/exists() 한도(단일 문서 10, 배치 20)를 넘지 않도록 각 규칙은 같은 문서
+    // (내 teachers 문서, 대상 students 문서, 내 invites 문서)만 되풀이해 본다. 같은 문서 조회는 캐시되어
+    // 한 번으로 계산된다 — attendance.test.ts의 52주 재발급 배치 시험이 이를 지킨다.
 
     function isSignedIn() {
       return request.auth != null;
@@ -75,6 +76,20 @@ service cloud.firestore {
             || (isAdmin() && d.by is string && d.at is timestamp));
     }
 
+    // 기도 제목: { studentToken, studentName, text, hidden: false, createdAt: serverTimestamp() } (+ extraKeys).
+    // 로그인 없는 학생이 쓰므로, 토큰이 가리키는 활성 학생 문서의 반·이름과 맞는지로 확인한다.
+    function validPrayer(d, classId, extraKeys) {
+      return isToken(d.studentToken)
+        && exists(studentPath(d.studentToken))
+        && studentOf(d.studentToken).data.active == true
+        && studentOf(d.studentToken).data.classId == classId
+        && d.studentName == studentOf(d.studentToken).data.name
+        && d.text is string && d.text.size() >= 1 && d.text.size() <= 500
+        && d.hidden == false
+        && d.createdAt == request.time
+        && d.keys().hasOnly(['studentToken', 'studentName', 'text', 'hidden', 'createdAt'].concat(extraKeys));
+    }
+
     function changedOnly(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
     }
@@ -107,6 +122,15 @@ service cloud.firestore {
       allow get: if true;
       allow list: if isTeacher();
       allow create, update, delete: if isAdmin();
+
+      // ---------- 우리 반 기도 (반 ID를 아는 사람에게 공개) ----------
+      match /prayers/{id} {
+        allow read: if true;
+        allow create: if validPrayer(request.resource.data, classId, []);
+        // 학생의 "숨기기": hidden 을 true 로 바꾸는 것만. 실제 삭제는 교사가.
+        allow update: if changedOnly(['hidden']) && request.resource.data.hidden == true;
+        allow delete: if isTeacher();
+      }
     }
 
     match /students/{token} {
@@ -154,6 +178,14 @@ service cloud.firestore {
     match /settings/{id} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
+    }
+
+    // ---------- 선생님만 보는 기도 ----------
+    match /prayers/{id} {
+      allow read: if isTeacher();
+      allow create: if request.resource.data.classId is string
+        && validPrayer(request.resource.data, request.resource.data.classId, ['classId']);
+      allow delete: if isTeacher();
     }
 
     // 교사 출석 화면: collectionGroup('attendance') where date == 주일
