@@ -1,0 +1,15 @@
+{
+  "name": "명지대학교교회 중등부",
+  "short_name": "중등부",
+  "description": "주보와 말씀, 우리 반 기도 제목을 함께 봐요",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff9f3",
+  "theme_color": "#ff8b3d",
+  "lang": "ko",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
