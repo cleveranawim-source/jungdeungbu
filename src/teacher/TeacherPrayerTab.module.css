@@ -1,0 +1,44 @@
+/* 두 묶음(우리 반 / 선생님께만). 줄은 학생 기도 탭(PrayerTab)과 같은 모양: 이름 ─ 날짜, 글, 오른쪽 아래 삭제 */
+.heading { display: flex; align-items: center; gap: var(--space-2); }
+.lock {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  flex-shrink: 0;
+}
+.count {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+.hint { color: var(--muted); font-size: var(--text-sm); }
+
+.empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) 0 var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+.empty > svg { color: var(--accent-text); }
+
+.list { list-style: none; margin: 0; padding: 0; }
+.item { padding: var(--space-4) 0 var(--space-2); }
+.item:last-child { padding-bottom: 0; }
+.item + .item { border-top: 1px solid var(--line); }
+.who { display: flex; align-items: center; gap: var(--space-2); line-height: var(--leading-tight); }
+.name { font-weight: var(--weight-bold); }
+.when { margin-left: auto; color: var(--muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.text { margin-top: var(--space-2); white-space: pre-wrap; overflow-wrap: anywhere; }
+/* 조용한 글자 버튼: 글자 끝을 카드 안쪽 선에 맞춘다(버튼 안 여백만큼 바깥으로) */
+.actions { margin-top: var(--space-1); margin-right: calc(-1 * var(--space-4)); display: flex; justify-content: flex-end; }
+/* 확인 상자가 열리면 여백 보정 없이 줄 폭 그대로 */
+.actions:has([role='group']) { margin-right: 0; }

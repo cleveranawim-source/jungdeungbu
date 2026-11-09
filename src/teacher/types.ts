@@ -1,6 +1,6 @@
 import type { Teacher } from '../types';
 
-/** TeacherApp 이 출석·우리 반·주보 탭에 넘기는 값. 탭은 자기 데이터를 useLoader 로 스스로 불러온다. */
+/** TeacherApp 이 출석·우리 반·기도·주보 탭에 넘기는 값. 탭은 자기 데이터를 useLoader 로 스스로 불러온다. */
 export interface TeacherTabProps {
   uid: string;
   teacher: Teacher;

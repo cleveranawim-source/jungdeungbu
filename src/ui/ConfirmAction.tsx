@@ -15,13 +15,15 @@ export interface ConfirmActionProps {
   /** 실패하면 던진다 → 오류 토스트, 확인 단계는 열린 채로. 성공 토스트는 부르는 쪽이 띄운다. */
   onConfirm(): Promise<void>;
   disabled?: boolean;
+  /** 줄마다 되풀이되는 목록에서: 테두리 없는 글자 버튼(ghost)으로 조용하게. 기본은 보조 버튼 */
+  quiet?: boolean;
 }
 
 /**
  * 되돌리기 어려운 행동의 줄 안 확인(브라우저 confirm 창을 쓰지 않는다).
  * 버튼을 누르면 그 자리에 설명 + 취소 + 빨간 확인 버튼이 열린다. Esc 나 취소로 닫힌다.
  */
-export function ConfirmAction({ label, icon, message, confirmLabel, onConfirm, disabled }: ConfirmActionProps) {
+export function ConfirmAction({ label, icon, message, confirmLabel, onConfirm, disabled, quiet = false }: ConfirmActionProps) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -57,7 +59,7 @@ export function ConfirmAction({ label, icon, message, confirmLabel, onConfirm, d
   if (!open) {
     return (
       <span className={s.wrap}>
-        <Button ref={triggerRef} variant="secondary" size="sm" className={s.trigger} disabled={disabled}
+        <Button ref={triggerRef} variant={quiet ? 'ghost' : 'secondary'} size="sm" className={quiet ? `${s.trigger} ${s.quiet}` : s.trigger} disabled={disabled}
           icon={icon && <Icon name={icon} size={18} />} onClick={() => setOpen(true)}>
           {label}
         </Button>

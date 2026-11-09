@@ -16,6 +16,7 @@ import { Screen } from '../ui/Screen';
 import { AttendanceTab } from './AttendanceTab';
 import { BulletinTab } from './BulletinTab';
 import { ClassTab } from './ClassTab';
+import { TeacherPrayerTab } from './TeacherPrayerTab';
 import type { TeacherTabProps } from './types';
 import s from './TeacherApp.module.css';
 
@@ -138,13 +139,7 @@ function Ready({ user, teacher, tab, sub, onSignOut }: {
   else if (current.key === 'attendance') body = <AttendanceTab {...props} />;
   else if (current.key === 'class') body = <ClassTab {...props} />;
   else if (current.key === 'bulletin') body = <BulletinTab {...props} />;
-  else {
-    body = (
-      <EmptyState icon={current.key} title="준비 중이에요">
-        {current.label} 화면은 곧 채워질 거예요.
-      </EmptyState>
-    );
-  }
+  else body = <TeacherPrayerTab {...props} />;
 
   return (
     <Screen
