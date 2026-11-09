@@ -19,7 +19,7 @@ export const ADMIN_SECTIONS: readonly AdminSection[] = [
   { key: 'announcements', label: '광고', desc: '기간을 정해 학생 홈에 띄워요', icon: 'megaphone', ready: true },
   { key: 'roster', label: '학생 명단', desc: '학생을 등록하고 링크를 보내요', icon: 'list', ready: true },
   { key: 'classes', label: '반·교사', desc: '반을 만들고 선생님을 초대해요', icon: 'class', ready: true },
-  { key: 'attendance', label: '출석 현황', desc: '주일마다 반별 출석을 봐요', icon: 'chart', ready: false },
+  { key: 'attendance', label: '출석 현황', desc: '주일마다 반별 출석을 봐요', icon: 'chart', ready: true },
 ];
 
 export function findAdminSection(sub: string | undefined): AdminSection | undefined {

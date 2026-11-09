@@ -8,6 +8,7 @@ import { BulletinEditor } from './BulletinEditor';
 import { ClassesTeachersAdmin } from './ClassesTeachersAdmin';
 import { RosterAdmin } from './RosterAdmin';
 import { SermonEditor } from './SermonEditor';
+import { StatsAdmin } from './StatsAdmin';
 import { ADMIN_SECTIONS, findAdminSection } from './sections';
 import s from './AdminTab.module.css';
 
@@ -37,6 +38,7 @@ export function AdminTab({ sub, myUid, thisSunday }: AdminTabProps) {
       {section.key === 'sermon' && <SermonEditor thisSunday={thisSunday} />}
       {section.key === 'announcements' && <AnnouncementsAdmin thisSunday={thisSunday} />}
       {section.key === 'roster' && <RosterAdmin />}
+      {section.key === 'attendance' && <StatsAdmin thisSunday={thisSunday} />}
       {section.key === 'classes' && <ClassesTeachersAdmin myUid={myUid} />}
       {!section.ready && (
         <EmptyState icon={section.icon} title="준비 중이에요">{section.label} 화면은 곧 채워질 거예요.</EmptyState>
