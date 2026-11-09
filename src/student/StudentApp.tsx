@@ -42,12 +42,15 @@ export function StudentApp({ token, tab, sub }: StudentAppProps) {
   // "이번 주" = 가장 가까운 주일. 날이 바뀌거나 화면이 다시 보일 때만 다시 계산
   const sundayId = useTodaySunday();
 
-  // 홈 화면 앱(start_url)이 링크를 잃어도 랜딩에서 다시 들어오게 기억한다. 닫힌 링크면 잊는다
+  // 홈 화면 앱(start_url)이 링크를 잃어도 랜딩에서 다시 들어오게 기억한다. 닫힌 링크면 잊는다.
+  // 선생님 기기(등록된 교사가 학생 링크를 열어 봄)에서는 기억하지 않는다: 공용 기기에 학생 링크를 남기지 않게.
+  // 세션 확인(pending)이 끝난 뒤에만 정한다.
   const known = student === undefined ? undefined : student?.active === true;
+  const studentDevice = session.state !== 'pending' && session.state !== 'teacher';
   useEffect(() => {
-    if (known === true) setLastStudentToken(token);
+    if (known === true && studentDevice) setLastStudentToken(token);
     else if (known === false) clearLastStudentToken(undefined, token);
-  }, [known, token]);
+  }, [known, studentDevice, token]);
 
   if (student === undefined) {
     if (error) return <Screen><LoadError error={error} onRetry={reload} audience="student" /></Screen>;

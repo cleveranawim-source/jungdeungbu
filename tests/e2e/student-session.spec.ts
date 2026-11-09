@@ -32,8 +32,10 @@ test('연결이 늦으면 안내하고, 시간이 지나면 다시 시도할 수
 
   // 8초가 지나면 failed: 버튼이 다시 눌리고, 누르면 안내 + 다시 시도
   await expect(submit).toBeEnabled({ timeout: 12000 });
+  // 붙잡은 요청을 먼저 끊고(실패) 나서 가로채기를 푼다. 순서가 반대면 풀리는 순간 붙잡힌 요청이 그대로 나가
+  // 늦게 성공할 수 있다 → 누르기 전에 ready 가 되어 이 시험이 보려는 '실패 뒤 다시 시도' 가 사라진다(간헐 실패의 원인)
+  for (const r of held.splice(0)) await r.abort().catch(() => {});
   await page.unroute(SIGN_UP);
-  for (const r of held) await r.abort().catch(() => {});
   await submit.click();
   await expectToast(page, '잠시 뒤 다시 시도해 주세요', 'error');
 
@@ -96,6 +98,10 @@ test('등록된 선생님 기기에서 학생 링크를 열면 선생님 로그�
   await page.goto(`#/s/${TOKEN}/prayer`);
   await expect(page.getByText('선생님 계정으로 로그인된 기기예요')).toBeVisible();
   await expect(page.getByRole('button', { name: '올리기' })).toBeDisabled();
+  // 공용 기기에 학생 링크를 남기지 않는다: 첫 화면에 "내 화면 열기"가 없다
+  await page.goto('#/');
+  await expect(page.getByRole('link', { name: '선생님 로그인' })).toBeVisible();
+  await expect(page.getByRole('link', { name: '내 화면 열기' })).toHaveCount(0);
   await page.goto('#/t');
   await expect(page.getByRole('tablist', { name: '교사 메뉴' })).toBeVisible();
 });
@@ -108,6 +114,8 @@ test('홈 화면 앱처럼 링크 없이 첫 화면으로 열면 "내 화면 열
 
   await page.goto(`#/s/${TOKEN}`);
   await expect(page.getByRole('tablist', { name: '학생 메뉴' })).toBeVisible();
+  // 학생 기기인지(선생님 기기가 아닌지) 세션 확인이 끝나면 기억한다
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('jdb:lastStudentToken'))).toBe(TOKEN);
 
   // start_url(./) 로 다시 연 것과 같다: 새로 불러온 첫 화면
   await page.goto('./');

@@ -11,6 +11,7 @@ import { useTodaySunday } from '../app/useTodaySunday';
 import { inAppBrowser, isAndroidKakao, kakaoOpenExternalHref } from '../lib/inAppBrowser';
 import type { Teacher } from '../types';
 import { Button, LinkButton } from '../ui/Button';
+import { ConfirmAction } from '../ui/ConfirmAction';
 import { EmptyState } from '../ui/EmptyState';
 import { Field } from '../ui/Field';
 import { Icon } from '../ui/icons';
@@ -58,17 +59,66 @@ export function TeacherApp({ tab, sub }: TeacherAppProps) {
   );
 }
 
-function SignOutButton({ onSignOut, variant = 'secondary' }: { onSignOut(): Promise<void>; variant?: 'secondary' | 'ghost' }) {
+type SignOut = (force?: boolean) => Promise<'unsynced' | void>;
+
+const UNSYNCED = '아직 저장되지 않은 출석이 있어요. 연결된 뒤 다시 로그아웃해 주세요';
+
+/**
+ * 로그아웃 버튼. 서버에 닿지 않은 출석이 있으면 로그아웃하지 않고 onUnsynced(없으면 오류 토스트).
+ * 로그아웃되면 화면을 새로 불러오므로 busy 는 그대로 둔다.
+ */
+function SignOutButton({ onSignOut, onUnsynced, variant = 'secondary' }: {
+  onSignOut: SignOut; onUnsynced?(): void; variant?: 'secondary' | 'ghost';
+}) {
   const { show } = useToast();
   const [busy, setBusy] = useState(false);
   return (
     <Button variant={variant} size="sm" busy={busy} icon={<Icon name="logout" size={18} />}
       onClick={async () => {
         setBusy(true);
-        try { await onSignOut(); } catch (e) { show(describeError(e), 'error'); setBusy(false); }
+        try {
+          if ((await onSignOut()) === 'unsynced') {
+            setBusy(false);
+            if (onUnsynced) onUnsynced(); else show(UNSYNCED, 'error');
+          }
+        } catch (e) { show(describeError(e), 'error'); setBusy(false); }
       }}>
       로그아웃
     </Button>
+  );
+}
+
+/** 로그아웃하려는데 서버에 닿지 않은 출석이 남았을 때: 다시 시도 / 저장 안 하고 로그아웃(확인 뒤). */
+function UnsyncedNotice({ onSignOut }: { onSignOut: SignOut }) {
+  const { show } = useToast();
+  const [busy, setBusy] = useState(false);
+  async function retry() {
+    setBusy(true);
+    try {
+      if ((await onSignOut()) === 'unsynced') {
+        setBusy(false);
+        show('아직 저장되지 않았어요. 연결을 확인한 뒤 다시 해 주세요', 'error');
+      }
+    } catch (e) {
+      show(describeError(e), 'error');
+      setBusy(false);
+    }
+  }
+  return (
+    <div className={s.unsynced} role="alert">
+      <p className={s.unsyncedText}>
+        <Icon name="offline" size={20} />
+        <span>{UNSYNCED}</span>
+      </p>
+      <div className={s.row}>
+        <Button variant="secondary" size="sm" busy={busy} icon={<Icon name="refresh" size={18} />} onClick={retry}>
+          다시 시도
+        </Button>
+        <ConfirmAction label="저장 안 하고 로그아웃" icon="logout" confirmLabel="지우고 로그아웃하기" disabled={busy}
+          message="저장되지 않은 출석은 이 기기에서 지워지고 되돌릴 수 없어요."
+          onConfirm={async () => { await onSignOut(true); }} />
+      </div>
+    </div>
   );
 }
 
@@ -143,7 +193,7 @@ function InAppNotice({ kakao }: { kakao: boolean }) {
   );
 }
 
-function NotInvited({ email, onSignOut }: { email: string; onSignOut(): Promise<void> }) {
+function NotInvited({ email, onSignOut }: { email: string; onSignOut: SignOut }) {
   return (
     <Screen title="선생님 로그인">
       <EmptyState icon="mail" title="등록되지 않은 계정입니다" action={<SignOutButton onSignOut={onSignOut} />}>
@@ -154,7 +204,7 @@ function NotInvited({ email, onSignOut }: { email: string; onSignOut(): Promise<
   );
 }
 
-function AuthError({ message, onSignOut }: { message: string; onSignOut(): Promise<void> }) {
+function AuthError({ message, onSignOut }: { message: string; onSignOut: SignOut }) {
   return (
     <Screen title="선생님 로그인">
       <EmptyState
@@ -176,8 +226,9 @@ function AuthError({ message, onSignOut }: { message: string; onSignOut(): Promi
 }
 
 function Ready({ user, teacher, tab, sub, onSignOut }: {
-  user: AuthUser; teacher: Teacher; tab: string; sub?: string; onSignOut(): Promise<void>;
+  user: AuthUser; teacher: Teacher; tab: string; sub?: string; onSignOut: SignOut;
 }) {
+  const [unsynced, setUnsynced] = useState(false);
   const isAdmin = teacher.role === 'admin';
   const items = isAdmin ? [...TABS, ADMIN_TAB] : TABS;
   const current = items.find((t) => t.key === tab) ?? items[0];
@@ -198,12 +249,13 @@ function Ready({ user, teacher, tab, sub, onSignOut }: {
     <Screen
       title={section?.label ?? current.label}
       sub={`${teacher.name} 선생님`}
-      actions={<SignOutButton onSignOut={onSignOut} />}
+      actions={<SignOutButton onSignOut={onSignOut} onUnsynced={() => setUnsynced(true)} />}
       tabBar={
         <TabBar items={items} current={current.key} label="교사 메뉴"
           onChange={(k) => navigate(teacherHref(k))} />
       }
     >
+      {unsynced && <UnsyncedNotice onSignOut={onSignOut} />}
       {body}
     </Screen>
   );

@@ -9,7 +9,9 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
   terminate,
+  waitForPendingWrites,
 } from 'firebase/firestore';
+import { clearDeviceData } from './deviceData';
 import { USING_EMULATOR } from './env';
 
 export { USING_EMULATOR };
@@ -41,15 +43,31 @@ if (USING_EMULATOR) {
 }
 
 /**
- * 이 기기에 남은 Firestore 오프라인 캐시(IndexedDB)를 지운다. 교회 공용 기기에서 선생님이 로그아웃한 뒤
- * 학생 명단·기도 제목이 남지 않게. 지운 뒤 db 는 더 쓸 수 없으므로 부른 쪽이 화면을 새로 불러와야 한다.
- * 다른 탭이 열려 있으면 지우기가 실패할 수 있다(failed-precondition) — 조용히 넘어간다.
+ * 이 기기에 남은 흔적을 지운다: 마지막으로 연 학생 링크(jdb:lastStudentToken)와 Firestore 오프라인 캐시(IndexedDB).
+ * 교회 공용 기기에서 선생님이 로그아웃한 뒤 학생 명단·기도 제목이 남지 않게. 지운 뒤 db 는 더 쓸 수 없으므로
+ * 부른 쪽이 화면을 새로 불러와야 한다. 다른 탭이 열려 있으면 캐시 지우기가 실패할 수 있다(failed-precondition) — 조용히 넘어간다.
+ * **오프라인 쓰기 대기열도 함께 지워지므로**, 부르기 전에 flushPendingWrites 로 서버에 닿았는지 확인한다.
  */
 export async function clearLocalCache(): Promise<void> {
-  try {
+  await clearDeviceData(async () => {
     await terminate(db);
     await clearIndexedDbPersistence(db);
-  } catch {
-    // 지우지 못해도 로그아웃은 이미 끝났다
+  });
+}
+
+/**
+ * 아직 서버에 닿지 않은 쓰기(오프라인에서 찍은 출석 등)가 모두 닿을 때까지 기다린다. timeoutMs 안에 끝나지 않거나
+ * 확인이 실패하면 'timeout' — 이때 캐시를 지우면 그 쓰기를 잃는다.
+ */
+export async function flushPendingWrites(timeoutMs: number): Promise<'flushed' | 'timeout'> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<'timeout'>((resolve) => { timer = setTimeout(() => resolve('timeout'), timeoutMs); });
+  try {
+    return await Promise.race([
+      waitForPendingWrites(db).then(() => 'flushed' as const, () => 'timeout' as const),
+      timeout,
+    ]);
+  } finally {
+    clearTimeout(timer);
   }
 }

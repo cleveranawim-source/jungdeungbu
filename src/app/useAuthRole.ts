@@ -2,7 +2,7 @@
 import { onAuthStateChanged, signOut as fbSignOut, type User } from 'firebase/auth';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ensureTeacher, signInAsEmulatorUser, signInWithGoogle } from '../data/teachers';
-import { auth, clearLocalCache, db } from '../lib/firebase';
+import { auth, clearLocalCache, db, flushPendingWrites } from '../lib/firebase';
 import type { Teacher } from '../types';
 import { teacherHref } from './router';
 import { describeError } from './Toast';
@@ -22,8 +22,16 @@ export interface AuthRole {
   error: string | null;
   signIn(): Promise<void>;
   signInEmu(email: string, name: string): Promise<void>;
-  signOut(): Promise<void>;
+  /**
+   * 로그아웃. 먼저 서버에 닿지 않은 쓰기(출석)를 SIGN_OUT_FLUSH_MS 동안 기다리고, 그래도 남아 있으면
+   * 로그아웃하지 않고 'unsynced' 를 돌려준다(캐시를 지우면 그 출석을 잃는다). `force` 면 기다리지 않고 지운다.
+   * 로그아웃하면 화면을 새로 불러오므로 그 경우엔 끝나지 않는다고 보면 된다.
+   */
+  signOut(force?: boolean): Promise<'unsynced' | void>;
 }
+
+/** 로그아웃 전에 대기 중인 쓰기를 기다리는 시간 */
+export const SIGN_OUT_FLUSH_MS = 4000;
 
 type State = Pick<AuthRole, 'status' | 'user' | 'teacher' | 'error'>;
 
@@ -57,9 +65,10 @@ export function useAuthRole(): AuthRole {
 
   const signIn = useCallback(() => signInWithGoogle(auth), []);
   const signInEmu = useCallback((email: string, name: string) => signInAsEmulatorUser(auth, email, name), []);
-  // 로그아웃 → 이 기기의 Firestore 캐시 지우기 → 교사 로그인 화면으로 새로 불러오기(지운 db 는 다시 쓸 수 없다).
+  // 로그아웃 → (대기 중인 쓰기 확인) → 이 기기의 Firestore 캐시 지우기 → 교사 로그인 화면으로 새로 불러오기(지운 db 는 다시 쓸 수 없다).
   // 해시만 바꾸면 새로 불러오지 않으므로 주소를 바꾼 뒤 reload 한다.
-  const signOut = useCallback(async () => {
+  const signOut = useCallback(async (force = false): Promise<'unsynced' | void> => {
+    if (!force && (await flushPendingWrites(SIGN_OUT_FLUSH_MS)) === 'timeout') return 'unsynced';
     leaving.current = true;
     try {
       await fbSignOut(auth);
