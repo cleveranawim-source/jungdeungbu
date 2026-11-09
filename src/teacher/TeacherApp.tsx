@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { AdminTab } from '../admin/AdminTab';
 import { findAdminSection } from '../admin/sections';
 import { EmuLogin } from '../app/EmuLogin';
@@ -8,9 +8,11 @@ import { TabBar, type TabItem } from '../app/TabBar';
 import { describeError, useToast } from '../app/Toast';
 import { useAuthRole, type AuthUser } from '../app/useAuthRole';
 import { useTodaySunday } from '../app/useTodaySunday';
+import { inAppBrowser, isAndroidKakao, kakaoOpenExternalHref } from '../lib/inAppBrowser';
 import type { Teacher } from '../types';
-import { Button } from '../ui/Button';
+import { Button, LinkButton } from '../ui/Button';
 import { EmptyState } from '../ui/EmptyState';
+import { Field } from '../ui/Field';
 import { Icon } from '../ui/icons';
 import { Loading } from '../ui/Loading';
 import { Screen } from '../ui/Screen';
@@ -85,14 +87,59 @@ function SignIn({ onGoogle, onEmu }: { onGoogle(): Promise<void>; onEmu(email: s
       setBusy(false);
     }
   }
+  // 카카오톡 등 앱 안 브라우저에서는 Google 이 로그인을 막는다 → 버튼 대신 바깥 브라우저로 여는 법
+  const [inApp] = useState(() => inAppBrowser(navigator.userAgent));
   return (
     <Screen title="선생님 로그인" sub="초대받은 Google 계정으로 들어와요">
-      <div className={s.signIn}>
-        <Button size="lg" block busy={busy} icon={<Icon name="login" />} onClick={google}>Google로 로그인</Button>
-        <p className={s.note}>학생은 로그인하지 않아요. 선생님이 보내 준 링크로 바로 들어와요.</p>
-      </div>
+      {inApp ? (
+        <InAppNotice kakao={inApp === 'kakao'} />
+      ) : (
+        <div className={s.signIn}>
+          <Button size="lg" block busy={busy} icon={<Icon name="login" />} onClick={google}>Google로 로그인</Button>
+          <p className={s.note}>학생은 로그인하지 않아요. 선생님이 보내 준 링크로 바로 들어와요.</p>
+        </div>
+      )}
       <EmuLogin onSignIn={onEmu} />
     </Screen>
+  );
+}
+
+/** 앱 안 브라우저: 오른쪽 위 메뉴로 바깥 브라우저에서 열기 안내 + 주소 복사(+ 안드로이드 카카오톡은 Chrome으로 열기). */
+function InAppNotice({ kakao }: { kakao: boolean }) {
+  const { show } = useToast();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const url = location.href;
+  const external = isAndroidKakao(navigator.userAgent) ? kakaoOpenExternalHref(url) : null;
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(url);
+      show('주소를 복사했어요. Safari나 Chrome 주소창에 붙여 넣어 주세요');
+    } catch {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+      show('복사하지 못했어요. 주소 칸을 길게 눌러 복사해 주세요', 'error');
+    }
+  }
+
+  return (
+    <div className={s.signIn}>
+      <p className={s.inApp} role="note">
+        <Icon name="info" size={20} />
+        <span>
+          {kakao ? '카카오톡' : '이 앱'} 안 브라우저에서는 Google 로그인이 안 돼요.
+          오른쪽 위 메뉴에서 'Safari/Chrome으로 열기'를 눌러 주세요
+        </span>
+      </p>
+      {external && (
+        <LinkButton href={external} size="lg" block icon={<Icon name="link" />}>Chrome으로 열기</LinkButton>
+      )}
+      <Field ref={inputRef} label="이 화면 주소" readOnly value={url}
+        onFocus={(e) => e.currentTarget.select()} hint="길게 눌러 직접 복사할 수도 있어요" />
+      <Button variant={external ? 'secondary' : 'primary'} size="lg" block icon={<Icon name="copy" size={20} />} onClick={copy}>
+        주소 복사
+      </Button>
+    </div>
   );
 }
 
