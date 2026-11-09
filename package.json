@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "typecheck": "tsc -b",
     "test:unit": "vitest run tests/unit",
     "test:rules": "bash scripts/with-java.sh npx firebase emulators:exec --only firestore --project demo-jungdeungbu \"vitest run tests/rules tests/data\"",
     "test:e2e": "bash scripts/with-java.sh npx firebase emulators:exec --only firestore,auth --project demo-jungdeungbu \"playwright test\"",
