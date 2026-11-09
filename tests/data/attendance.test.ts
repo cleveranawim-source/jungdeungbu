@@ -1,7 +1,8 @@
+import { disableNetwork, doc, enableNetwork, onSnapshot, Timestamp, writeBatch, type Firestore } from 'firebase/firestore'
 import { expect, test } from 'vitest'
 import { listAttendanceByDate, listStudentAttendance, setAttendance } from '../../src/data/attendance'
 import { getStudent } from '../../src/data/students'
-import { ADMIN, asStudent, asUser, STUDENT_A_UID, TEACHER_A, TEACHER_B, TOKEN_A, TOKEN_B, useRulesEnv } from '../rules/setup'
+import { ADMIN, asStudent, asUser, seed, STUDENT_A_UID, TEACHER_A, TEACHER_B, TOKEN_A, TOKEN_B, useRulesEnv } from '../rules/setup'
 
 const env = useRulesEnv()
 
@@ -87,4 +88,48 @@ test('다른 반 교사의 setAttendance는 permission-denied로 거부', async 
   })
   expect(await listStudentAttendance(db, TOKEN_A)).toEqual([])
   expect((await getStudent(db, TOKEN_A))?.streak).toBe(0)
+})
+
+/** 로컬 캐시에 그 문서(대기 중인 쓰기 포함)가 보일 때까지 기다린다. */
+function waitForLocalDoc(db: Firestore, path: string): Promise<void> {
+  return new Promise((resolve) => {
+    const unsub = onSnapshot(doc(db, path), { includeMetadataChanges: true }, (snap) => {
+      if (snap.exists()) {
+        unsub()
+        resolve()
+      }
+    })
+  })
+}
+
+test('오프라인(캐시 읽기)에서는 출석만 쓰고 streak은 건드리지 않고 null', async () => {
+  const AT = Timestamp.fromDate(new Date('2026-11-08T02:00:00Z'))
+  await seed(env(), async (db) => {
+    const batch = writeBatch(db)
+    batch.update(doc(db, `students/${TOKEN_A}`), { streak: 7, lastPresent: '2026-11-08' })
+    for (const date of ['2026-09-27', '2026-10-04', '2026-10-11', '2026-10-18', '2026-10-25', '2026-11-01', '2026-11-08']) {
+      batch.set(doc(db, `students/${TOKEN_A}/attendance/${date}`), { date, present: true, by: 'tA', at: AT })
+    }
+    await batch.commit()
+  })
+
+  // 이 기기는 그 학생의 출석 기록을 한 번도 받지 않았다(캐시 비어 있음) → 오프라인 읽기는 빈 결과
+  const db = asUser(env(), TEACHER_A)
+  await disableNetwork(db)
+  const pending = setAttendance(db, TEACHER_A.uid, TOKEN_A, '2026-11-15', true)
+  await waitForLocalDoc(db, `students/${TOKEN_A}/attendance/2026-11-15`)
+  await enableNetwork(db)
+  expect(await pending).toBeNull()
+
+  const admin = asUser(env(), ADMIN)
+  expect(await getStudent(admin, TOKEN_A)).toMatchObject({ streak: 7, lastPresent: '2026-11-08' })
+  const records = await listStudentAttendance(admin, TOKEN_A)
+  expect(records).toHaveLength(8)
+  expect(records.at(-1)).toMatchObject({ date: '2026-11-15', present: true, by: TEACHER_A.uid })
+
+  // 다시 온라인에서 토글하면 전체 기록으로 계산된다
+  expect(await setAttendance(db, TEACHER_A.uid, TOKEN_A, '2026-11-15', true)).toEqual({
+    streak: 8,
+    lastPresent: '2026-11-15',
+  })
 })
