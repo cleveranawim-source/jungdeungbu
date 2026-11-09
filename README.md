@@ -1,0 +1,71 @@
+# 명지대학교교회 중등부 앱
+
+주보와 설교 요약, 우리 반 기도 제목, 출석을 한곳에서 보는 모바일 웹 앱이에요.
+React + Vite + TypeScript, Firebase(Firestore · Authentication), GitHub Pages 배포(`/jungdeungbu/`)로 만들었어요.
+
+## 들어가는 길
+
+| 누가 | 어떻게 |
+|---|---|
+| 교사 | 앱 주소 뒤에 `#/t` → **선생님 로그인**(Google). 관리자가 미리 등록한 이메일만 들어와요 |
+| 학생 | 선생님이 보내 준 링크(`#/s/{토큰}`). 로그인 없이 열려요(기도 제목을 올릴 때만 조용히 익명 로그인) |
+
+## 역할
+
+- **학생**: 홈 · 주보 · 말씀 · 기도 · 나(출석 달력, 연속 출석)
+- **반 교사**: 출석 체크, 우리 반 학생과 링크 공유, 반 기도 제목, 주보 보기
+- **관리자**: 반 교사 기능 전체 + 관리 탭(주보·설교·광고 작성, 학생 명단, 반·교사, 출석 현황과 CSV)
+
+## 매주 하는 일 (관리자)
+
+1. 관리 → **주보 작성**: 이번 주일 날짜를 고르고(지난 주보 복사 가능) 임시저장 후 **게시**
+2. 관리 → **설교 작성**: 같은 날짜로 제목·본문·요약·적용 질문 입력
+3. 필요하면 관리 → **광고** 추가·수정
+4. 주일에 반 교사들이 **출석** 탭에서 체크
+5. 학기 중간에 관리 → **출석 현황**에서 출석률 확인, 필요하면 CSV 내보내기
+
+새 학생은 관리 → **학생 명단**에서 추가(여럿이면 일괄 붙여넣기)하고 **링크 공유**로 보내 주세요.
+
+## 초기 1회 작업
+
+1. Firebase 프로젝트를 새로 만든다.
+2. **Firestore** 데이터베이스를 `asia-northeast3`(서울) 리전으로 만든다.
+3. **Authentication → 로그인 방법**에서 **Google** 공급자와 **익명** 공급자를 **둘 다** 켠다(학생은 익명 인증을 쓴다).
+4. Authentication → 설정 → **승인된 도메인**에 `cleveranawim-source.github.io` 추가.
+5. Firestore 콘솔에서 `invites/{본인 이메일(소문자)}` 문서를 만든다: `{ name: '이름', role: 'admin', classIds: [] }`
+6. Firebase 프로젝트 설정 → 내 앱(웹)의 설정값을 로컬 `.env.local`(`.env.example` 참고)과 GitHub 저장소 **Settings → Secrets and variables → Actions**에 `VITE_FIREBASE_*` 여섯 개로 넣는다.
+   `VITE_USE_EMULATOR`는 넣지 않는다.
+7. `.firebaserc`의 `default` 프로젝트 ID를 만든 프로젝트로 바꾼다(지금은 에뮬레이터용 `demo-jungdeungbu`).
+8. 규칙과 인덱스를 올린다(컬렉션 그룹 인덱스가 없으면 출석 화면이 동작하지 않는다):
+   ```
+   npx firebase deploy --only firestore
+   ```
+9. GitHub 저장소 Settings → Pages → Source를 **GitHub Actions**로 바꾸고 `main`에 푸시한다.
+10. 앱에서 `#/t`로 Google 로그인 → 관리 탭에서 반·교사·학생을 등록한다.
+
+## 개발
+
+```
+npm install
+npm run dev          # 개발 서버 (http://localhost:5173/jungdeungbu/)
+npm run emu          # Firestore(8080)·Auth(9099) 에뮬레이터
+npm run typecheck    # 타입 검사
+npm run test:unit    # 단위 시험 (에뮬레이터 불필요)
+npm run test:rules   # 보안 규칙·데이터 계층 시험 (에뮬레이터)
+npm run test:e2e     # 화면 시험 (에뮬레이터 + Playwright)
+npm run build        # dist/ 생성
+```
+
+에뮬레이터는 **Java**가 필요해요. `scripts/with-java.sh`가 PATH에 Java가 없으면 Homebrew `openjdk`를 찾아 붙이고(`brew install openjdk`), `emu`·`test:rules`·`test:e2e`는 이 스크립트를 거쳐 실행돼요.
+에뮬레이터로 화면을 띄우려면 `VITE_USE_EMULATOR=1 npm run dev`.
+
+GitHub Actions(`.github/workflows/pages.yml`)는 `main` 푸시 때 타입 검사 → 단위 시험 → 빌드 → Pages 배포를 해요. Java와 에뮬레이터 설치는 하지 않으므로 `test:rules`·`test:e2e`는 **배포 전에 로컬에서** 돌려 주세요.
+
+## 데이터 구조 한 줄 요약
+
+`teachers`·`invites`(교사) / `classes` · `students/{토큰}/attendance`(반·학생·출석) / `bulletins`·`sermons`·`announcements`(주보·설교·광고) / `classes/{id}/prayers`(반 공개 기도) · `prayers`(선생님만) / `studentSessions`(익명 UID ↔ 토큰).
+
+## 문서
+
+- [설계 문서](docs/superpowers/specs/2026-11-09-jungdeungbu-app-design.md): 목적, 데이터 모델, 보안 규칙, 화면, 배포
+- [디자인 기준](docs/design.md): 색·글꼴·간격과 컴포넌트 원칙
