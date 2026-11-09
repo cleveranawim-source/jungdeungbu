@@ -1,7 +1,8 @@
 // 학생 기기의 익명 세션: 학생 문서가 열리면 뒤에서 조용히 익명 로그인 → studentSessions/{uid} 에 토큰을 묶는다.
 // 읽기 화면은 이걸 기다리지 않는다. 기도 제목 올리기만 'ready' 를 필요로 한다.
+// 이 기기의 익명 uid 가 이미 다른 학생 링크에 묶여 있으면(형제가 휴대폰을 같이 씀) 새 익명 uid 로 바꾼다(studentUidFor).
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { bindStudentSession, signInStudentAnonymously } from '../data/session';
+import { bindStudentSession, studentUidFor } from '../data/session';
 import { auth, db } from '../lib/firebase';
 
 /**
@@ -43,7 +44,8 @@ export function useStudentSession(token: string, enabled: boolean): StudentSessi
         if (live()) { setUid(null); setState('teacher'); }
         return false;
       }
-      const id = await signInStudentAnonymously(auth);
+      // uid 는 이 링크의 것으로 정해진 뒤에만 내보낸다(앞 학생 uid 로 잠깐이라도 "내 글"이 보이지 않게)
+      const id = await studentUidFor(auth, db, token);
       if (!live()) return false;
       setUid(id);
       await bindStudentSession(db, id, token);

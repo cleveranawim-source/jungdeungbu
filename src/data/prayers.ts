@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   limit,
   orderBy,
@@ -13,7 +14,7 @@ import {
   type Firestore,
   type QuerySnapshot,
 } from 'firebase/firestore';
-import type { Prayer, WithId } from '../types';
+import type { Prayer, StudentSession, WithId } from '../types';
 
 /** Firestore `in` 질의 한 번에 넣을 수 있는 값 수. */
 const IN_LIMIT = 30;
@@ -29,6 +30,15 @@ const newestFirst = (a: Prayer, b: Prayer) => b.createdAt.toMillis() - a.created
  */
 export async function bindStudentSession(db: Firestore, uid: string, token: string): Promise<void> {
   await setDoc(doc(db, 'studentSessions', uid), { token });
+}
+
+/**
+ * 이 기기(익명 uid)가 묶여 있는 링크. 아직 묶지 않았으면 null. 본인 uid 만 읽을 수 있다(규칙).
+ * 오프라인이면 기기 캐시에서 읽는다(묶기는 이 기기만 쓰므로 캐시가 곧 최신).
+ */
+export async function getStudentSession(db: Firestore, uid: string): Promise<StudentSession | null> {
+  const snap = await getDoc(doc(db, 'studentSessions', uid));
+  return snap.exists() ? { token: (snap.data() as StudentSession).token } : null;
 }
 
 /**

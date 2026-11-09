@@ -5,6 +5,7 @@ import {
   bindStudentSession,
   deleteClassPrayer,
   deleteTeacherPrayer,
+  getStudentSession,
   listClassPrayers,
   listTeacherPrayers,
 } from '../../src/data/prayers'
@@ -21,6 +22,7 @@ import {
   TEACHER_A,
   TEACHER_B,
   TOKEN_A,
+  TOKEN_B,
   useRulesEnv,
 } from '../rules/setup'
 
@@ -146,4 +148,16 @@ test('deleteTeacherPrayer: 교사만', async () => {
   await seed(env(), async (db) => {
     expect((await getDocs(collection(db, 'prayers'))).size).toBe(0)
   })
+})
+
+test('getStudentSession: 본인 세션만 읽고, 없으면 null', async () => {
+  expect(await getStudentSession(asA(), STUDENT_A_UID)).toEqual({ token: TOKEN_A })
+  expect(await getStudentSession(asStudent(env(), STUDENT_B_UID), STUDENT_B_UID)).toEqual({ token: TOKEN_B })
+  // 아직 묶지 않은 기기
+  expect(await getStudentSession(asStudent(env(), 'stuNew'), 'stuNew')).toBeNull()
+  // 남의 세션은 읽을 수 없다(토큰이 새지 않게)
+  await expect(getStudentSession(asStudent(env(), STUDENT_B_UID), STUDENT_A_UID)).rejects.toMatchObject({
+    code: 'permission-denied',
+  })
+  await expect(getStudentSession(asAnon(env()), STUDENT_A_UID)).rejects.toMatchObject({ code: 'permission-denied' })
 })
