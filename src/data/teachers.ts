@@ -1,0 +1,91 @@
+import {
+  GoogleAuthProvider,
+  signInWithCredential,
+  signInWithPopup,
+  type Auth,
+} from 'firebase/auth';
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  writeBatch,
+  type Firestore,
+} from 'firebase/firestore';
+import { USING_EMULATOR } from '../lib/env';
+import type { Invite, Teacher, WithId } from '../types';
+import { isPermissionDenied } from './errors';
+
+/** invites 문서 ID = 소문자 이메일 (규칙의 myEmail()과 같다). */
+const inviteId = (email: string) => email.trim().toLowerCase();
+
+export async function signInWithGoogle(auth: Auth): Promise<void> {
+  await signInWithPopup(auth, new GoogleAuthProvider());
+}
+
+/** 에뮬레이터 전용: 팝업 없이 가짜 Google 계정으로 로그인한다. */
+export async function signInAsEmulatorUser(auth: Auth, email: string, name: string): Promise<void> {
+  if (!USING_EMULATOR) throw new Error('signInAsEmulatorUser는 에뮬레이터에서만 쓸 수 있습니다');
+  await signInWithCredential(
+    auth,
+    GoogleAuthProvider.credential(JSON.stringify({ sub: email, email, email_verified: true, name })),
+  );
+}
+
+/**
+ * 로그인한 사용자의 교사 문서. 없으면 invites/{소문자 이메일}을 복사해 만든다.
+ * 초대가 없으면(또는 읽을 권한이 없으면) null.
+ */
+export async function ensureTeacher(db: Firestore, user: { uid: string; email: string }): Promise<Teacher | null> {
+  const ref = doc(db, 'teachers', user.uid);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return snap.data() as Teacher;
+
+  const email = inviteId(user.email);
+  let invite: Invite;
+  try {
+    const inv = await getDoc(doc(db, 'invites', email));
+    if (!inv.exists()) return null;
+    invite = inv.data() as Invite;
+  } catch (e) {
+    if (isPermissionDenied(e)) return null;
+    throw e;
+  }
+  const teacher: Teacher = { email, name: invite.name, role: invite.role, classIds: invite.classIds };
+  await setDoc(ref, teacher);
+  return teacher;
+}
+
+export async function listTeachers(db: Firestore): Promise<WithId<Teacher>[]> {
+  const snap = await getDocs(collection(db, 'teachers'));
+  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Teacher) }));
+}
+
+/** id = 소문자 이메일 */
+export async function listInvites(db: Firestore): Promise<WithId<Invite>[]> {
+  const snap = await getDocs(collection(db, 'invites'));
+  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Invite) }));
+}
+
+export async function saveInvite(db: Firestore, email: string, invite: Invite): Promise<void> {
+  await setDoc(doc(db, 'invites', inviteId(email)), invite);
+}
+
+export async function deleteInvite(db: Firestore, email: string): Promise<void> {
+  await deleteDoc(doc(db, 'invites', inviteId(email)));
+}
+
+export async function updateTeacher(db: Firestore, uid: string, patch: Partial<Teacher>): Promise<void> {
+  await updateDoc(doc(db, 'teachers', uid), patch);
+}
+
+/** 교사 내보내기: teachers/{uid}와 invites/{email}을 한 배치로 지운다(초대가 남으면 다시 등록된다). */
+export async function removeTeacher(db: Firestore, uid: string, email: string): Promise<void> {
+  const batch = writeBatch(db);
+  batch.delete(doc(db, 'teachers', uid));
+  batch.delete(doc(db, 'invites', inviteId(email)));
+  await batch.commit();
+}

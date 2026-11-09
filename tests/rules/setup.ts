@@ -1,10 +1,13 @@
 import { readFileSync } from 'node:fs'
 import { initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing'
-import { doc, setDoc } from 'firebase/firestore'
+import { doc, setDoc, type Firestore } from 'firebase/firestore'
 import { afterAll, beforeAll, beforeEach } from 'vitest'
 
 export type TestUser = { uid: string; email: string }
-export type TestDb = ReturnType<ReturnType<RulesTestEnvironment['authenticatedContext']>['firestore']>
+// 시험 컨텍스트의 firestore()는 compat 타입이지만 실제 인스턴스는 모듈식 함수(doc, getDocs …)와 src/data/* 에
+// 그대로 넘길 수 있다. 타입만 모듈식 Firestore로 맞춘다.
+export type TestDb = Firestore
+const modular = (db: unknown): Firestore => db as Firestore
 
 export const ADMIN: TestUser = { uid: 'admin1', email: 'admin@example.com' }
 export const TEACHER_A: TestUser = { uid: 'tA', email: 'a@example.com' } // 반 classA 담당
@@ -44,21 +47,21 @@ export async function makeEnv(): Promise<RulesTestEnvironment> {
 }
 
 export function asUser(env: RulesTestEnvironment, u: TestUser) {
-  return env.authenticatedContext(u.uid, { email: u.email, email_verified: true }).firestore()
+  return modular(env.authenticatedContext(u.uid, { email: u.email, email_verified: true }).firestore())
 }
 
 /** Firebase 익명 로그인한 학생 기기. */
 export function asStudent(env: RulesTestEnvironment, uid: string) {
-  return env.authenticatedContext(uid, { firebase: { sign_in_provider: 'anonymous' } }).firestore()
+  return modular(env.authenticatedContext(uid, { firebase: { sign_in_provider: 'anonymous' } }).firestore())
 }
 
 export function asAnon(env: RulesTestEnvironment) {
-  return env.unauthenticatedContext().firestore()
+  return modular(env.unauthenticatedContext().firestore())
 }
 
 export async function seed(env: RulesTestEnvironment, writer: (db: TestDb) => Promise<void>) {
   await env.withSecurityRulesDisabled(async (ctx) => {
-    await writer(ctx.firestore())
+    await writer(modular(ctx.firestore()))
   })
 }
 
