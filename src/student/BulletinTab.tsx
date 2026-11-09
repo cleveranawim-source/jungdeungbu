@@ -30,7 +30,7 @@ export function BulletinTab({ token, sundayId, sub }: StudentTabProps) {
 
   let main;
   if (one.data === undefined) {
-    main = one.error ? <LoadError error={one.error} onRetry={one.reload} /> : <Loading />;
+    main = one.error ? <LoadError error={one.error} onRetry={one.reload} audience="student" /> : <Loading />;
   } else if (one.data.bulletin) {
     main = (
       <BulletinView
@@ -65,7 +65,7 @@ export function BulletinTab({ token, sundayId, sub }: StudentTabProps) {
         </div>
       )}
       {main}
-      {past.data === undefined ? (past.error ? <LoadError error={past.error} onRetry={past.reload} /> : null) : pastList.length > 0 && (
+      {past.data === undefined ? (past.error ? <LoadError error={past.error} onRetry={past.reload} audience="student" /> : null) : pastList.length > 0 && (
         <Card title="지난 주보">
           <ul className={s.list}>
             {pastList.map((b) => (

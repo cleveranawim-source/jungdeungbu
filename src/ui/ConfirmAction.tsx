@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { describeError, useToast } from '../app/Toast';
+import { describeError, useToast, type ErrorAudience } from '../app/Toast';
 import { Button } from './Button';
 import { Icon, type IconName } from './icons';
 import s from './ConfirmAction.module.css';
@@ -17,13 +17,15 @@ export interface ConfirmActionProps {
   disabled?: boolean;
   /** 줄마다 되풀이되는 목록에서: 테두리 없는 글자 버튼(ghost)으로 조용하게. 기본은 보조 버튼 */
   quiet?: boolean;
+  /** 실패 문구를 누구 말로(학생 화면이면 'student') */
+  errorAudience?: ErrorAudience;
 }
 
 /**
  * 되돌리기 어려운 행동의 줄 안 확인(브라우저 confirm 창을 쓰지 않는다).
  * 버튼을 누르면 그 자리에 설명 + 취소 + 빨간 확인 버튼이 열린다. Esc 나 취소로 닫힌다.
  */
-export function ConfirmAction({ label, icon, message, confirmLabel, onConfirm, disabled, quiet = false }: ConfirmActionProps) {
+export function ConfirmAction({ label, icon, message, confirmLabel, onConfirm, disabled, quiet = false, errorAudience }: ConfirmActionProps) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -46,7 +48,7 @@ export function ConfirmAction({ label, icon, message, confirmLabel, onConfirm, d
       await onConfirm();
       if (alive.current) setOpen(false);
     } catch (e) {
-      show(describeError(e), 'error');
+      show(describeError(e, errorAudience), 'error');
     } finally {
       if (alive.current) setBusy(false);
     }

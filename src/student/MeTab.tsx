@@ -41,10 +41,12 @@ export function MeTab({ student, token, classId, sundayId }: StudentTabProps) {
           연속 출석 <strong>{activeStreak(student, sundayId)}주</strong>
         </p>
         {att.data === undefined ? (
-          att.error ? <LoadError error={att.error} onRetry={att.reload} /> : <Loading />
+          att.error ? <LoadError error={att.error} onRetry={att.reload} audience="student" /> : <Loading />
         ) : (
           <>
-            <p className={s.count}>이번 학기에 {presentCount}번 왔어요</p>
+            <p className={s.count}>
+              {presentCount > 0 ? `이번 학기에 ${presentCount}번 왔어요` : '이번 학기 첫 출석을 기다리고 있어요'}
+            </p>
             <AttendanceCalendar records={att.data} from={from} to={sundayId} />
           </>
         )}

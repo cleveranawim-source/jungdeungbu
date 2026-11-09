@@ -1,8 +1,8 @@
 // 학생 기기의 익명 세션이 늦거나 실패할 때 기도 올리기 안내. (기도 기능 전체 시험은 Task 12 의 prayer.spec)
 import { expect, test, type Route } from '@playwright/test';
 import { doc, setDoc } from 'firebase/firestore';
-import { expectToast } from './helpers';
-import { clear, seed } from './seed';
+import { expectAnonymousStudent, expectToast, loginAsEmu } from './helpers';
+import { clear, seed, seedAdmin } from './seed';
 
 const TOKEN = 'testStudentToken_00002'; // 22자
 
@@ -70,4 +70,32 @@ test('올리기가 서버에 늦게 닿으면 "연결되면 올라가요"', asyn
   await expect(page.getByRole('status').filter({ hasText: '연결되면 올라가요' })).toHaveCount(1, { timeout: 8000 });
   await page.unroute('**/google.firestore.v1.Firestore/Write/**');
   for (const r of held) await r.continue().catch(() => {});
+});
+
+test('초대 없는 Google 계정이 남은 기기에서 학생 링크를 열면 그 계정을 로그아웃하고 익명으로', async ({ page }) => {
+  // 같은 브라우저(같은 기기)에서 초대 없는 계정으로 선생님 로그인을 해 본 뒤
+  await loginAsEmu(page, 'nobody@example.com', '아무개', { expectTabBar: false });
+  await expect(page.getByText('등록되지 않은 계정입니다')).toBeVisible();
+
+  await page.goto(`#/s/${TOKEN}`);
+  await expect(page.getByText('김하늘')).toBeVisible();
+  await expectAnonymousStudent(page);
+  await page.getByLabel('기도 제목').fill('친구랑 화해하게');
+  await page.getByRole('button', { name: '올리기' }).click();
+  await expectToast(page, '올렸어요');
+  await expect(page.getByText('내 글')).toBeVisible();
+
+  // 선생님 화면으로 가면 로그인 화면(초대 없는 계정은 남지 않았고, 익명 학생은 교사 기준 '로그인 안 함')
+  await page.goto('#/t');
+  await expect(page.getByRole('button', { name: '에뮬레이터 로그인' })).toBeVisible();
+});
+
+test('등록된 선생님 기기에서 학생 링크를 열면 선생님 로그인은 그대로 두고 올리기만 잠근다', async ({ page }) => {
+  await seedAdmin('admin@example.com');
+  await loginAsEmu(page, 'admin@example.com', '관리자');
+  await page.goto(`#/s/${TOKEN}/prayer`);
+  await expect(page.getByText('선생님 계정으로 로그인된 기기예요')).toBeVisible();
+  await expect(page.getByRole('button', { name: '올리기' })).toBeDisabled();
+  await page.goto('#/t');
+  await expect(page.getByRole('tablist', { name: '교사 메뉴' })).toBeVisible();
 });

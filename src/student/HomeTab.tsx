@@ -28,7 +28,7 @@ export function HomeTab({ student, token, sundayId }: StudentTabProps) {
     return (
       <>
         {banner}
-        {error ? <LoadError error={error} onRetry={reload} /> : <Loading />}
+        {error ? <LoadError error={error} onRetry={reload} audience="student" /> : <Loading />}
       </>
     );
   }

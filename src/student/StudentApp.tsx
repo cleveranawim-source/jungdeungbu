@@ -42,7 +42,7 @@ export function StudentApp({ token, tab, sub }: StudentAppProps) {
   const sundayId = useTodaySunday();
 
   if (student === undefined) {
-    if (error) return <Screen><LoadError error={error} onRetry={reload} /></Screen>;
+    if (error) return <Screen><LoadError error={error} onRetry={reload} audience="student" /></Screen>;
     return <Screen><Loading /></Screen>;
   }
   // 없는 토큰·비활성(재발급된 옛 링크) 모두 같은 안내

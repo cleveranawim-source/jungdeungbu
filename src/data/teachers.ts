@@ -59,6 +59,19 @@ export async function ensureTeacher(db: Firestore, user: { uid: string; email: s
   return teacher;
 }
 
+/**
+ * uid 가 등록된 교사인지(teachers/{uid} 가 있는지). 규칙은 본인 문서 get 을 허락하고,
+ * 막히면(permission-denied) 교사가 아니라고 본다. 연결 오류 등 다른 오류는 그대로 던진다.
+ */
+export async function isRegisteredTeacher(db: Firestore, uid: string): Promise<boolean> {
+  try {
+    return (await getDoc(doc(db, 'teachers', uid))).exists();
+  } catch (e) {
+    if (isPermissionDenied(e)) return false;
+    throw e;
+  }
+}
+
 export async function listTeachers(db: Firestore): Promise<WithId<Teacher>[]> {
   const snap = await getDocs(collection(db, 'teachers'));
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Teacher) }));

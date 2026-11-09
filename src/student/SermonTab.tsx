@@ -22,7 +22,7 @@ export function SermonTab(props: StudentTabProps) {
 
 function SermonList({ token, sundayId }: StudentTabProps) {
   const { data, error, reload } = useLoader(useCallback(() => listSermons(db), []));
-  if (data === undefined) return error ? <LoadError error={error} onRetry={reload} /> : <Loading />;
+  if (data === undefined) return error ? <LoadError error={error} onRetry={reload} audience="student" /> : <Loading />;
   // 미리 써 둔 다음 주 설교는 그 주가 되면 보인다
   const sermons = data.filter((x) => x.date <= sundayId);
   if (sermons.length === 0) {
@@ -57,7 +57,7 @@ function SermonDetail({ token, date }: StudentTabProps & { date: string }) {
       </LinkButton>
     </div>
   );
-  if (data === undefined) return <>{back}{error ? <LoadError error={error} onRetry={reload} /> : <Loading />}</>;
+  if (data === undefined) return <>{back}{error ? <LoadError error={error} onRetry={reload} audience="student" /> : <Loading />}</>;
   if (data === null) {
     return <>{back}<EmptyState icon="sermon" title={`${formatMonthDay(date)} 말씀이 없어요`}>목록에서 다른 말씀을 골라 보세요.</EmptyState></>;
   }

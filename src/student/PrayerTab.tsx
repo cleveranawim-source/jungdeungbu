@@ -27,7 +27,7 @@ const VISIBILITY: readonly Choice<Visibility>[] = [
 
 const VISIBILITY_HINT: Record<Visibility, string> = {
   class: '우리 반 친구들과 선생님이 함께 봐요.',
-  teachers: '선생님만 봐요. 아래 목록에는 나오지 않아요.',
+  teachers: '중등부 선생님들만 봐요. 아래 목록에는 나오지 않아요.',
 };
 
 /** flag 가 ms 동안 계속 참일 때만 참(잠깐 스치는 상태에 안내 문구가 깜빡이지 않게). */
@@ -87,7 +87,7 @@ export function PrayerTab({ student, classId, myUid, sessionState, retrySession 
         void list.reload();
       }
     } catch (err) {
-      show(describeError(err), 'error');
+      show(describeError(err, 'student'), 'error');
     } finally {
       setBusy(false);
     }
@@ -146,7 +146,7 @@ export function PrayerTab({ student, classId, myUid, sessionState, retrySession 
 
       <Card title="우리 반 기도 제목">
         {list.data === undefined ? (
-          list.error ? <LoadError error={list.error} onRetry={list.reload} /> : <Loading />
+          list.error ? <LoadError error={list.error} onRetry={list.reload} audience="student" /> : <Loading />
         ) : list.data.length === 0 ? (
           <EmptyState icon="prayer" title="아직 올라온 기도 제목이 없어요">
             위에서 기도 제목을 올리면 우리 반이 함께 볼 수 있어요.
@@ -171,6 +171,7 @@ export function PrayerTab({ student, classId, myUid, sessionState, retrySession 
                         message="이 기도 제목을 지울까요? 지운 글은 되돌릴 수 없어요."
                         confirmLabel="삭제하기"
                         onConfirm={() => remove(p)}
+                        errorAudience="student"
                       />
                     </div>
                   )}

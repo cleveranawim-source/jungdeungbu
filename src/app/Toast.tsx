@@ -73,14 +73,22 @@ export function useToast(): ToastApi {
   return api;
 }
 
+/** 오류 문구를 누구에게 보여 주는지. 학생에게는 "담당 반" 같은 교사 말을 쓰지 않는다. */
+export type ErrorAudience = 'teacher' | 'student';
+
 /**
  * 오류를 사용자에게 보여 줄 문장으로 바꾼다.
  * Firestore 오류 코드(`permission-denied`, `unavailable`; `firestore/…` 접두어도 허용)는 정해진 문구로, 나머지는 message.
+ * `audience` 가 'student' 면 권한 오류를 학생이 할 수 있는 일(링크 다시 열기)로 안내한다.
  */
-export function describeError(e: unknown): string {
+export function describeError(e: unknown, audience: ErrorAudience = 'teacher'): string {
   const code = typeof e === 'object' && e !== null && 'code' in e ? String((e as { code: unknown }).code) : '';
   const short = code.split('/').pop();
-  if (short === 'permission-denied') return '권한이 없어요. 담당 반이 맞는지 확인해 주세요';
+  if (short === 'permission-denied') {
+    return audience === 'student'
+      ? '링크를 다시 열어 주세요. 계속 안 되면 선생님께 말해 주세요'
+      : '권한이 없어요. 담당 반이 맞는지 확인해 주세요';
+  }
   if (short === 'unavailable') return '연결이 끊겼어요. 다시 연결되면 저장돼요';
   const msg = typeof e === 'object' && e !== null && 'message' in e ? (e as { message: unknown }).message : undefined;
   return typeof msg === 'string' && msg ? msg : '문제가 생겼어요. 잠시 뒤 다시 해 주세요';
