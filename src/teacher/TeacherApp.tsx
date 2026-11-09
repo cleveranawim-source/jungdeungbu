@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AdminTab } from '../admin/AdminTab';
 import { findAdminSection } from '../admin/sections';
 import { EmuLogin } from '../app/EmuLogin';
@@ -6,18 +6,23 @@ import { teacherHref } from '../app/router';
 import { TabBar, type TabItem } from '../app/TabBar';
 import { describeError, useToast } from '../app/Toast';
 import { useAuthRole, type AuthUser } from '../app/useAuthRole';
+import { nearestSunday, toDateId } from '../lib/dates';
 import type { Teacher } from '../types';
 import { Button } from '../ui/Button';
 import { EmptyState } from '../ui/EmptyState';
 import { Icon } from '../ui/icons';
 import { Loading } from '../ui/Loading';
 import { Screen } from '../ui/Screen';
+import { AttendanceTab } from './AttendanceTab';
+import { BulletinTab } from './BulletinTab';
+import { ClassTab } from './ClassTab';
+import type { TeacherTabProps } from './types';
 import s from './TeacherApp.module.css';
 
 export interface TeacherAppProps {
   /** 주소의 탭(검사 안 된 문자열). 모르는 값·권한 없는 탭이면 출석 */
   tab: string;
-  /** 관리 탭 안의 화면(`#/t/admin/{sub}`) */
+  /** 탭 안의 화면: 관리 `#/t/admin/{화면}`, 우리 반 `#/t/class/{학생 토큰}`, 주보 `#/t/bulletin/{날짜}` */
   sub?: string;
 }
 
@@ -124,6 +129,22 @@ function Ready({ user, teacher, tab, sub, onSignOut }: {
   const items = isAdmin ? [...TABS, ADMIN_TAB] : TABS;
   const current = items.find((t) => t.key === tab) ?? items[0];
   const section = current.key === 'admin' ? findAdminSection(sub) : undefined;
+  // "이번 주" = 가장 가까운 주일. 화면이 열려 있는 동안은 고정
+  const thisSunday = useMemo(() => toDateId(nearestSunday(new Date())), []);
+  const props: TeacherTabProps = { uid: user.uid, teacher, thisSunday, sub };
+
+  let body;
+  if (current.key === 'admin') body = <AdminTab sub={sub} myUid={user.uid} />;
+  else if (current.key === 'attendance') body = <AttendanceTab {...props} />;
+  else if (current.key === 'class') body = <ClassTab {...props} />;
+  else if (current.key === 'bulletin') body = <BulletinTab {...props} />;
+  else {
+    body = (
+      <EmptyState icon={current.key} title="준비 중이에요">
+        {current.label} 화면은 곧 채워질 거예요.
+      </EmptyState>
+    );
+  }
 
   return (
     <Screen
@@ -135,13 +156,7 @@ function Ready({ user, teacher, tab, sub, onSignOut }: {
           onChange={(k) => { location.hash = teacherHref(k); }} />
       }
     >
-      {current.key === 'admin' ? (
-        <AdminTab sub={sub} myUid={user.uid} />
-      ) : (
-        <EmptyState icon={current.key} title="준비 중이에요">
-          {current.label} 화면은 곧 채워질 거예요.
-        </EmptyState>
-      )}
+      {body}
     </Screen>
   );
 }

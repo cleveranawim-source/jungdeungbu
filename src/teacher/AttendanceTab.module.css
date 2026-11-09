@@ -1,0 +1,109 @@
+/* 위: 날짜·반 고르기 카드 / 아래: 출석 인원 + 이름 버튼 그리드(2열) */
+.controls { padding: var(--space-4); }
+
+.stepper { display: flex; align-items: center; gap: var(--space-2); }
+.stepper .step { width: var(--touch); padding: 0; flex-shrink: 0; }
+.when { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.date {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+}
+/* "이번 주" 한 줄과 "오늘로" 버튼 줄의 높이를 같게 둬서 날짜를 옮겨도 아래가 들썩이지 않게 */
+.rel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: var(--touch-min);
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.stepper .today { padding: 0 var(--space-3); }
+
+.roll { display: flex; flex-direction: column; gap: var(--space-3); }
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); padding: 0 var(--space-1); }
+.count { font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
+.className { color: var(--muted); font-size: var(--text-sm); font-weight: var(--weight-medium); }
+
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.student {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 64px;
+  padding: var(--space-3);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--ink);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  text-align: left;
+  user-select: none;
+  touch-action: manipulation; /* 두 번 눌러 확대 대기 없이 바로 */
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
+}
+.student:active { transform: scale(0.97); }
+.student[aria-pressed='true'] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+@media (hover: hover) {
+  .student[aria-pressed='false']:hover { background: var(--accent-soft); }
+  .student[aria-pressed='true']:hover { background: var(--accent-press); border-color: var(--accent-press); }
+}
+
+/* 체크 동그라미: 안 찍음 = 빈 동그라미, 찍음 = 남색 동그라미 + 귤빛 체크(색만으로 알리지 않게) */
+.tick {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: 2px solid var(--line-strong);
+  border-radius: 50%;
+  color: var(--accent);
+}
+.student[aria-pressed='true'] .tick { background: var(--accent-ink); border-color: var(--accent-ink); }
+
+/* 저장 중: 동그라미 둘레에 옅게 숨 쉬는 고리. 움직임 줄이기면 base.css 가 끝 상태(보이는 고리)로 멈춘다 */
+.student[aria-busy='true'] .tick::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+  opacity: 0.7;
+  animation: pending var(--dur-slow) var(--ease-out) infinite alternate;
+}
+.student[aria-busy='true'][aria-pressed='true'] .tick::after { border-color: var(--accent-ink); }
+@keyframes pending { from { opacity: 0.15; transform: scale(0.85); } to { opacity: 0.7; transform: scale(1); } }
+
+.name { flex: 1; min-width: 0; }
+
+/* 4주 이상 연속·생일 주간: 작고 조용하게 */
+.marks {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+.student[aria-pressed='true'] .marks { color: var(--accent-ink); }
