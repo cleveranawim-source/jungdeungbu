@@ -14,15 +14,22 @@ import {
   type Firestore,
 } from 'firebase/firestore';
 import { weekContains } from '../lib/dates';
+import { isPermissionDenied } from './errors';
 import { DEFAULT_ORDER, type Announcement, type Bulletin, type BulletinTemplate, type Sermon, type WithId } from '../types';
 
 const TEMPLATE_PATH = 'settings/bulletinTemplate';
 
 // ---------- 주보 (문서 ID = 주일 날짜) ----------
 
+/** 없는 주보, 그리고 교사가 아닌 사람에게 임시저장 주보(규칙이 permission-denied)는 null. */
 export async function getBulletin(db: Firestore, dateId: string): Promise<Bulletin | null> {
-  const snap = await getDoc(doc(db, 'bulletins', dateId));
-  return snap.exists() ? (snap.data({ serverTimestamps: 'estimate' }) as Bulletin) : null;
+  try {
+    const snap = await getDoc(doc(db, 'bulletins', dateId));
+    return snap.exists() ? (snap.data({ serverTimestamps: 'estimate' }) as Bulletin) : null;
+  } catch (e) {
+    if (isPermissionDenied(e)) return null;
+    throw e;
+  }
 }
 
 /** 관리자. 임시저장(published:false)과 게시 모두 이 함수. */

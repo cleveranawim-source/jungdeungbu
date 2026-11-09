@@ -170,9 +170,12 @@ service cloud.firestore {
 
     // ---------- 콘텐츠: 주보 · 설교 · 광고 · 설정 ----------
     // 공개 콘텐츠라 누구나 읽고, 관리자만 쓴다. 주보·설교 문서 ID는 주일 날짜(yyyy-mm-dd).
+    // 단, 임시저장 주보(published:false)는 교사만 읽는다. 목록 질의는 where('published','==',true)를
+    // 걸어야 통과한다(규칙은 질의가 돌려줄 수 있는 모든 문서에 대해 따진다). 없는 문서 get은 빈 결과.
 
     match /bulletins/{date} {
-      allow read: if true;
+      allow get: if resource == null || resource.data.published == true || isTeacher();
+      allow list: if isTeacher() || resource.data.published == true;
       allow create, update, delete: if isAdmin() && isDateId(date);
     }
 

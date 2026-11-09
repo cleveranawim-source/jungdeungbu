@@ -1,7 +1,7 @@
 import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing'
 import { collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore'
 import { beforeEach, describe, expect, test } from 'vitest'
-import { ADMIN, asAnon, asUser, OUTSIDER, seed, TEACHER_A, useRulesEnv } from './setup'
+import { ADMIN, asAnon, asStudent, asUser, OUTSIDER, seed, STUDENT_A_UID, TEACHER_A, useRulesEnv } from './setup'
 
 const env = useRulesEnv()
 
@@ -58,6 +58,46 @@ describe('콘텐츠 읽기', () => {
     const tpl = await assertSucceeds(getDoc(doc(anon, 'settings/bulletinTemplate')))
     expect(tpl.data()).toEqual(template)
     await assertSucceeds(getDocs(collection(anon, 'settings')))
+  })
+})
+
+describe('임시저장 주보 읽기', () => {
+  const DRAFT = '2026-11-22'
+  beforeEach(async () => {
+    await seed(env(), async (db) => {
+      await setDoc(doc(db, `bulletins/${DATE}`), bulletin())
+      await setDoc(doc(db, `bulletins/${DRAFT}`), { ...bulletin(DRAFT), published: false })
+    })
+  })
+
+  test('익명·학생은 임시저장 주보를 get 못 한다, 게시본은 된다', async () => {
+    const anon = asAnon(env())
+    await assertFails(getDoc(doc(anon, `bulletins/${DRAFT}`)))
+    await assertSucceeds(getDoc(doc(anon, `bulletins/${DATE}`)))
+    await assertFails(getDoc(doc(asStudent(env(), STUDENT_A_UID), `bulletins/${DRAFT}`)))
+    await assertFails(getDoc(doc(asUser(env(), OUTSIDER), `bulletins/${DRAFT}`)))
+  })
+
+  test('없는 주보 get은 누구나 된다(빈 결과)', async () => {
+    const snap = await assertSucceeds(getDoc(doc(asAnon(env()), 'bulletins/2026-12-06')))
+    expect(snap.exists()).toBe(false)
+  })
+
+  test('익명 list: 조건 없으면 실패, published == true면 성공', async () => {
+    const anon = asAnon(env())
+    await assertFails(getDocs(collection(anon, 'bulletins')))
+    await assertFails(getDocs(query(collection(anon, 'bulletins'), where('published', '==', false))))
+    const ok = await assertSucceeds(getDocs(query(collection(anon, 'bulletins'), where('published', '==', true))))
+    expect(ok.docs.map((d) => d.id)).toEqual([DATE])
+  })
+
+  test('교사는 임시저장 주보를 get·list 한다', async () => {
+    for (const u of [TEACHER_A, ADMIN]) {
+      const db = asUser(env(), u)
+      const snap = await assertSucceeds(getDoc(doc(db, `bulletins/${DRAFT}`)))
+      expect(snap.data()?.published).toBe(false)
+      expect((await assertSucceeds(getDocs(collection(db, 'bulletins')))).size).toBe(2)
+    }
   })
 })
 

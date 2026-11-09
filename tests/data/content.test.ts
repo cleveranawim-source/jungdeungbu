@@ -40,6 +40,13 @@ test('saveBulletin·getBulletin: updatedBy·updatedAt을 붙인다', async () =>
   ).rejects.toMatchObject({ code: 'permission-denied' })
 })
 
+test('getBulletin: 임시저장 주보는 학생·익명에게 null(permission-denied), 교사에게는 그대로', async () => {
+  await saveBulletin(asUser(env(), ADMIN), ADMIN.uid, bulletin('2026-11-22', false))
+  expect(await getBulletin(asAnon(env()), '2026-11-22')).toBeNull()
+  expect(await getBulletin(asUser(env(), TEACHER_A), '2026-11-22')).toMatchObject({ published: false })
+  expect(await getBulletin(asUser(env(), ADMIN), '2026-11-22')).toMatchObject({ published: false })
+})
+
 test('listBulletins는 게시본만 최신순, listAllBulletins는 전부', async () => {
   const admin = asUser(env(), ADMIN)
   await saveBulletin(admin, ADMIN.uid, bulletin('2026-11-01', true))
