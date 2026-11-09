@@ -1,10 +1,13 @@
 export type RosterRow = { name: string; className: string; birthday: string | null };
 
-function normalizeBirthday(raw: string): string | null {
+function normalizeBirthday(raw: string): string | null | undefined {
   if (raw === '') return null;
   const m = /^(\d{1,2})[-/](\d{1,2})$/.exec(raw) ?? /^(\d{2})(\d{2})$/.exec(raw);
-  if (!m) return null;
-  return `${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
+  if (!m) return undefined;
+  const month = Number(m[1]);
+  const day = Number(m[2]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return undefined;
+  return `${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
 export function parseRoster(
@@ -22,7 +25,12 @@ export function parseRoster(
     } else if (!classNames.includes(className)) {
       errors.push({ line, message: `${line}줄: 반 '${className}'을(를) 찾을 수 없어요` });
     } else {
-      rows.push({ name, className, birthday: normalizeBirthday(birthday) });
+      const normalized = normalizeBirthday(birthday);
+      if (normalized === undefined) {
+        errors.push({ line, message: `${line}줄: 생일 형식이 맞지 않아요 (MM-DD)` });
+      } else {
+        rows.push({ name, className, birthday: normalized });
+      }
     }
   });
   return { rows, errors };
