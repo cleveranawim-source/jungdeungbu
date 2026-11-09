@@ -1,4 +1,4 @@
-import { useCallback, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { describeError, useToast } from '../app/Toast';
 import { useLoader } from '../app/useLoader';
 import { addPrayer, deleteClassPrayer, listClassPrayers } from '../data/prayers';
@@ -30,6 +30,17 @@ const VISIBILITY_HINT: Record<Visibility, string> = {
   teachers: '선생님만 봐요. 아래 목록에는 나오지 않아요.',
 };
 
+/** flag 가 ms 동안 계속 참일 때만 참(잠깐 스치는 상태에 안내 문구가 깜빡이지 않게). */
+function useLasting(flag: boolean, ms: number): boolean {
+  const [lasting, setLasting] = useState(false);
+  useEffect(() => {
+    if (!flag) { setLasting(false); return; }
+    const t = setTimeout(() => setLasting(true), ms);
+    return () => clearTimeout(t);
+  }, [flag, ms]);
+  return lasting;
+}
+
 /** 기도: 올리기 폼(500자, 우리 반 / 선생님만) + 우리 반 기도 제목 목록(내 글은 삭제). */
 export function PrayerTab({ student, classId, myUid, sessionState, retrySession }: StudentTabProps) {
   const { show } = useToast();
@@ -40,6 +51,20 @@ export function PrayerTab({ student, classId, myUid, sessionState, retrySession 
   const [fieldError, setFieldError] = useState<string | null>(null);
 
   const teacherDevice = sessionState === 'teacher';
+  // 연결을 기다리는 중이면 이유를 알려 준다(첫 로딩의 짧은 pending 에는 띄우지 않는다)
+  const waitingSession = useLasting(sessionState === 'pending', 1500);
+  const waitingUpload = useLasting(busy, 2000);
+  const waitingText = waitingUpload ? '연결되면 올라가요' : waitingSession ? '연결되면 올릴 수 있어요' : '';
+
+  // 올리기를 눌렀다가 "잠시 뒤 다시 시도해 주세요"를 본 학생에게, 다시 연결되면 알려 준다.
+  // 적어 둔 글은 그대로 남아 있고, 저절로 올리지는 않는다(한 번 더 눌러 올린다).
+  const retryAsked = useRef(false);
+  useEffect(() => {
+    if (retryAsked.current && sessionState === 'ready') {
+      retryAsked.current = false;
+      show('이제 올릴 수 있어요');
+    }
+  }, [sessionState, show]);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -47,6 +72,7 @@ export function PrayerTab({ student, classId, myUid, sessionState, retrySession 
     if (!body) { setFieldError('기도 제목을 적어 주세요'); return; }
     if (sessionState !== 'ready' || !myUid) {
       show('잠시 뒤 다시 시도해 주세요', 'error');
+      retryAsked.current = true;
       void retrySession();
       return;
     }
@@ -98,12 +124,19 @@ export function PrayerTab({ student, classId, myUid, sessionState, retrySession 
               hint={VISIBILITY_HINT[visibility]}
             />
           </fieldset>
-          {teacherDevice && (
+          {teacherDevice ? (
             <p className={s.note}>
               <Icon name="info" size={18} />
               선생님 계정으로 로그인된 기기예요
             </p>
+          ) : waitingText && (
+            <p className={s.note} aria-hidden="true">
+              <Icon name="offline" size={18} />
+              {waitingText}
+            </p>
           )}
+          {/* 늘 있는 알림 영역이라야 화면 읽기가 바뀐 문구를 읽어 준다 */}
+          <span className="sr-only" role="status">{teacherDevice ? '' : waitingText}</span>
           <Button type="submit" block busy={busy} disabled={teacherDevice || sessionState === 'pending'}
             icon={<Icon name="prayer" size={20} />}>
             올리기
