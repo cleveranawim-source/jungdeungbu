@@ -1,6 +1,6 @@
 // 교사 로그인 상태와 역할. Firebase 익명 사용자(학생 기기)는 교사 기준으로 '로그인 안 함'이다.
 import { onAuthStateChanged, signOut as fbSignOut, type User } from 'firebase/auth';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ensureTeacher, signInAsEmulatorUser, signInWithGoogle } from '../data/teachers';
 import { auth, clearLocalCache, db } from '../lib/firebase';
 import type { Teacher } from '../types';
@@ -31,10 +31,13 @@ const SIGNED_OUT: State = { status: 'signedOut', user: null, teacher: null, erro
 
 export function useAuthRole(): AuthRole {
   const [state, setState] = useState<State>({ status: 'loading', user: null, teacher: null, error: null });
+  // 로그아웃 중(캐시 지우고 새로 불러오기 전): 로그인 화면이 잠깐 떴다가 새로 불러오며 깜빡이지 않게 화면을 그대로 둔다
+  const leaving = useRef(false);
 
   useEffect(() => {
     let seq = 0; // 늦게 끝난 이전 사용자의 확인 결과가 덮어쓰지 않게
     const unsub = onAuthStateChanged(auth, (u: User | null) => {
+      if (leaving.current) return;
       const my = ++seq;
       if (!u || u.isAnonymous) { setState(SIGNED_OUT); return; }
       const user: AuthUser = { uid: u.uid, email: u.email ?? '', name: u.displayName ?? '' };
@@ -57,7 +60,13 @@ export function useAuthRole(): AuthRole {
   // 로그아웃 → 이 기기의 Firestore 캐시 지우기 → 교사 로그인 화면으로 새로 불러오기(지운 db 는 다시 쓸 수 없다).
   // 해시만 바꾸면 새로 불러오지 않으므로 주소를 바꾼 뒤 reload 한다.
   const signOut = useCallback(async () => {
-    await fbSignOut(auth);
+    leaving.current = true;
+    try {
+      await fbSignOut(auth);
+    } catch (e) {
+      leaving.current = false;
+      throw e;
+    }
     await clearLocalCache();
     history.replaceState(null, '', teacherHref());
     location.reload();

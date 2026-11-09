@@ -91,7 +91,8 @@ test('로그아웃하면 이 기기의 Firestore 캐시를 비우고, 다시 로
   await expect(page.getByRole('button', { name: /김하늘/ })).toBeVisible();
   await expect.poll(() => cachedDocCount(page)).toBeGreaterThan(0);
 
-  await page.getByRole('button', { name: '로그아웃' }).click();
+  // 로그아웃은 캐시를 지운 뒤 화면을 새로 불러온다
+  await Promise.all([page.waitForEvent('load'), page.getByRole('button', { name: '로그아웃' }).click()]);
   await expect(page.getByRole('button', { name: '에뮬레이터 로그인' })).toBeVisible();
   await expect(page).toHaveURL(/#\/t$/);
   expect(await cachedDocCount(page)).toBe(0);
