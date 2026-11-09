@@ -70,7 +70,9 @@ test('일괄 등록 미리보기, 링크 재발급, 비활성화', async ({ page
   // 링크 재발급: 확인 단계를 거치고, 옛 링크는 닫히고 새 링크가 열린다
   await page.getByRole('button', { name: /^이바다/ }).click();
   await page.getByRole('button', { name: '링크 공유' }).click();
-  const oldHash = studentHash(await readClipboard(page));
+  const oldText = await readClipboard(page);
+  expect(oldText).toMatch(/^이바다야, 중등부 앱이야 → /); // 받침 없는 이름은 "야"
+  const oldHash = studentHash(oldText);
   await page.getByRole('button', { name: '링크 재발급' }).click();
   await page.getByRole('button', { name: '취소' }).click();
   await page.getByRole('button', { name: '링크 재발급' }).click();

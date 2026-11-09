@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { studentHref } from '../app/router';
 import { useToast } from '../app/Toast';
+import { vocative } from '../lib/korean';
 import { Button } from './Button';
 import { Field } from './Field';
 import { Icon } from './icons';
@@ -8,7 +9,7 @@ import s from './ShareLink.module.css';
 
 export interface ShareLinkProps {
   token: string;
-  /** 학생 이름(보내는 글 "김하늘아, 중등부 앱이야 → 주소") */
+  /** 학생 이름(보내는 글 "김하늘아, 중등부 앱이야 → 주소" / "이바다야, …") */
   name: string;
 }
 
@@ -25,7 +26,7 @@ export function ShareLink({ token, name }: ShareLinkProps) {
   const { show } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const url = studentUrl(token);
-  const text = `${name}아, 중등부 앱이야 → ${url}`;
+  const text = `${vocative(name)}, 중등부 앱이야 → ${url}`;
 
   async function share() {
     if (typeof navigator.share === 'function') {
