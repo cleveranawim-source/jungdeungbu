@@ -16,8 +16,10 @@ import type { AttendanceDoc } from '../types';
  * 출석 토글(그 반 교사 또는 관리자). 그 학생 출석 기록 전체를 읽어 새 상태를 반영하고,
  * 출석 문서 { date, present, by: uid, at: serverTimestamp() }와 학생 문서 { streak, lastPresent }를 한 배치로 쓴다.
  *
- * streak 기준일은 dateId가 아니라 "기록된 가장 늦은 주일"이다(dateId 포함). 그래서 지난 날짜를 고쳐도
- * 현재 streak이 그 날짜 기준으로 바뀌지 않고, 어느 순서로 토글해도 최종 기록이 같으면 같은 값이 된다.
+ * streak 기준일은 dateId가 아니라 "출석(present:true)으로 기록된 가장 늦은 주일"이다(출석이 하나도 없으면 dateId).
+ * 그래서 지난 날짜를 고쳐도 현재 streak이 그 날짜 기준으로 바뀌지 않고, 어느 순서로 토글해도 최종 기록이 같으면
+ * 같은 값이 된다. 이번 주일을 눌렀다가 취소해 남은 present:false 기록은 기준일이 되지 않으므로 지난주까지의
+ * streak이 그대로 남는다(지난주도 빠졌는지는 화면의 activeStreak 이 lastPresent 로 가린다).
  *
  * 반환: 다시 계산해 저장한 { streak, lastPresent }. 단 출석 기록을 오프라인 캐시에서 읽었으면
  * (metadata.fromCache) 기록이 일부뿐일 수 있으므로 **출석 문서만 쓰고 학생 문서는 건드리지 않으며 null**을 돌려준다
@@ -53,7 +55,7 @@ export async function setAttendance(
   }
   byDate.set(dateId, present);
   const records = [...byDate].map(([date, p]) => ({ date, present: p }));
-  const asOf = records.reduce((max, r) => (r.date > max ? r.date : max), dateId);
+  const asOf = records.reduce<string | null>((max, r) => (r.present && (max === null || r.date > max) ? r.date : max), null) ?? dateId;
   const { streak, lastPresent } = computeStreak(records, asOf);
 
   batch.update(doc(db, 'students', token), { streak, lastPresent });

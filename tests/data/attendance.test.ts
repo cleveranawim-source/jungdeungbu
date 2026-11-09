@@ -22,13 +22,20 @@ test('3주 연속 출석 뒤 streak 3', async () => {
   expect(records.every((r) => r.present && r.by === TEACHER_A.uid)).toBe(true)
 })
 
-test('이번 주 취소하면 streak 0, lastPresent는 지난 주', async () => {
+test('이번 주를 눌렀다 취소하면 지난주까지의 streak 2가 그대로, lastPresent는 지난 주(취소 기록은 기준일이 아니다)', async () => {
   const db = asUser(env(), TEACHER_A)
+  await setAttendance(db, TEACHER_A.uid, TOKEN_A, '2026-11-01', true)
   await setAttendance(db, TEACHER_A.uid, TOKEN_A, '2026-11-08', true)
-  await setAttendance(db, TEACHER_A.uid, TOKEN_A, '2026-11-15', true)
+  expect(await setAttendance(db, TEACHER_A.uid, TOKEN_A, '2026-11-15', true)).toEqual({ streak: 3, lastPresent: '2026-11-15' })
   const result = await setAttendance(db, TEACHER_A.uid, TOKEN_A, '2026-11-15', false)
-  expect(result).toEqual({ streak: 0, lastPresent: '2026-11-08' })
-  expect(await getStudent(db, TOKEN_A)).toMatchObject({ streak: 0, lastPresent: '2026-11-08' })
+  // 예전에는 11-15(present:false)가 기준일이 되어 0이었다. 이제 기준일은 마지막 출석 11-08 → 11-08·11-01 로 2
+  expect(result).toEqual({ streak: 2, lastPresent: '2026-11-08' })
+  expect(await getStudent(db, TOKEN_A)).toMatchObject({ streak: 2, lastPresent: '2026-11-08' })
+})
+
+test('출석 기록이 하나도 없으면(결석만) 기준일은 그 날짜, streak 0', async () => {
+  const db = asUser(env(), TEACHER_A)
+  expect(await setAttendance(db, TEACHER_A.uid, TOKEN_A, '2026-11-15', false)).toEqual({ streak: 0, lastPresent: null })
 })
 
 test('두 교사가 순서 바꿔 토글해도 같은 streak', async () => {
