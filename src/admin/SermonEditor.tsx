@@ -97,10 +97,10 @@ export function SermonEditor({ thisSunday }: { thisSunday: string }) {
         <div className={s.fields}>
           <Field ref={titleRef} label="설교 제목" autoComplete="off" maxLength={60} value={form.title} error={titleError}
             onChange={(e) => { setTitleError(null); update({ title: e.target.value }); }} />
-          <Field label="성경 본문" autoComplete="off" value={form.scripture} placeholder="마가복음 4:35-41"
+          <Field label="성경 본문" autoComplete="off" value={form.scripture} placeholder="예: 마가복음 4:35-41"
             onChange={(e) => update({ scripture: e.target.value })} />
           <TextArea label="요약" rows={3} maxLength={300} showCount value={form.summary}
-            hint="말씀 목록과 첫머리에 보이는 두세 문장이에요"
+            hint="말씀 첫머리에 보이는 두세 문장"
             onChange={(e) => update({ summary: e.target.value })} />
           <TextArea label="설교 원고" rows={14} className={s.body} value={form.body}
             hint="빈 줄로 문단을 나눠요"
@@ -148,7 +148,7 @@ function QuestionEditor({ questions, onChange }: { questions: Question[]; onChan
           <li key={q.k} className={`${ed.line} ${s.question}`}>
             <label className={ed.num} htmlFor={`q-${q.k}`}><span className="sr-only">적용 질문 </span>{i + 1}</label>
             <textarea id={`q-${q.k}`} data-q={q.k} className={ed.input} rows={2} value={q.text}
-              placeholder={i === 0 ? '요즘 내가 무서워하는 것은 무엇인가요?' : undefined}
+              placeholder={i === 0 ? '예: 요즘 내가 무서워하는 것은?' : undefined}
               onChange={(e) => onChange(questions.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)))} />
             <button type="button" className={ed.icon} aria-label={`${i + 1}번째 질문 지우기`}
               disabled={questions.length === 1 && !q.text} onClick={() => remove(i)}>

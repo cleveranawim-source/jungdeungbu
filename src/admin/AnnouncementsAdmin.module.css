@@ -1,0 +1,38 @@
+.stack { display: flex; flex-direction: column; gap: var(--space-4); }
+.muted { color: var(--muted); font-size: var(--text-sm); }
+.form { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.title { display: inline-flex; align-items: center; gap: var(--space-1); }
+.title > svg { color: var(--accent-text); }
+
+/* 시작·끝 주일: 위아래로(한 줄에 둘은 휴대폰 폭에 안 들어간다), 옅은 면으로 한 묶음 */
+.dates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+/* 진행 상태: 글자로 알린다. 진행 중만 초록 면, 예정은 선, 끝남은 옅게 */
+.status {
+  display: inline-block;
+  padding: 2px var(--space-2);
+  border: 1.5px solid currentColor;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  line-height: 1.4;
+}
+.now { color: var(--ok); background: var(--ok-soft); }
+.soon { color: var(--accent-text); }
+.past { color: var(--muted); border-style: dashed; }
+
+.danger {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--line);
+}

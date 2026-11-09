@@ -1,6 +1,7 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { addDays, nearestSunday, toDateId } from '../../src/lib/dates';
+import { expectToast, loginAsEmu } from './helpers';
 import { clear, seed, seedAdmin } from './seed';
 
 const ADMIN = 'admin@example.com';
@@ -90,4 +91,143 @@ test('주보 없는 주 안내', async ({ page }) => {
   await page.goto(`#/s/${TOKEN}`);
   await expect(page.getByText('이번 주 주보가 아직 없어요')).toBeVisible();
   await expect(page.getByRole('tab', { name: '홈' })).toHaveAttribute('aria-selected', 'true');
+});
+
+// ---------- 관리자 편집 (주보·설교·광고) ----------
+
+const WALK = '함께 걷는 길';
+
+/** 관리 메뉴에서 화면 하나를 연다(`#/t/admin/{화면}`). */
+async function openAdmin(page: Page, name: string): Promise<void> {
+  await page.getByRole('tab', { name: '관리' }).click();
+  await page.getByRole('link', { name: new RegExp(`^${name}`) }).click();
+  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
+}
+
+test('관리자가 주보를 게시하면 학생 홈에 보인다', async ({ page, context }) => {
+  await loginAsEmu(page, ADMIN, '관리자');
+
+  // 설교 먼저: 제목·본문·질문
+  await openAdmin(page, '설교 작성');
+  await page.getByLabel('설교 제목').fill(WALK);
+  await page.getByLabel('성경 본문').fill('누가복음 24:13-35');
+  await page.getByLabel('요약').fill('엠마오로 가는 길에 예수님이 함께 걸으셨어요.');
+  await page.getByLabel('적용 질문 1').fill('이번 주 누구와 함께 걸을까요?');
+  await page.getByRole('button', { name: '저장', exact: true }).click();
+  await expectToast(page, '설교를 저장했어요');
+
+  // 주보: 템플릿 순서로 시작, 설교 제목은 설교에서 가져오기 → 게시
+  await page.getByRole('link', { name: '관리 메뉴' }).click();
+  await page.getByRole('link', { name: /^주보 작성/ }).click();
+  await expect(page.getByLabel('1번 순서 이름')).toHaveValue('묵도');
+  await page.getByRole('button', { name: '설교 제목 가져오기' }).click();
+  await expect(page.getByLabel('설교 제목')).toHaveValue(WALK);
+  await page.getByLabel('찬양 1').fill(HYMN);
+  await page.getByRole('button', { name: '게시', exact: true }).click();
+  await expectToast(page, '게시했어요');
+  await expect(page.getByText('관리자님이 방금 저장')).toBeVisible();
+
+  const student = await context.newPage();
+  await student.goto(`#/s/${TOKEN}`);
+  await expect(student.getByRole('heading', { name: WALK })).toBeVisible();
+  await student.getByRole('tab', { name: '주보' }).click();
+  await expect(student.getByText(HYMN)).toBeVisible();
+  await student.getByRole('tab', { name: '말씀' }).click();
+  await student.getByRole('link', { name: new RegExp(WALK) }).click();
+  await expect(student.getByText('이번 주 누구와 함께 걸을까요?')).toBeVisible();
+});
+
+test('임시저장 주보는 학생에게 안 보인다', async ({ page, context }) => {
+  await loginAsEmu(page, ADMIN, '관리자');
+  await openAdmin(page, '주보 작성');
+  await page.getByLabel('설교 제목').fill('아직 비밀인 제목');
+  await page.getByRole('button', { name: '임시저장', exact: true }).click();
+  await expectToast(page, '임시저장했어요');
+
+  // 규칙이 임시저장 주보 읽기를 막고(getBulletin → null), 학생 화면은 "없음" 안내
+  const student = await context.newPage();
+  await student.goto(`#/s/${TOKEN}`);
+  await expect(student.getByText('이번 주 주보가 아직 없어요')).toBeVisible();
+  await expect(student.getByText('아직 비밀인 제목')).toHaveCount(0);
+  await student.getByRole('tab', { name: '주보' }).click();
+  await expect(student.getByText('이번 주 주보가 아직 없어요')).toBeVisible();
+
+  // 교사 주보 탭에서는 "임시저장" 표시와 함께 보인다
+  await page.getByRole('tab', { name: '주보' }).click();
+  await expect(page.getByText('학생에게는 아직 보이지 않아요')).toBeVisible();
+  await expect(page.getByText('아직 비밀인 제목')).toBeVisible();
+});
+
+test('광고 종료일이 지나면 주보 광고란에 없다', async ({ page, context }) => {
+  await seed((db) => setDoc(doc(db, 'bulletins', THIS_SUNDAY), {
+    date: THIS_SUNDAY, order: [{ type: '설교', title: WALK, detail: '' }], hymns: [], scripture: '',
+    sermonTitle: WALK, published: true, updatedBy: 'admin', updatedAt: serverTimestamp(),
+  }));
+  await loginAsEmu(page, ADMIN, '관리자');
+  await openAdmin(page, '광고');
+
+  const form = page.getByRole('form', { name: '새 광고' });
+  // 지난 주일 하루만 하던 광고(끝남)
+  await form.getByLabel('제목').fill('지난 행사 광고');
+  await form.getByRole('group', { name: '시작' }).getByRole('button', { name: '지난 주일' }).click();
+  await form.getByRole('group', { name: '끝' }).getByRole('button', { name: '지난 주일' }).click();
+  await form.getByRole('button', { name: '광고 추가' }).click();
+  await expectToast(page, '광고를 추가했어요');
+  await expect(page.getByRole('button', { name: /^지난 행사 광고/ })).toContainText('끝남');
+
+  // 이번 주일 광고(기본 날짜 = 이번 주일)
+  await form.getByLabel('제목').fill('이번 주 광고');
+  await form.getByLabel('내용').fill('예배 뒤 다 같이 점심 먹어요.');
+  await form.getByRole('button', { name: '광고 추가' }).click();
+  await expectToast(page, '광고를 추가했어요');
+  await expect(page.getByRole('button', { name: /^이번 주 광고/ })).toContainText('진행 중');
+
+  const student = await context.newPage();
+  await student.goto(`#/s/${TOKEN}/bulletin`);
+  await expect(student.getByText('예배 뒤 다 같이 점심 먹어요.')).toBeVisible();
+  await expect(student.getByText('이번 주 광고', { exact: true })).toBeVisible();
+  await expect(student.getByText('지난 행사 광고')).toHaveCount(0);
+});
+
+test('주보 편집: 저장 안 한 내용은 날짜·메뉴 이동 전에 묻고, 새로고침해도 복구된다', async ({ page }) => {
+  await loginAsEmu(page, ADMIN, '관리자');
+  await openAdmin(page, '주보 작성');
+  const title = page.getByLabel('설교 제목');
+  await title.fill('쓰다 만 제목');
+
+  // 날짜를 옮기려 하면 그 자리에서 묻는다 → 계속 쓰기
+  const stepper = page.getByRole('group', { name: '주보 날짜' });
+  const dateText = await stepper.getByRole('status').textContent();
+  await stepper.getByRole('button', { name: '다음 주일' }).click();
+  await expect(page.getByText('저장하지 않은 내용이 있어요')).toBeVisible();
+  await expect(stepper.getByRole('status')).toHaveText(dateText!);
+  await page.getByRole('button', { name: '계속 쓰기' }).click();
+  await expect(title).toHaveValue('쓰다 만 제목');
+
+  // 탭 바로 나가려 해도 묻는다
+  await page.getByRole('tab', { name: '출석' }).click();
+  await expect(page.getByText('저장하지 않은 내용이 있어요')).toBeVisible();
+  await page.getByRole('button', { name: '계속 쓰기' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: '주보 작성' })).toBeVisible();
+
+  // 새로고침(앱이 꺼진 셈) → 이 탭의 sessionStorage 에서 복구
+  await page.reload();
+  await expect(page.getByText('저장 안 된 내용을 복구했어요')).toBeVisible();
+  await expect(title).toHaveValue('쓰다 만 제목');
+
+  // 저장하면 복구본은 지워진다
+  await page.getByRole('button', { name: '임시저장', exact: true }).click();
+  await expectToast(page, '임시저장했어요');
+  await page.reload();
+  await expect(title).toHaveValue('쓰다 만 제목');
+  await expect(page.getByText('저장 안 된 내용을 복구했어요')).toHaveCount(0);
+
+  // 다시 고치고 관리 메뉴로 → 저장하지 않고 이동
+  await title.fill('버릴 제목');
+  await page.getByRole('link', { name: '관리 메뉴' }).click();
+  await expect(page.getByText('저장하지 않은 내용이 있어요')).toBeVisible();
+  await page.getByRole('button', { name: '저장하지 않고 이동' }).click();
+  await expect(page.getByRole('navigation', { name: '관리 메뉴' })).toBeVisible();
+  await page.getByRole('link', { name: /^주보 작성/ }).click();
+  await expect(title).toHaveValue('쓰다 만 제목');
 });

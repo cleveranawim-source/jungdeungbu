@@ -3,6 +3,7 @@ import { teacherHref } from '../app/router';
 import { LinkButton } from '../ui/Button';
 import { EmptyState } from '../ui/EmptyState';
 import { Icon } from '../ui/icons';
+import { AnnouncementsAdmin } from './AnnouncementsAdmin';
 import { BulletinEditor } from './BulletinEditor';
 import { ClassesTeachersAdmin } from './ClassesTeachersAdmin';
 import { RosterAdmin } from './RosterAdmin';
@@ -34,6 +35,7 @@ export function AdminTab({ sub, myUid, thisSunday }: AdminTabProps) {
       </div>
       {section.key === 'bulletin' && <BulletinEditor myUid={myUid} thisSunday={thisSunday} />}
       {section.key === 'sermon' && <SermonEditor thisSunday={thisSunday} />}
+      {section.key === 'announcements' && <AnnouncementsAdmin thisSunday={thisSunday} />}
       {section.key === 'roster' && <RosterAdmin />}
       {section.key === 'classes' && <ClassesTeachersAdmin myUid={myUid} />}
       {!section.ready && (

@@ -172,7 +172,7 @@ export function BulletinEditor({ myUid, thisSunday }: { myUid: string; thisSunda
 
       <Card title="말씀">
         <div className={s.fields}>
-          <Field label="성경 본문" autoComplete="off" value={form.scripture} placeholder="마가복음 4:35-41"
+          <Field label="성경 본문" autoComplete="off" value={form.scripture} placeholder="예: 마가복음 4:35-41"
             onChange={(e) => update({ scripture: e.target.value })} />
           <Field label="설교 제목" autoComplete="off" value={form.sermonTitle}
             onChange={(e) => update({ sermonTitle: e.target.value })}
@@ -315,7 +315,7 @@ function HymnEditor({ hymns, onChange }: { hymns: Hymn[]; onChange(h: Hymn[]): v
           <li key={h.k} className={ed.line}>
             <label className={ed.num} htmlFor={`hymn-${h.k}`}><span className="sr-only">찬양 </span>{i + 1}</label>
             <input id={`hymn-${h.k}`} data-hymn={h.k} className={ed.input} autoComplete="off" value={h.text}
-              placeholder={i === 0 ? '찬송가 288장' : undefined}
+              placeholder={i === 0 ? '예: 찬송가 288장' : undefined}
               onChange={(e) => onChange(hymns.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)))} />
             <button type="button" className={ed.icon} aria-label={`${i + 1}번째 찬양 지우기`}
               disabled={hymns.length === 1 && !h.text} onClick={() => remove(i)}>

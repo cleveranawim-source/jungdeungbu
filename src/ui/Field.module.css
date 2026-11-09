@@ -21,7 +21,7 @@ textarea.control { min-height: 120px; resize: vertical; line-height: var(--leadi
 .foot { display: flex; gap: var(--space-3); justify-content: space-between; font-size: var(--text-sm); }
 .hint { color: var(--muted); }
 .error { display: flex; gap: var(--space-1); align-items: center; color: var(--danger); font-weight: var(--weight-medium); }
-.count { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+.count { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .over { color: var(--danger); }
 
 .selectWrap { position: relative; display: block; }
