@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { AdminTab } from '../admin/AdminTab';
 import { findAdminSection } from '../admin/sections';
 import { EmuLogin } from '../app/EmuLogin';
@@ -7,7 +7,7 @@ import { teacherHref } from '../app/router';
 import { TabBar, type TabItem } from '../app/TabBar';
 import { describeError, useToast } from '../app/Toast';
 import { useAuthRole, type AuthUser } from '../app/useAuthRole';
-import { nearestSunday, toDateId } from '../lib/dates';
+import { useTodaySunday } from '../app/useTodaySunday';
 import type { Teacher } from '../types';
 import { Button } from '../ui/Button';
 import { EmptyState } from '../ui/EmptyState';
@@ -135,8 +135,8 @@ function Ready({ user, teacher, tab, sub, onSignOut }: {
   const items = isAdmin ? [...TABS, ADMIN_TAB] : TABS;
   const current = items.find((t) => t.key === tab) ?? items[0];
   const section = current.key === 'admin' ? findAdminSection(sub) : undefined;
-  // "이번 주" = 가장 가까운 주일. 화면이 열려 있는 동안은 고정
-  const thisSunday = useMemo(() => toDateId(nearestSunday(new Date())), []);
+  // "이번 주" = 가장 가까운 주일. 날이 바뀌거나 화면이 다시 보일 때만 다시 계산
+  const thisSunday = useTodaySunday();
   const props: TeacherTabProps = { uid: user.uid, teacher, thisSunday, sub };
   const navigate = useGuardedNavigate();
 

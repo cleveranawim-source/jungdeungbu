@@ -3,7 +3,7 @@ import { teacherHref } from '../app/router';
 import { useLoader } from '../app/useLoader';
 import { listAttendanceByDate } from '../data/attendance';
 import { listStudents } from '../data/students';
-import { isBirthdayWeek, shiftDateId } from '../lib/dates';
+import { isBirthdayWeek } from '../lib/dates';
 import { db } from '../lib/firebase';
 import { activeStreak } from '../lib/streak';
 import { LinkButton } from '../ui/Button';
@@ -25,9 +25,16 @@ export function AttendanceTab({ uid, teacher, thisSunday }: TeacherTabProps) {
   const classes = useMyClasses(teacher);
   const [current, choose] = useClassChoice(classes.data);
   const [dateId, setDateId] = useState(thisSunday);
+  // 화면을 켜 둔 채 주가 바뀌면(이번 주일이 다시 계산됨) 새 주일로 옮긴다
+  const [seenSunday, setSeenSunday] = useState(thisSunday);
+  if (seenSunday !== thisSunday) {
+    setSeenSunday(thisSunday);
+    setDateId(thisSunday);
+  }
   // 반·날짜를 옮겨도 저장 중인 토글을 잃지 않게 그리드 밖에 둔다
   const marks = useAttendanceMarks(uid);
-  const latest = shiftDateId(thisSunday, 7); // 다음 주일까지만(미리 찍기)
+  // 미리 찍기 없음: 앞 주일에 출석 아님(present:false) 기록이 남으면 그 주 연속 출석이 0으로 보인다
+  const latest = thisSunday;
 
   if (classes.data === undefined) {
     return classes.error ? <LoadError error={classes.error} onRetry={classes.reload} /> : <Loading />;

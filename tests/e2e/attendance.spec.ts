@@ -75,7 +75,7 @@ test('교사가 출석을 찍으면 학생 "나" 탭에 보인다', async ({ pag
   await expect(page.getByRole('button', { name: /김하늘/ })).toHaveAttribute('aria-pressed', 'false');
 });
 
-test('날짜는 7일씩 옮기고, 다음 주일보다 뒤로는 못 간다', async ({ page }) => {
+test('날짜는 7일씩 옮기고, 이번 주일보다 뒤로는 못 간다(미리 찍기 없음)', async ({ page }) => {
   await loginAsEmu(page, ADMIN, '관리자');
   const [y, m, d] = THIS_SUNDAY.split('-').map(Number);
   const shift = (n: number) => toDateId(new Date(y, m - 1, d + n));
@@ -90,9 +90,14 @@ test('날짜는 7일씩 옮기고, 다음 주일보다 뒤로는 못 간다', as
   await expect(page.getByText(`${formatMonthDay(THIS_SUNDAY)} 주일`)).toBeVisible();
   await expect(page.getByText('출석 0 / 1')).toBeVisible();
 
-  await page.getByRole('button', { name: '다음 주일' }).click();
-  await expect(page.getByText(`${formatMonthDay(shift(7))} 주일`)).toBeVisible();
+  // 이번 주일이 끝: 다음 주일로 넘어가지 않는다
   await expect(page.getByRole('button', { name: '다음 주일' })).toBeDisabled();
+  await page.getByRole('button', { name: '지난 주일' }).click();
+  await expect(page.getByRole('button', { name: '다음 주일' })).toBeEnabled();
+  await page.getByRole('button', { name: '다음 주일' }).click();
+  await expect(page.getByText(`${formatMonthDay(THIS_SUNDAY)} 주일`)).toBeVisible();
+  await expect(page.getByRole('button', { name: '다음 주일' })).toBeDisabled();
+  await expect(page.getByText(`${formatMonthDay(shift(7))} 주일`)).toHaveCount(0);
 });
 
 test('2반 교사는 1반을 볼 수 없다', async ({ page }) => {

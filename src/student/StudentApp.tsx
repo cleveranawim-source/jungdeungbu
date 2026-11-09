@@ -1,11 +1,11 @@
 // 학생 화면: 토큰으로 학생 문서를 한 번 읽고, 뒤에서 익명 세션을 묶고, 탭마다 화면을 그린다.
-import { useCallback, useMemo, type ReactNode } from 'react';
+import { useCallback, type ReactNode } from 'react';
 import { InvalidLink } from '../app/InvalidLink';
 import { studentHref, type StudentTab } from '../app/router';
 import { TabBar, type TabItem } from '../app/TabBar';
 import { useLoader } from '../app/useLoader';
+import { useTodaySunday } from '../app/useTodaySunday';
 import { getStudent } from '../data/students';
-import { nearestSunday, toDateId } from '../lib/dates';
 import { db } from '../lib/firebase';
 import { Icon } from '../ui/icons';
 import { LoadError } from '../ui/LoadError';
@@ -38,8 +38,8 @@ export function StudentApp({ token, tab, sub }: StudentAppProps) {
   // App 이 key={token} 으로 다시 만들므로 토큰이 바뀌면 새로 불러온다
   const { data: student, error, reload } = useLoader(useCallback(() => getStudent(db, token), [token]));
   const session = useStudentSession(token, student?.active === true);
-  // "이번 주" = 가장 가까운 주일. 화면이 열려 있는 동안은 고정
-  const sundayId = useMemo(() => toDateId(nearestSunday(new Date())), []);
+  // "이번 주" = 가장 가까운 주일. 날이 바뀌거나 화면이 다시 보일 때만 다시 계산
+  const sundayId = useTodaySunday();
 
   if (student === undefined) {
     if (error) return <Screen><LoadError error={error} onRetry={reload} /></Screen>;
