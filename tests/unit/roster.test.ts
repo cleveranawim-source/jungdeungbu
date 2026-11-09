@@ -27,3 +27,9 @@ test('normalizeBirthday: 한 칸 생일(학생 추가 폼)', () => {
   expect(normalizeBirthday('13-01')).toBeUndefined();
   expect(normalizeBirthday('삼월')).toBeUndefined();
 });
+
+test('같은 이름의 반이 둘이면 그 반 줄은 짐작하지 않고 고칠 줄로', () => {
+  const { rows, errors } = parseRoster('박별\t1반\n김하늘\t2반', ['1반', '1반', '2반']);
+  expect(rows).toEqual([{ name: '김하늘', className: '2반', birthday: null }]);
+  expect(errors).toEqual([{ line: 1, message: "1줄: '1반' 이름의 반이 둘 이상 있어요. 반·교사에서 이름을 바꿔 주세요" }]);
+});

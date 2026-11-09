@@ -25,6 +25,9 @@ export function parseRoster(
       errors.push({ line, message: `${line}줄: 이름이 없어요` });
     } else if (!classNames.includes(className)) {
       errors.push({ line, message: `${line}줄: 반 '${className}'을(를) 찾을 수 없어요` });
+    } else if (classNames.indexOf(className) !== classNames.lastIndexOf(className)) {
+      // 같은 이름의 반이 둘 이상이면 어느 반인지 짐작하지 않는다
+      errors.push({ line, message: `${line}줄: '${className}' 이름의 반이 둘 이상 있어요. 반·교사에서 이름을 바꿔 주세요` });
     } else {
       const normalized = normalizeBirthday(birthday);
       if (normalized === undefined) {

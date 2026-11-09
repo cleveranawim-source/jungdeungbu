@@ -38,8 +38,16 @@ function birthdayLabel(b: string): string {
 
 const rowDomId = (token: string) => `student-${token}`;
 
+/** 학생 추가·고치기 공통: 이름은 꼭, 생일은 비우거나 월-일 */
+function validateStudent(name: string, birthday: string): { name?: string; birthday?: string } {
+  const errs: { name?: string; birthday?: string } = {};
+  if (!name.trim()) errs.name = '이름을 적어 주세요';
+  if (normalizeBirthday(birthday.trim()) === undefined) errs.birthday = '월-일로 적어 주세요 (예: 03-05)';
+  return errs;
+}
+
 /**
- * 관리 → 학생 명단: 반 보기 → 학생 목록(이름·생일·연속 출석). 줄을 열면 링크 공유·반 옮기기·링크 재발급·비활성화.
+ * 관리 → 학생 명단: 반 보기 → 학생 목록(이름·생일·연속 출석). 줄을 열면 링크 공유·이름·생일 고치기·반 옮기기·링크 재발급·비활성화.
  * 아래에 학생 추가 폼과 일괄 등록(붙여 넣기 → 미리보기 → n명 등록).
  */
 export function RosterAdmin() {
@@ -129,6 +137,29 @@ function StudentRow({ st, classes, meta, open, onToggle, onReissued, onChanged, 
   const { show } = useToast();
   const [moveTo, setMoveTo] = useState(st.classId);
   const [busy, setBusy] = useState(false);
+  const [name, setName] = useState(st.name);
+  const [birthday, setBirthday] = useState(st.birthday ?? '');
+  const [errors, setErrors] = useState<{ name?: string; birthday?: string }>({});
+  const [saving, setSaving] = useState(false);
+  const b = normalizeBirthday(birthday.trim());
+  const unchanged = name.trim() === st.name && b === (st.birthday ?? null);
+
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    const errs = validateStudent(name, birthday);
+    setErrors(errs);
+    if (Object.keys(errs).length) return;
+    setSaving(true);
+    try {
+      await updateStudent(db, st.id, { name: name.trim(), birthday: b ?? null });
+      show('저장했어요');
+      await onChanged();
+    } catch (err) {
+      show(describeError(err), 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function move() {
     setBusy(true);
@@ -148,6 +179,15 @@ function StudentRow({ st, classes, meta, open, onToggle, onReissued, onChanged, 
         aside={st.streak > 0 ? <span className={s.streak}>{st.streak}주 연속</span> : undefined}
         open={open} onToggle={onToggle}>
         <ShareLink token={st.id} name={st.name} />
+        <form className={s.edit} onSubmit={save} noValidate aria-label={`${st.name} 정보 고치기`}>
+          <div className={s.pair}>
+            <Field label="이름" autoComplete="off" maxLength={20} value={name}
+              onChange={(e) => setName(e.target.value)} error={errors.name} />
+            <Field label="생일" inputMode="numeric" autoComplete="off" maxLength={5} value={birthday}
+              onChange={(e) => setBirthday(e.target.value)} placeholder="03-05" hint="비워 둬도 돼요" error={errors.birthday} />
+          </div>
+          <Button type="submit" variant="secondary" block busy={saving} disabled={unchanged}>저장</Button>
+        </form>
         <div className={s.move}>
           <Select label="반 옮기기" value={moveTo} onChange={(e) => setMoveTo(e.target.value)}>
             {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -180,9 +220,7 @@ function NewStudent({ classes, defaultClassId, onAdded }: {
   async function submit(e: FormEvent) {
     e.preventDefault();
     const b = normalizeBirthday(birthday.trim());
-    const errs: typeof errors = {};
-    if (!name.trim()) errs.name = '이름을 적어 주세요';
-    if (b === undefined) errs.birthday = '월-일로 적어 주세요 (예: 03-05)';
+    const errs = validateStudent(name, birthday);
     setErrors(errs);
     if (Object.keys(errs).length) return;
     setBusy(true);
@@ -223,12 +261,22 @@ function BulkRegister({ classes, onDone }: { classes: Cls[]; onDone(): Promise<v
   const [busy, setBusy] = useState(false);
   const names = useMemo(() => classes.map((c) => c.name), [classes]);
   const { rows, errors } = useMemo(() => parseRoster(text, names), [text, names]);
-  const idOf = (n: string) => classes.find((c) => c.name === n)!.id;
+  // 반 이름 → ID. 같은 이름이 둘 이상이면(parseRoster 가 이미 고칠 줄로 뺀다) 짐작하지 않고 넣지 않는다
+  const idByName = useMemo(() => {
+    const m = new Map<string, string | null>();
+    for (const c of classes) m.set(c.name, m.has(c.name) ? null : c.id);
+    return m;
+  }, [classes]);
 
   async function register() {
+    const resolved = rows.map((r) => ({ name: r.name, classId: idByName.get(r.className) ?? null, birthday: r.birthday }));
+    if (resolved.some((r) => r.classId === null)) {
+      show('반을 정하지 못한 줄이 있어요. 반 이름이 겹치지 않게 고친 뒤 다시 해 주세요', 'error');
+      return;
+    }
     setBusy(true);
     try {
-      await bulkCreateStudents(db, rows.map((r) => ({ name: r.name, classId: idOf(r.className), birthday: r.birthday })));
+      await bulkCreateStudents(db, resolved.map((r) => ({ ...r, classId: r.classId! })));
       show(`${rows.length}명을 등록했어요`);
       setText('');
       await onDone();

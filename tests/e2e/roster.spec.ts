@@ -22,6 +22,12 @@ test('관리자가 반·학생을 만들고 학생 링크가 열린다', async (
   await page.getByRole('button', { name: '반 추가' }).click();
   await expectToast(page, '반을 추가했어요');
   await expect(page.getByRole('button', { name: /^1반/ })).toBeVisible();
+  // 같은 이름의 반은 또 만들 수 없다(일괄 등록에서 어느 반인지 알 수 없게 된다)
+  await page.getByLabel('반 이름').fill(' 1반 ');
+  await page.getByRole('button', { name: '반 추가' }).click();
+  await expect(page.getByText('같은 이름의 반이 이미 있어요')).toBeVisible();
+  await expect(page.getByRole('button', { name: /^1반/ })).toHaveCount(1);
+  await page.getByLabel('반 이름').fill('');
 
   // 관리 → 학생 명단 → 추가 '김하늘' 1반 03-05
   await page.getByRole('link', { name: '관리 메뉴' }).click();
@@ -115,4 +121,39 @@ test('초대한 교사는 담당 반으로 들어오고 관리 탭이 없다', a
   // 관리 주소로 와도 출석 탭으로
   await page.goto('#/t/admin');
   await expect(page.getByRole('tab', { name: '출석' })).toHaveAttribute('aria-selected', 'true');
+});
+
+test('학생 이름·생일을 고치면 학생 화면에도 새 이름', async ({ page, browser }) => {
+  const TOKEN = 'rosterRenameToken_0001'; // 22자
+  await seed(async (db) => {
+    await setDoc(doc(db, 'classes/classA'), { name: '1반', grade: 1, order: 1 });
+    await setDoc(doc(db, 'students', TOKEN), {
+      name: '김하늘', classId: 'classA', birthday: '03-05', active: true, streak: 0, lastPresent: null,
+    });
+  });
+  await loginAsEmu(page, ADMIN, '관리자');
+  await page.goto('#/t/admin/roster');
+  await page.getByRole('button', { name: /^김하늘/ }).click();
+  const form = page.getByRole('form', { name: '김하늘 정보 고치기' });
+  const save = form.getByRole('button', { name: '저장' });
+  await expect(save).toBeDisabled(); // 바뀐 게 없으면 누를 수 없다
+
+  // 추가 폼과 같은 검사
+  await form.getByLabel('이름').fill('  ');
+  await form.getByLabel('생일').fill('13-01');
+  await save.click();
+  await expect(form.getByText('이름을 적어 주세요')).toBeVisible();
+  await expect(form.getByText('월-일로 적어 주세요 (예: 03-05)')).toBeVisible();
+
+  await form.getByLabel('이름').fill('김하람');
+  await form.getByLabel('생일').fill('0412');
+  await save.click();
+  await expectToast(page, '저장했어요');
+  await expect(page.getByRole('button', { name: /^김하람/ })).toContainText('생일 4월 12일');
+
+  const { page: student } = await openStudent(browser, `#/s/${TOKEN}`);
+  await expect(student.getByText('김하람')).toBeVisible();
+  await student.getByRole('tab', { name: '나' }).click();
+  await expect(student.getByRole('heading', { name: '김하람' })).toBeVisible();
+  await expect(student.getByText('4월 12일')).toBeVisible();
 });

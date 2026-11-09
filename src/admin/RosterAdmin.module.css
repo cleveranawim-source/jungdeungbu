@@ -6,6 +6,7 @@
 .count { margin-left: var(--space-1); color: var(--muted); font-weight: var(--weight-regular); }
 .streak { color: var(--accent-text); font-weight: var(--weight-bold); }
 
+.edit { display: flex; flex-direction: column; gap: var(--space-3); }
 .move { display: grid; grid-template-columns: 1fr auto; gap: var(--space-3); align-items: end; }
 .danger {
   display: flex;

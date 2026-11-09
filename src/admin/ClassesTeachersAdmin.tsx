@@ -57,12 +57,13 @@ export function ClassesTeachersAdmin({ myUid }: { myUid: string }) {
             {classes.map((c) => (
               <ListRow key={c.id} title={c.name} meta={`${c.grade}학년, 순서 ${c.order}`}
                 open={open === `c:${c.id}`} onToggle={() => toggle(`c:${c.id}`)}>
-                <ClassEdit cls={c} onSaved={async () => { setOpen(null); await reload(); }} />
+                <ClassEdit cls={c} otherNames={classes.filter((o) => o.id !== c.id).map((o) => o.name)}
+                  onSaved={async () => { setOpen(null); await reload(); }} />
               </ListRow>
             ))}
           </List>
         )}
-        <NewClass nextOrder={Math.max(0, ...classes.map((c) => c.order)) + 1} onAdded={reload} />
+        <NewClass nextOrder={Math.max(0, ...classes.map((c) => c.order)) + 1} classNames={classes.map((c) => c.name)} onAdded={reload} />
       </Card>
 
       <Card title="선생님 초대">
@@ -132,15 +133,17 @@ function ClassFields({ name, grade, order, onName, onGrade, onOrder, errors }: {
   );
 }
 
-function validateClass(name: string, grade: string, order: string) {
+/** otherNames: 이 반을 뺀 나머지 반 이름들(같은 이름이면 일괄 등록·고르기에서 어느 반인지 알 수 없다) */
+function validateClass(name: string, grade: string, order: string, otherNames: readonly string[]) {
   const errors: { name?: string; grade?: string; order?: string } = {};
   if (!name.trim()) errors.name = '반 이름을 적어 주세요';
+  else if (otherNames.some((n) => n.trim() === name.trim())) errors.name = '같은 이름의 반이 이미 있어요';
   if (toPositiveInt(grade) === null) errors.grade = '1 이상의 숫자로 적어 주세요';
   if (toPositiveInt(order) === null) errors.order = '1 이상의 숫자로 적어 주세요';
   return errors;
 }
 
-function NewClass({ nextOrder, onAdded }: { nextOrder: number; onAdded(): Promise<void> }) {
+function NewClass({ nextOrder, classNames, onAdded }: { nextOrder: number; classNames: string[]; onAdded(): Promise<void> }) {
   const { show } = useToast();
   const [name, setName] = useState('');
   const [grade, setGrade] = useState('1');
@@ -151,7 +154,7 @@ function NewClass({ nextOrder, onAdded }: { nextOrder: number; onAdded(): Promis
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    const errs = validateClass(name, grade, orderValue);
+    const errs = validateClass(name, grade, orderValue, classNames);
     setErrors(errs);
     if (Object.keys(errs).length) return;
     setBusy(true);
@@ -178,7 +181,7 @@ function NewClass({ nextOrder, onAdded }: { nextOrder: number; onAdded(): Promis
   );
 }
 
-function ClassEdit({ cls, onSaved }: { cls: Cls; onSaved(): Promise<void> }) {
+function ClassEdit({ cls, otherNames, onSaved }: { cls: Cls; otherNames: string[]; onSaved(): Promise<void> }) {
   const { show } = useToast();
   const [name, setName] = useState(cls.name);
   const [grade, setGrade] = useState(String(cls.grade));
@@ -188,7 +191,7 @@ function ClassEdit({ cls, onSaved }: { cls: Cls; onSaved(): Promise<void> }) {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    const errs = validateClass(name, grade, order);
+    const errs = validateClass(name, grade, order, otherNames);
     setErrors(errs);
     if (Object.keys(errs).length) return;
     setBusy(true);
