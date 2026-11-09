@@ -28,3 +28,10 @@ test('둘 다면 생일 먼저, 둘 다', () => {
   const xs = celebrations({ ...base, birthday: '11-15', streak: 4, lastPresent: SUN }, SUN);
   expect(xs.map((x) => x.kind)).toEqual(['birthday', 'streak']);
 });
+test('연속 출석 축하는 activeStreak 와 같은 기준(학생·교사 화면이 같은 값)', () => {
+  const at = (lastPresent: string) => celebrations({ ...base, streak: 4, lastPresent }, SUN);
+  expect(at(SUN)).toHaveLength(1);            // 이번 주일 출석
+  expect(at('2026-11-08')).toHaveLength(1);   // 지난 주일까지, 이번 주일은 아직 기록 없음
+  expect(at('2026-11-01')).toEqual([]);       // 두 주일 전 → 끊김
+  expect(at('2026-11-22')).toHaveLength(1);   // 다음 주일을 미리 찍음(교사 화면도 그대로 보여 줌)
+});

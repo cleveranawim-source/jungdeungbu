@@ -4,6 +4,7 @@ import { listStudentAttendance } from '../data/attendance';
 import { getClass } from '../data/classes';
 import { formatBirthday, semesterStart } from '../lib/dates';
 import { db } from '../lib/firebase';
+import { activeStreak } from '../lib/streak';
 import { AttendanceCalendar } from '../ui/AttendanceCalendar';
 import { Card } from '../ui/Card';
 import { LoadError } from '../ui/LoadError';
@@ -37,7 +38,7 @@ export function MeTab({ student, token, classId, sundayId }: StudentTabProps) {
 
       <Card title="이번 학기 출석">
         <p className={s.streak}>
-          연속 출석 <strong>{student.streak}주</strong>
+          연속 출석 <strong>{activeStreak(student, sundayId)}주</strong>
         </p>
         {att.data === undefined ? (
           att.error ? <LoadError error={att.error} onRetry={att.reload} /> : <Loading />
