@@ -106,6 +106,10 @@ describe('attendance 쓰기', () => {
     await assertSucceeds(batch.commit())
     const copied = await getDocs(collection(asAnon(env()), `students/${NEW_TOKEN}/attendance`))
     expect(copied.size).toBe(2)
+    // 옛 링크는 즉시 죽는다: 학생 문서·출석 모두 토큰으로 못 읽음
+    await assertFails(getDoc(doc(asAnon(env()), `students/${TOKEN_A}`)))
+    await assertFails(getDocs(collection(asAnon(env()), `students/${TOKEN_A}/attendance`)))
+    await assertFails(getDoc(doc(asAnon(env()), att(TOKEN_A))))
   })
 
   test('1년치(52주) 출석을 옮기는 재발급 배치도 조회 한도(20)에 걸리지 않는다', async () => {
@@ -152,7 +156,7 @@ describe('attendance 쓰기', () => {
   test('present가 bool이 아니거나, at이 서버 시각이 아니거나, 여분 키가 있으면 거부', async () => {
     const a = asUser(env(), TEACHER_A)
     await assertFails(setDoc(doc(a, att(TOKEN_A)), { ...record(TEACHER_A), present: 'yes' }))
-    await assertFails(setDoc(doc(a, att(TOKEN_A)), { ...record(TEACHER_A), at: Timestamp.now() }))
+    await assertFails(setDoc(doc(a, att(TOKEN_A)), { ...record(TEACHER_A), at: Timestamp.fromMillis(Date.now() - 60_000) }))
     await assertFails(setDoc(doc(a, att(TOKEN_A)), { ...record(TEACHER_A), note: '지각' }))
     const { at: _omit, ...noAt } = record(TEACHER_A)
     await assertFails(setDoc(doc(a, att(TOKEN_A)), noAt))
@@ -187,6 +191,29 @@ describe('attendance 읽기', () => {
     const list = await assertSucceeds(getDocs(collection(anon, `students/${TOKEN_A}/attendance`)))
     expect(list.docs.map((d) => d.id).sort()).toEqual(['2026-11-01', DATE])
     await assertSucceeds(getDoc(doc(anon, att(TOKEN_B))))
+  })
+
+  test('비활성 학생의 출석은 토큰으로 list 불가', async () => {
+    await seedAttendance()
+    const TOKEN_INACTIVE = 'Tok3n_I-inactiveStud01'
+    await seed(env(), async (db) => {
+      await setDoc(doc(db, `students/${TOKEN_INACTIVE}`), { ...STUDENT_A, active: false })
+      await setDoc(doc(db, att(TOKEN_INACTIVE)), {
+        date: DATE,
+        present: true,
+        by: 'tA',
+        at: Timestamp.fromDate(new Date('2026-11-08T01:00:00Z')),
+      })
+    })
+    const anon = asAnon(env())
+    await assertSucceeds(getDocs(collection(anon, `students/${TOKEN_A}/attendance`)))
+    await assertFails(getDocs(collection(anon, `students/${TOKEN_INACTIVE}/attendance`)))
+    await assertFails(getDoc(doc(anon, att(TOKEN_INACTIVE))))
+    await assertFails(getDocs(collection(asUser(env(), OUTSIDER), `students/${TOKEN_INACTIVE}/attendance`)))
+    const byTeacher = await assertSucceeds(
+      getDocs(collection(asUser(env(), TEACHER_B), `students/${TOKEN_INACTIVE}/attendance`)),
+    )
+    expect(byTeacher.size).toBe(1)
   })
 
   test('컬렉션 그룹 질의는 교사만', async () => {

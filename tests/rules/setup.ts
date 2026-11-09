@@ -15,6 +15,10 @@ export const OUTSIDER: TestUser = { uid: 'xU', email: 'x@example.com' } // 로�
 export const TOKEN_A = 'Tok3n_A-q8Zr2Lm5Nx7Pw1' // classA 학생
 export const TOKEN_B = 'Tok3n_B-k4Ys9Hv6Jd0Fc3' // classB 학생
 
+// 학생 기기의 익명 인증 UID. seedBase가 studentSessions/{uid} = { token }으로 묶어 둔다.
+export const STUDENT_A_UID = 'stuA' // → TOKEN_A
+export const STUDENT_B_UID = 'stuB' // → TOKEN_B
+
 export const STUDENT_A = {
   name: '김하늘',
   classId: 'classA',
@@ -43,6 +47,11 @@ export function asUser(env: RulesTestEnvironment, u: TestUser) {
   return env.authenticatedContext(u.uid, { email: u.email, email_verified: true }).firestore()
 }
 
+/** Firebase 익명 로그인한 학생 기기. */
+export function asStudent(env: RulesTestEnvironment, uid: string) {
+  return env.authenticatedContext(uid, { firebase: { sign_in_provider: 'anonymous' } }).firestore()
+}
+
 export function asAnon(env: RulesTestEnvironment) {
   return env.unauthenticatedContext().firestore()
 }
@@ -53,7 +62,7 @@ export async function seed(env: RulesTestEnvironment, writer: (db: TestDb) => Pr
   })
 }
 
-/** 모든 규칙 시험이 공유하는 기본 데이터: 초대 3건, 교사 3명, 반 2개, 학생 2명. */
+/** 모든 규칙 시험이 공유하는 기본 데이터: 초대 3건, 교사 3명, 반 2개, 학생 2명, 학생 세션 2개. */
 export async function seedBase(env: RulesTestEnvironment) {
   await seed(env, async (db) => {
     await Promise.all([
@@ -67,6 +76,8 @@ export async function seedBase(env: RulesTestEnvironment) {
       setDoc(doc(db, 'classes/classB'), { name: '1학년 2반', grade: 1, order: 2 }),
       setDoc(doc(db, `students/${TOKEN_A}`), STUDENT_A),
       setDoc(doc(db, `students/${TOKEN_B}`), STUDENT_B),
+      setDoc(doc(db, `studentSessions/${STUDENT_A_UID}`), { token: TOKEN_A }),
+      setDoc(doc(db, `studentSessions/${STUDENT_B_UID}`), { token: TOKEN_B }),
     ])
   })
 }

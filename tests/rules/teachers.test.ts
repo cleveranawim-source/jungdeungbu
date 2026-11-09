@@ -144,4 +144,16 @@ describe('invites', () => {
     await assertSucceeds(updateDoc(doc(admin, 'invites/a@example.com'), { classIds: ['classA', 'classB'] }))
     await assertSucceeds(deleteDoc(doc(admin, 'invites/b@example.com')))
   })
+
+  test('invites 문서 ID는 소문자 이메일, role은 admin·teacher만', async () => {
+    const admin = asUser(env(), ADMIN)
+    const invite = { name: '새선생님', role: 'teacher', classIds: ['classA'] }
+    await assertSucceeds(setDoc(doc(admin, 'invites/new@example.com'), invite))
+    await assertSucceeds(setDoc(doc(admin, 'invites/boss@example.com'), { ...invite, role: 'admin' }))
+    await assertFails(setDoc(doc(admin, 'invites/New@Example.com'), invite))
+    await assertFails(setDoc(doc(admin, 'invites/x@example.com'), { ...invite, role: 'owner' }))
+    await assertFails(setDoc(doc(admin, 'invites/y@example.com'), { name: '역할없음', classIds: [] }))
+    await assertSucceeds(updateDoc(doc(admin, 'invites/a@example.com'), { role: 'admin' }))
+    await assertFails(updateDoc(doc(admin, 'invites/a@example.com'), { role: 'superuser' }))
+  })
 })

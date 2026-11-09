@@ -4,8 +4,8 @@ service cloud.firestore {
 
     // ---------- 공통 함수 ----------
     // 한 요청의 get()/exists() 한도(단일 문서 10, 배치 20)를 넘지 않도록 각 규칙은 같은 문서
-    // (내 teachers 문서, 대상 students 문서, 내 invites 문서)만 되풀이해 본다. 같은 문서 조회는 캐시되어
-    // 한 번으로 계산된다 — attendance.test.ts의 52주 재발급 배치 시험이 이를 지킨다.
+    // (내 teachers 문서, 내 invites 문서, 내 studentSessions 문서, 대상 students 문서)만 되풀이해 본다.
+    // 같은 문서 조회는 캐시되어 한 번으로 계산된다 — attendance.test.ts의 52주 재발급 배치 시험이 이를 지킨다.
 
     function isSignedIn() {
       return request.auth != null;
@@ -76,18 +76,24 @@ service cloud.firestore {
             || (isAdmin() && d.by is string && d.at is timestamp));
     }
 
-    // 기도 제목: { studentToken, studentName, text, hidden: false, createdAt: serverTimestamp() } (+ extraKeys).
-    // 로그인 없는 학생이 쓰므로, 토큰이 가리키는 활성 학생 문서의 반·이름과 맞는지로 확인한다.
+    // 학생 기기(익명 인증)의 세션: studentSessions/{uid} = { token }
+    function sessionOf(uid) {
+      return get(/databases/$(database)/documents/studentSessions/$(uid));
+    }
+
+    // 기도 제목: { authorUid, studentName, text, createdAt: serverTimestamp() } (+ extraKeys).
+    // 공개 문서에 토큰을 넣지 않는다. 글쓴이는 익명 인증 UID이고, 그 UID의 세션이 가리키는
+    // 활성 학생의 반·이름과 맞아야 한다. 조회: 세션 1 + 학생 1.
     function validPrayer(d, classId, extraKeys) {
-      return isToken(d.studentToken)
-        && exists(studentPath(d.studentToken))
-        && studentOf(d.studentToken).data.active == true
-        && studentOf(d.studentToken).data.classId == classId
-        && d.studentName == studentOf(d.studentToken).data.name
+      let student = studentOf(sessionOf(request.auth.uid).data.token);
+      return request.auth != null
+        && d.authorUid == request.auth.uid
+        && student.data.active == true
+        && student.data.classId == classId
+        && d.studentName == student.data.name
         && d.text is string && d.text.size() >= 1 && d.text.size() <= 500
-        && d.hidden == false
         && d.createdAt == request.time
-        && d.keys().hasOnly(['studentToken', 'studentName', 'text', 'hidden', 'createdAt'].concat(extraKeys));
+        && d.keys().hasOnly(['authorUid', 'studentName', 'text', 'createdAt'].concat(extraKeys));
     }
 
     function changedOnly(keys) {
@@ -113,7 +119,10 @@ service cloud.firestore {
 
     match /invites/{email} {
       allow get: if (hasVerifiedEmail() && myEmail() == email) || isAdmin();
-      allow list, create, update, delete: if isAdmin();
+      allow list, delete: if isAdmin();
+      allow create, update: if isAdmin()
+        && email == email.lower()
+        && request.resource.data.role in ['admin', 'teacher'];
     }
 
     // ---------- classes · students ----------
@@ -123,20 +132,22 @@ service cloud.firestore {
       allow list: if isTeacher();
       allow create, update, delete: if isAdmin();
 
-      // ---------- 우리 반 기도 (반 ID를 아는 사람에게 공개) ----------
+      // ---------- 우리 반 기도 (반 ID를 아는 사람에게 공개; 문서에 비밀 값 없음) ----------
+      // 수정 규칙 없음. 삭제는 교사 또는 글쓴이 본인(같은 익명 UID).
       match /prayers/{id} {
         allow read: if true;
         allow create: if validPrayer(request.resource.data, classId, []);
-        // 학생의 "숨기기": hidden 을 true 로 바꾸는 것만. 실제 삭제는 교사가.
-        allow update: if changedOnly(['hidden']) && request.resource.data.hidden == true;
-        allow delete: if isTeacher();
+        allow delete: if isTeacher()
+          || (request.auth != null && request.auth.uid == resource.data.authorUid);
       }
     }
 
+    // 토큰을 아는 사람은 활성 학생만 읽는다(재발급된 옛 링크는 즉시 죽는다). 교사는 모두.
     match /students/{token} {
-      allow get: if true;
+      allow get: if isTeacher() || resource.data.active == true;
       allow list: if isTeacher();
-      allow create, delete: if isAdmin();
+      allow create: if isAdmin() && isToken(token);
+      allow delete: if isAdmin();
       // 관리자는 무엇이든(재발급 시 active:false 포함). 반 교사는 출석 배치의 streak·lastPresent만.
       allow update: if isAdmin()
         || (teachesClass(resource.data.classId)
@@ -146,11 +157,11 @@ service cloud.firestore {
             && (request.resource.data.lastPresent == null || isDateId(request.resource.data.lastPresent)));
 
       // ---------- attendance ----------
-      // 읽기: 토큰(경로)을 아는 누구나. 쓰기: 그 반 교사 또는 관리자.
+      // 읽기: 교사, 또는 토큰(경로)을 알고 그 학생이 활성일 때. 쓰기: 그 반 교사 또는 관리자.
       // 관리자를 먼저 따지는 이유: 링크 재발급 배치에서는 새 학생 문서가 아직 없어서(get()은 배치 전 상태)
       // studentOf(token)를 볼 수 없다.
       match /attendance/{date} {
-        allow read: if true;
+        allow read: if isTeacher() || studentOf(token).data.active == true;
         allow create, update: if (isAdmin() || teachesClass(studentOf(token).data.classId))
           && validAttendance(date);
         allow delete: if isAdmin() || teachesClass(studentOf(token).data.classId);
@@ -178,6 +189,17 @@ service cloud.firestore {
     match /settings/{id} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
+    }
+
+    // ---------- 학생 세션 ----------
+    // 학생 링크를 연 기기가 익명 로그인 뒤 자기 UID에 토큰을 묶는다(다른 링크를 열면 덮어씀).
+    match /studentSessions/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['token'])
+        && isToken(request.resource.data.token)
+        && studentOf(request.resource.data.token).data.active == true;
     }
 
     // ---------- 선생님만 보는 기도 ----------

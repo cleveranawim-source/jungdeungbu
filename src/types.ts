@@ -11,7 +11,8 @@ export interface OrderItem { type: string; title: string; detail: string }
 export interface Bulletin { date: string; order: OrderItem[]; hymns: string[]; scripture: string; sermonTitle: string; published: boolean; updatedBy: string; updatedAt: Timestamp }
 export interface Sermon { date: string; title: string; scripture: string; summary: string; body: string; questions: string[] }
 export interface Announcement { title: string; body: string; startDate: string; endDate: string; pinned: boolean; createdAt: Timestamp }
-export interface Prayer { studentToken: string; studentName: string; text: string; hidden: boolean; createdAt: Timestamp; classId?: string }
+export interface Prayer { authorUid: string; studentName: string; text: string; createdAt: Timestamp; classId?: string }
+export interface StudentSession { token: string }
 export interface BulletinTemplate { order: OrderItem[] }
 export type WithId<T> = T & { id: string };
 
