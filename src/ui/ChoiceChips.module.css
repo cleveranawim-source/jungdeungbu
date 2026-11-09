@@ -1,0 +1,45 @@
+.group { margin: 0; padding: 0; border: 0; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.legend { padding: 0; margin-bottom: var(--space-2); font-size: var(--text-sm); font-weight: var(--weight-bold); color: var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.hint { color: var(--muted); font-size: var(--text-sm); }
+
+.chip { position: relative; display: inline-flex; }
+.input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1; /* 보이는 알약(.face) 위에서 누름을 직접 받는다 */
+}
+.face {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--touch-min);
+  padding: 0 var(--space-4);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+.tick { display: none; color: var(--accent-text); }
+
+.input:checked + .face {
+  background: var(--accent-soft);
+  border-color: var(--accent-text);
+  font-weight: var(--weight-bold);
+}
+.input:checked + .face .tick { display: grid; }
+.input:focus-visible + .face { outline: 3px solid var(--focus); outline-offset: 2px; }
+.input:active + .face { transform: scale(0.97); }
+.group:disabled .face { opacity: 0.5; }
+
+@media (hover: hover) {
+  .input:not(:checked):hover + .face { background: var(--accent-soft); }
+}

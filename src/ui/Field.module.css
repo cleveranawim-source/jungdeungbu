@@ -23,3 +23,15 @@ textarea.control { min-height: 120px; resize: vertical; line-height: var(--leadi
 .error { display: flex; gap: var(--space-1); align-items: center; color: var(--danger); font-weight: var(--weight-medium); }
 .count { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
 .over { color: var(--danger); }
+
+.selectWrap { position: relative; display: block; }
+.select { appearance: none; padding-right: calc(var(--space-4) + var(--icon-md) + var(--space-2)); cursor: pointer; }
+.chevron {
+  position: absolute;
+  top: 50%;
+  right: var(--space-4);
+  display: grid;
+  color: var(--muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}

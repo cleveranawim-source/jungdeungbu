@@ -1,4 +1,4 @@
-import { useId, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from 'react';
+import { useId, type InputHTMLAttributes, type ReactNode, type Ref, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
 import { Icon } from './icons';
 import s from './Field.module.css';
 
@@ -33,7 +33,10 @@ function Wrap({ id, label, hint, error, count, children }: Common & { id: string
   );
 }
 
-export interface FieldProps extends Common, Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> {}
+export interface FieldProps extends Common, Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> {
+  /** React 19: ref 는 그냥 prop 으로 input 에 넘어간다 */
+  ref?: Ref<HTMLInputElement>;
+}
 
 export function Field({ label, hint, error, className, ...rest }: FieldProps) {
   const id = useId();
@@ -74,6 +77,29 @@ export function TextArea({ label, hint, error, showCount, className, value, maxL
         aria-describedby={hint || error ? `${id}-msg` : undefined}
         {...rest}
       />
+    </Wrap>
+  );
+}
+
+export interface SelectProps extends Common, Omit<SelectHTMLAttributes<HTMLSelectElement>, 'id'> {}
+
+/** 고르기 칸. 보기는 <option> 으로 children 에 넣는다. 모양은 Field 와 같고 오른쪽에 ⌄ 아이콘. */
+export function Select({ label, hint, error, className, children, ...rest }: SelectProps) {
+  const id = useId();
+  return (
+    <Wrap id={id} label={label} hint={hint} error={error}>
+      <span className={s.selectWrap}>
+        <select
+          id={id}
+          className={[s.control, s.select, className].filter(Boolean).join(' ')}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={hint || error ? `${id}-msg` : undefined}
+          {...rest}
+        >
+          {children}
+        </select>
+        <span className={s.chevron} aria-hidden="true"><Icon name="chevronDown" size={20} /></span>
+      </span>
     </Wrap>
   );
 }

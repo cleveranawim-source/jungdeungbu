@@ -1,0 +1,23 @@
+.wrap { display: inline-flex; }
+/* 보조 버튼 모양에 빨간 글자: 지우는 쪽 행동임을 미리 알린다(두 클래스라 Button 의 색보다 앞선다) */
+.wrap .trigger { color: var(--danger); }
+
+.box {
+  /* 줄 안 버튼 묶음(flex-wrap) 안에서도 한 줄을 다 쓴다 */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+}
+.message {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+.message > svg { color: var(--danger); margin-top: 2px; }
+.buttons { display: flex; gap: var(--space-2); justify-content: flex-end; flex-wrap: wrap; }

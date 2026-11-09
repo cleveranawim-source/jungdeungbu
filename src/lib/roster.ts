@@ -1,6 +1,7 @@
 export type RosterRow = { name: string; className: string; birthday: string | null };
 
-function normalizeBirthday(raw: string): string | null | undefined {
+/** 생일 칸 → 'MM-DD'. 빈 칸은 null, 형식이 틀리면 undefined. ('3-5', '03/05', '0305' 모두 '03-05') */
+export function normalizeBirthday(raw: string): string | null | undefined {
   if (raw === '') return null;
   const m = /^(\d{1,2})[-/](\d{1,2})$/.exec(raw) ?? /^(\d{2})(\d{2})$/.exec(raw);
   if (!m) return undefined;

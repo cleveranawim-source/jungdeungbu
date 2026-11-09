@@ -20,6 +20,11 @@ test('교사 경로 기본 탭 attendance', () => {
   expect(parseHash('#/t/')).toEqual({ kind: 'teacher', tab: 'attendance' });
 });
 test('교사 탭', () => expect(parseHash('#/t/admin')).toEqual({ kind: 'teacher', tab: 'admin' }));
+test('교사 탭 안의 화면', () => {
+  expect(parseHash('#/t/admin/roster')).toEqual({ kind: 'teacher', tab: 'admin', sub: 'roster' });
+  expect(parseHash('#/t/admin/')).toEqual({ kind: 'teacher', tab: 'admin' });
+  expect('sub' in parseHash('#/t/admin')).toBe(false);
+});
 test('빈 해시는 landing', () => {
   expect(parseHash('')).toEqual({ kind: 'landing' });
   expect(parseHash('#')).toEqual({ kind: 'landing' });
@@ -35,4 +40,6 @@ test('studentHref', () => {
 test('teacherHref', () => {
   expect(teacherHref()).toBe('#/t');
   expect(teacherHref('prayer')).toBe('#/t/prayer');
+  expect(teacherHref('admin', 'classes')).toBe('#/t/admin/classes');
+  expect(parseHash(teacherHref('admin', 'roster'))).toEqual({ kind: 'teacher', tab: 'admin', sub: 'roster' });
 });

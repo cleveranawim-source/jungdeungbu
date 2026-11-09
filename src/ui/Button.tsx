@@ -1,4 +1,4 @@
-import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react';
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 import s from './Button.module.css';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
@@ -21,6 +21,8 @@ function cls({ variant = 'primary', size = 'md', block }: Look, extra?: string) 
 export interface ButtonProps extends Look, ButtonHTMLAttributes<HTMLButtonElement> {
   /** 처리 중: 누를 수 없고 동그라미가 돈다. */
   busy?: boolean;
+  /** 초점 옮기기용(React 19: ref 는 그냥 prop 으로 button 에 넘어간다) */
+  ref?: Ref<HTMLButtonElement>;
 }
 
 export function Button({ variant, size, block, icon, busy, disabled, className, children, type = 'button', ...rest }: ButtonProps) {

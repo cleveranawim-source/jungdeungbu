@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { parseRoster } from '../../src/lib/roster';
+import { normalizeBirthday, parseRoster } from '../../src/lib/roster';
 
 const classes = ['1반', '2반'];
 test('탭·쉼표·빈 줄·공백', () => {
@@ -18,4 +18,12 @@ test('생일 형식 오류는 행 제외', () => {
     { line: 1, message: '1줄: 생일 형식이 맞지 않아요 (MM-DD)' },
     { line: 2, message: '2줄: 생일 형식이 맞지 않아요 (MM-DD)' },
   ]);
+});
+
+test('normalizeBirthday: 한 칸 생일(학생 추가 폼)', () => {
+  expect(normalizeBirthday('3-5')).toBe('03-05');
+  expect(normalizeBirthday('0305')).toBe('03-05');
+  expect(normalizeBirthday('')).toBeNull();
+  expect(normalizeBirthday('13-01')).toBeUndefined();
+  expect(normalizeBirthday('삼월')).toBeUndefined();
 });
