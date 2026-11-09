@@ -1,0 +1,25 @@
+.field { display: flex; flex-direction: column; gap: var(--space-2); }
+
+.label { font-size: var(--text-sm); font-weight: var(--weight-bold); color: var(--ink); }
+
+.control {
+  width: 100%;
+  min-height: var(--touch);
+  padding: var(--space-3) var(--space-4);
+  background: var(--card);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  font-size: var(--text-md); /* 16px 이상이어야 iOS 가 확대하지 않는다 */
+  line-height: 1.4;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.control::placeholder { color: var(--muted); opacity: 1; }
+.control:focus-visible { outline-offset: 1px; border-color: var(--focus); }
+.control[aria-invalid='true'] { border-color: var(--danger); }
+textarea.control { min-height: 120px; resize: vertical; line-height: var(--leading-body); }
+
+.foot { display: flex; gap: var(--space-3); justify-content: space-between; font-size: var(--text-sm); }
+.hint { color: var(--muted); }
+.error { display: flex; gap: var(--space-1); align-items: center; color: var(--danger); font-weight: var(--weight-medium); }
+.count { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+.over { color: var(--danger); }

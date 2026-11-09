@@ -1,0 +1,12 @@
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-5);
+}
+.accent { background: var(--accent-soft); border-color: transparent; box-shadow: none; }
+.quiet { background: transparent; border-style: dashed; border-color: var(--line-strong); box-shadow: none; }
+
+.title { margin-bottom: var(--space-3); }
+.body > * + * { margin-top: var(--space-3); }
