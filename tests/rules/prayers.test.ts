@@ -98,11 +98,15 @@ describe('우리 반 기도 생성', () => {
         classPrayer({ authorUid: STUDENT_B_UID, studentName: STUDENT_B.name }),
       ),
     )
+    // 이유 하나만 다르게: 반·이름은 stuB 의 것(위 성공과 같다)이고 authorUid 만 stuA
+    await assertFails(
+      addDoc(
+        collection(stuB, 'classes/classB/prayers'),
+        classPrayer({ authorUid: STUDENT_A_UID, studentName: STUDENT_B.name }),
+      ),
+    )
     // stuB가 stuA 행세: authorUid·이름·반 모두 stuA 것으로 맞춰도, 세션이 가리키는 학생은 B
     await assertFails(addDoc(collection(stuB, 'classes/classA/prayers'), classPrayer()))
-    await assertFails(
-      addDoc(collection(stuB, 'classes/classB/prayers'), classPrayer({ studentName: STUDENT_B.name })),
-    )
   })
 
   test('500자 초과 거부', async () => {

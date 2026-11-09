@@ -7,8 +7,8 @@ React + Vite + TypeScript, Firebase(Firestore · Authentication), GitHub Pages �
 
 | 누가 | 어떻게 |
 |---|---|
-| 교사 | 앱 주소 뒤에 `#/t` → **선생님 로그인**(Google). 관리자가 미리 등록한 이메일만 들어와요 |
-| 학생 | 선생님이 보내 준 링크(`#/s/{토큰}`). 로그인 없이 열려요(기도 제목을 올릴 때만 조용히 익명 로그인) |
+| 교사 | 앱 주소 뒤에 `#/t` → **선생님 로그인**(Google). 관리자가 미리 등록한 이메일만 들어와요. 카카오톡 등 앱 안 브라우저에서는 Google 이 로그인을 막아서, 바깥 브라우저(Safari/Chrome)로 여는 안내가 대신 떠요 |
+| 학생 | 선생님이 보내 준 링크(`#/s/{토큰}`). 로그인 화면 없이 열려요. 링크를 여는 순간 뒤에서 조용히 익명 로그인하고 그 기기를 링크에 묶어요(기도 제목 올리기·내 글 지우기에 쓰여요). 홈 화면에 추가한 앱은 링크 없이 첫 화면으로 열리므로, 첫 화면의 **내 화면 열기**로 들어와요 |
 
 ## 역할
 
@@ -33,11 +33,15 @@ React + Vite + TypeScript, Firebase(Firestore · Authentication), GitHub Pages �
 3. **Authentication → 로그인 방법**에서 **Google** 공급자와 **익명** 공급자를 **둘 다** 켠다(학생은 익명 인증을 쓴다).
 4. Authentication → 설정 → **승인된 도메인**에 `cleveranawim-source.github.io` 추가.
 5. Firestore 콘솔에서 `invites/{본인 이메일(소문자)}` 문서를 만든다: `{ name: '이름', role: 'admin', classIds: [] }`
+   - 초대 이메일은 **Google 계정 주소 그대로** 적는다(앱에서 선생님을 초대할 때도 같다). 대소문자는 알아서 맞추지만,
+     점(`.`)이나 `+별칭`은 맞추지 않는다: `hong.gildong@gmail.com` 으로 로그인하는 분을 `honggildong@gmail.com` 으로 초대하면 들어오지 못한다.
 6. Firebase 프로젝트 설정 → 내 앱(웹)의 설정값을 로컬 `.env.local`(`.env.example` 참고)과 GitHub 저장소 **Settings → Secrets and variables → Actions**에 `VITE_FIREBASE_*` 여섯 개로 넣는다.
    `VITE_USE_EMULATOR`는 넣지 않는다.
 7. `.firebaserc`의 `default` 프로젝트 ID를 만든 프로젝트로 바꾼다(지금은 에뮬레이터용 `demo-jungdeungbu`).
-8. 규칙과 인덱스를 올린다(컬렉션 그룹 인덱스가 없으면 출석 화면이 동작하지 않는다):
+8. 규칙과 인덱스를 올린다(컬렉션 그룹 인덱스가 없으면 출석 화면이 동작하지 않는다). 처음엔 Firebase CLI 로그인과 프로젝트 선택부터:
    ```
+   npx firebase login
+   npx firebase use <projectId>
    npx firebase deploy --only firestore
    ```
 9. GitHub 저장소 Settings → Pages → Source를 **GitHub Actions**로 바꾸고 `main`에 푸시한다.
@@ -60,6 +64,16 @@ npm run build        # dist/ 생성
 에뮬레이터로 화면을 띄우려면 `VITE_USE_EMULATOR=1 npm run dev`.
 
 GitHub Actions(`.github/workflows/pages.yml`)는 `main` 푸시 때 타입 검사 → 단위 시험 → 빌드 → Pages 배포를 해요. Java와 에뮬레이터 설치는 하지 않으므로 `test:rules`·`test:e2e`는 **배포 전에 로컬에서** 돌려 주세요.
+
+## 기기에서 직접 확인 (배포 후)
+
+자동 시험이 닿지 않는 부분이에요. 배포할 때마다 휴대폰으로 한 번씩 봐 주세요.
+
+- [ ] iPhone·갤럭시 **카카오톡 안 브라우저**에서 학생 링크 열기(홈·주보·기도 올리기)
+- [ ] **카톡에서 교사 로그인**: Google 버튼 대신 안내가 뜨는지, 'Safari/Chrome으로 열기'(안드로이드는 **Chrome으로 열기** 버튼)로 바깥 브라우저에서 Google 로그인이 되는지
+- [ ] **Android 홈 화면 추가 후 실행**: 학생 링크를 연 뒤 홈 화면에 추가 → 아이콘으로 열면 첫 화면의 **내 화면 열기**로 내 화면이 열리는지
+- [ ] **편집기 저장바와 키보드**: 주보·설교 작성에서 입력칸을 눌러 키보드가 올라와도 아래 저장바·입력칸이 가려지지 않는지
+- [ ] 교사 **로그아웃 뒤 다시 로그인**: 로그인 화면으로 돌아오고, 같은 계정으로 다시 들어가 출석 명단이 보이는지
 
 ## 데이터 구조 한 줄 요약
 

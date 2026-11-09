@@ -10,7 +10,8 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # 배포 도중 끊으면 Pages 가 반쯤 올라간 상태로 남을 수 있어 앞 배포를 끝까지 둔다
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -25,6 +26,14 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:unit
       # 에뮬레이터 테스트(test:rules, test:e2e)는 Java 와 에뮬레이터가 필요해 CI 에서 돌리지 않는다. 배포 전 로컬에서 실행한다.
+      - name: Firebase 설정값 확인
+        env:
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+        run: |
+          if [ -z "$VITE_FIREBASE_PROJECT_ID" ]; then
+            echo "::error::VITE_FIREBASE_PROJECT_ID 가 비어 있어요. 저장소 Settings → Secrets and variables → Actions 에 VITE_FIREBASE_* 여섯 개를 넣어 주세요(README 초기 1회 작업 6번)."
+            exit 1
+          fi
       - run: npm run build
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
