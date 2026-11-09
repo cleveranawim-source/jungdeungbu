@@ -1,0 +1,95 @@
+/* 탭 바 바로 위에 붙는 저장 줄. 내용 흐름 안의 마지막 요소라 맨 아래까지 스크롤하면 제자리에 앉고 아무것도 가리지 않는다 */
+.bar {
+  position: sticky;
+  bottom: calc(var(--tabbar-h) + var(--safe-bottom) + var(--space-3));
+  z-index: var(--z-bar);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--card-raised);
+  box-shadow: var(--shadow-float);
+}
+
+.state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-2);
+  padding: 0 var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+}
+.state > svg { color: var(--ok); }
+.dot {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.note { flex-basis: 100%; }
+
+.buttons { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--space-2); }
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+}
+.message { display: flex; gap: var(--space-2); align-items: flex-start; color: var(--ink); font-size: var(--text-sm); }
+.message > svg { color: var(--danger); margin-top: 1px; }
+.message strong { display: block; font-size: var(--text-md); }
+.sub { display: block; color: var(--ink); }
+.confirmButtons { display: flex; gap: var(--space-2); justify-content: flex-end; flex-wrap: wrap; }
+
+/* 저장 줄 안에서는 바탕이 같아 확인 상자의 둥근 면만 남긴다 */
+.bar > .confirm { margin: calc(var(--space-1) * -1); }
+
+/* ---------- 맨 위 카드 ---------- */
+.head { padding: var(--space-4); }
+.dateSet { margin: 0; padding: 0; border: 0; min-width: 0; }
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1) var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+.badge {
+  padding: 2px var(--space-2);
+  border: 1.5px solid currentColor;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  line-height: 1.4;
+}
+.ok { color: var(--ok); background: var(--ok-soft); }
+.draft { color: var(--accent-text); background: var(--accent-soft); }
+.new { color: var(--muted); border-style: dashed; }
+
+.recovered {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+.recovered > svg { color: var(--accent-text); }
+.recoveredText { flex: 1 1 auto; }

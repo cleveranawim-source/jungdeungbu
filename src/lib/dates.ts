@@ -69,3 +69,26 @@ export function sundaysBetween(from: string, to: string): string[] {
   for (let id = toDateId(cur); id <= to; cur = addDays(cur, 7), id = toDateId(cur)) out.push(id);
   return out;
 }
+
+/** "2026-11-08" 에 n일을 더한 날짜 ID */
+export function shiftDateId(dateId: string, days: number): string {
+  return toDateId(addDays(fromDateId(dateId), days));
+}
+
+/** from → to 가 몇 주인지(반올림, to 가 앞이면 음수) */
+export function weeksBetween(from: string, to: string): number {
+  return Math.round((fromDateId(to).getTime() - fromDateId(from).getTime()) / (7 * 864e5));
+}
+
+/** 저장 시각을 "방금 / 3분 전 / 2시간 전 / 4일 전 / 11월 2일" 로. */
+export function formatAgo(atMs: number, nowMs: number): string {
+  const sec = Math.max(0, (nowMs - atMs) / 1000);
+  if (sec < 60) return '방금';
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}분 전`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}시간 전`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `${day}일 전`;
+  return formatMonthDay(toDateId(new Date(atMs)));
+}

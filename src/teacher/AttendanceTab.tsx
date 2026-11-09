@@ -3,34 +3,21 @@ import { teacherHref } from '../app/router';
 import { useLoader } from '../app/useLoader';
 import { listAttendanceByDate } from '../data/attendance';
 import { listStudents } from '../data/students';
-import { addDays, formatMonthDay, isBirthdayWeek, toDateId } from '../lib/dates';
+import { isBirthdayWeek, shiftDateId } from '../lib/dates';
 import { db } from '../lib/firebase';
 import { activeStreak } from '../lib/streak';
-import { Button, LinkButton } from '../ui/Button';
+import { LinkButton } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { EmptyState } from '../ui/EmptyState';
 import { Icon } from '../ui/icons';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
+import { SundayStepper } from '../ui/SundayStepper';
 import { ClassPicker } from './ClassPicker';
 import type { TeacherTabProps } from './types';
 import { useAttendanceMarks, type AttendanceMarks } from './useAttendanceMarks';
 import { useClassChoice, useMyClasses } from './useClassChoice';
 import s from './AttendanceTab.module.css';
-
-const toDate = (id: string) => {
-  const [y, m, d] = id.split('-').map(Number);
-  return new Date(y, m - 1, d);
-};
-const shift = (id: string, days: number) => toDateId(addDays(toDate(id), days));
-const weeksFrom = (base: string, id: string) => Math.round((toDate(id).getTime() - toDate(base).getTime()) / (7 * 864e5));
-
-function relativeWeek(n: number): string {
-  if (n === 0) return '이번 주';
-  if (n === -1) return '지난주';
-  if (n === 1) return '다음 주';
-  return n < 0 ? `${-n}주 전` : `${n}주 뒤`;
-}
 
 /** 출석: 날짜(주일)·반을 고르고, 이름 버튼을 눌러 출석/취소. 예배실에서 한 손으로 빠르게. */
 export function AttendanceTab({ uid, teacher, thisSunday }: TeacherTabProps) {
@@ -40,7 +27,7 @@ export function AttendanceTab({ uid, teacher, thisSunday }: TeacherTabProps) {
   const [dateId, setDateId] = useState(thisSunday);
   // 반·날짜를 옮겨도 저장 중인 토글을 잃지 않게 그리드 밖에 둔다
   const marks = useAttendanceMarks(uid);
-  const latest = shift(thisSunday, 7); // 다음 주일까지만(미리 찍기)
+  const latest = shiftDateId(thisSunday, 7); // 다음 주일까지만(미리 찍기)
 
   if (classes.data === undefined) {
     return classes.error ? <LoadError error={classes.error} onRetry={classes.reload} /> : <Loading />;
@@ -62,38 +49,12 @@ export function AttendanceTab({ uid, teacher, thisSunday }: TeacherTabProps) {
   return (
     <>
       <Card className={s.controls}>
-        <DateStepper value={dateId} thisSunday={thisSunday} latest={latest} onChange={setDateId} />
+        <SundayStepper label="출석 날짜" value={dateId} thisSunday={thisSunday} latest={latest} onChange={setDateId} />
         <ClassPicker classes={classes.data} value={current} onChange={choose} />
       </Card>
       <Roll key={current} marks={marks} classId={current} className={classes.data.length < 2 ? klass.name : undefined}
         dateId={dateId} thisSunday={thisSunday} isAdmin={isAdmin} />
     </>
-  );
-}
-
-function DateStepper({ value, thisSunday, latest, onChange }: {
-  value: string; thisSunday: string; latest: string; onChange(id: string): void;
-}) {
-  const away = weeksFrom(thisSunday, value);
-  return (
-    <div className={s.stepper}>
-      <Button variant="secondary" className={s.step} aria-label="지난 주일" icon={<Icon name="chevronLeft" />}
-        onClick={() => onChange(shift(value, -7))} />
-      <div className={s.when}>
-        <p className={s.date} aria-live="polite">{formatMonthDay(value)} 주일</p>
-        <div className={s.rel}>
-          <span>{relativeWeek(away)}</span>
-          {away !== 0 && (
-            <Button variant="ghost" size="sm" className={s.today} icon={<Icon name="calendar" size={18} />}
-              onClick={() => onChange(thisSunday)}>
-              오늘로
-            </Button>
-          )}
-        </div>
-      </div>
-      <Button variant="secondary" className={s.step} aria-label="다음 주일" icon={<Icon name="chevronRight" />}
-        disabled={value >= latest} onClick={() => onChange(shift(value, 7))} />
-    </div>
   );
 }
 

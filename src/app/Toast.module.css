@@ -2,7 +2,8 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(var(--tabbar-h) + var(--safe-bottom) + var(--space-3));
+  /* --toast-lift: 화면 아래에 붙은 저장 줄(EditorBar) 높이만큼 올려 그 버튼을 가리지 않는다 */
+  bottom: calc(var(--tabbar-h) + var(--safe-bottom) + var(--space-3) + var(--toast-lift, 0px));
   z-index: var(--z-toast);
   display: flex;
   flex-direction: column;

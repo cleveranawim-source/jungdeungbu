@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { AdminTab } from '../admin/AdminTab';
 import { findAdminSection } from '../admin/sections';
 import { EmuLogin } from '../app/EmuLogin';
+import { LeaveGuardProvider, useGuardedNavigate } from '../app/leaveGuard';
 import { teacherHref } from '../app/router';
 import { TabBar, type TabItem } from '../app/TabBar';
 import { describeError, useToast } from '../app/Toast';
@@ -48,7 +49,11 @@ export function TeacherApp({ tab, sub }: TeacherAppProps) {
   if (role.status === 'notInvited' || !role.teacher || !role.user) {
     return <NotInvited email={role.user?.email ?? ''} onSignOut={role.signOut} />;
   }
-  return <Ready user={role.user} teacher={role.teacher} tab={tab} sub={sub} onSignOut={role.signOut} />;
+  return (
+    <LeaveGuardProvider>
+      <Ready user={role.user} teacher={role.teacher} tab={tab} sub={sub} onSignOut={role.signOut} />
+    </LeaveGuardProvider>
+  );
 }
 
 function SignOutButton({ onSignOut, variant = 'secondary' }: { onSignOut(): Promise<void>; variant?: 'secondary' | 'ghost' }) {
@@ -133,9 +138,10 @@ function Ready({ user, teacher, tab, sub, onSignOut }: {
   // "이번 주" = 가장 가까운 주일. 화면이 열려 있는 동안은 고정
   const thisSunday = useMemo(() => toDateId(nearestSunday(new Date())), []);
   const props: TeacherTabProps = { uid: user.uid, teacher, thisSunday, sub };
+  const navigate = useGuardedNavigate();
 
   let body;
-  if (current.key === 'admin') body = <AdminTab sub={sub} myUid={user.uid} />;
+  if (current.key === 'admin') body = <AdminTab sub={sub} myUid={user.uid} thisSunday={thisSunday} />;
   else if (current.key === 'attendance') body = <AttendanceTab {...props} />;
   else if (current.key === 'class') body = <ClassTab {...props} />;
   else if (current.key === 'bulletin') body = <BulletinTab {...props} />;
@@ -148,7 +154,7 @@ function Ready({ user, teacher, tab, sub, onSignOut }: {
       actions={<SignOutButton onSignOut={onSignOut} />}
       tabBar={
         <TabBar items={items} current={current.key} label="교사 메뉴"
-          onChange={(k) => { location.hash = teacherHref(k); }} />
+          onChange={(k) => navigate(teacherHref(k))} />
       }
     >
       {body}

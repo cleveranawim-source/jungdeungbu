@@ -14,7 +14,7 @@ export interface AdminSection {
 
 /** 관리 메뉴(브리프 순서). `#/t/admin/{key}` */
 export const ADMIN_SECTIONS: readonly AdminSection[] = [
-  { key: 'bulletin', label: '주보 작성', desc: '예배 순서와 찬송을 채워요', icon: 'bulletin', ready: false },
+  { key: 'bulletin', label: '주보 작성', desc: '예배 순서와 찬송을 채워요', icon: 'bulletin', ready: true },
   { key: 'sermon', label: '설교 작성', desc: '말씀 요약과 나눔 질문을 올려요', icon: 'sermon', ready: false },
   { key: 'announcements', label: '광고', desc: '기간을 정해 학생 홈에 띄워요', icon: 'megaphone', ready: false },
   { key: 'roster', label: '학생 명단', desc: '학생을 등록하고 링크를 보내요', icon: 'list', ready: true },
