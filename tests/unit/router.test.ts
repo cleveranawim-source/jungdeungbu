@@ -43,3 +43,14 @@ test('teacherHref', () => {
   expect(teacherHref('admin', 'classes')).toBe('#/t/admin/classes');
   expect(parseHash(teacherHref('admin', 'roster'))).toEqual({ kind: 'teacher', tab: 'admin', sub: 'roster' });
 });
+test('학생 탭 안의 화면(지난 주보·설교 날짜)', () => {
+  expect(parseHash('#/s/' + T + '/sermon/2026-11-08')).toEqual({ kind: 'student', token: T, tab: 'sermon', sub: '2026-11-08' });
+  expect(parseHash('#/s/' + T + '/bulletin/')).toEqual({ kind: 'student', token: T, tab: 'bulletin' });
+  expect('sub' in parseHash('#/s/' + T + '/me')).toBe(false);
+  // 모르는 탭이면 sub 도 버리고 home
+  expect(parseHash('#/s/' + T + '/nope/2026-11-08')).toEqual({ kind: 'student', token: T, tab: 'home' });
+});
+test('studentHref sub', () => {
+  expect(studentHref(T, 'sermon', '2026-11-08')).toBe('#/s/' + T + '/sermon/2026-11-08');
+  expect(parseHash(studentHref(T, 'bulletin', '2026-11-01'))).toEqual({ kind: 'student', token: T, tab: 'bulletin', sub: '2026-11-01' });
+});

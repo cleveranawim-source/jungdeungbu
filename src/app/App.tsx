@@ -23,7 +23,7 @@ export default function App() {
     <ToastProvider>
       <OfflineBar />
       {route.kind === 'landing' && <Landing />}
-      {route.kind === 'student' && <StudentApp key={route.token} token={route.token} tab={route.tab} />}
+      {route.kind === 'student' && <StudentApp key={route.token} token={route.token} tab={route.tab} sub={route.sub} />}
       {route.kind === 'teacher' && <TeacherApp tab={route.tab} sub={route.sub} />}
       {route.kind === 'invalid' && <InvalidLink />}
     </ToastProvider>
