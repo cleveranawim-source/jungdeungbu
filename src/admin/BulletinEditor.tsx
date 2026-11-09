@@ -13,7 +13,7 @@ import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
 import { EditorBar, EditorHead, StateBadge } from './EditorBar';
 import { useEditorDraft } from './useEditorDraft';
-import { newKey, useNow, useSavedBy } from './editorUtils';
+import { hasStrings, isRows, newKey, useNow, useSavedBy } from './editorUtils';
 import ed from './editor.module.css';
 import s from './BulletinEditor.module.css';
 
@@ -39,6 +39,12 @@ function toDoc(f: Form): Doc {
   };
 }
 
+/** sessionStorage 복구본이 이 폼 모양인지(깨졌으면 버린다) */
+const isForm = (x: unknown): x is Form =>
+  hasStrings(x, ['scripture', 'sermonTitle'])
+  && isRows((x as Form).order, ['type', 'title', 'detail'])
+  && isRows((x as Form).hymns, ['text']);
+
 interface Meta { published: boolean; by: string; at: number }
 
 /**
@@ -48,7 +54,7 @@ interface Meta { published: boolean; by: string; at: number }
 export function BulletinEditor({ myUid, thisSunday }: { myUid: string; thisSunday: string }) {
   const { show } = useToast();
   const [date, setDate] = useState(thisSunday);
-  const draft = useEditorDraft<Form>('bulletin', date, setDate, toDoc);
+  const draft = useEditorDraft<Form>('bulletin', date, setDate, toDoc, isForm);
   const [busy, setBusy] = useState<'draft' | 'publish' | 'template' | null>(null);
   const [savedMeta, setSavedMeta] = useState<{ date: string; meta: Meta } | null>(null);
   const [copied, setCopied] = useState<{ date: string; from: string; before: Pick<Form, 'order' | 'hymns'> } | null>(null);

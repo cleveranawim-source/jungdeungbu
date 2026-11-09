@@ -1,7 +1,7 @@
 import { expect, test, type Route } from '@playwright/test';
 import { collection, doc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import { formatMonthDay, nearestSunday, toDateId } from '../../src/lib/dates';
-import { expectToast, loginAsEmu, readClipboard, studentHash } from './helpers';
+import { closeStudents, expectToast, loginAsEmu, openStudent, readClipboard, studentHash } from './helpers';
 import { clear, seed } from './seed';
 
 const ADMIN = 'admin@example.com';
@@ -11,6 +11,8 @@ const TOKEN_B = 'attendStudentTokenB_01';
 
 // 앱과 같은 규칙으로 "이번 주" 주일을 잡는다
 const THIS_SUNDAY = toDateId(nearestSunday(new Date()));
+
+test.afterEach(closeStudents);
 
 test.beforeEach(async () => {
   await clear();
@@ -28,7 +30,7 @@ test.beforeEach(async () => {
   });
 });
 
-test('교사가 출석을 찍으면 학생 "나" 탭에 보인다', async ({ page, context }) => {
+test('교사가 출석을 찍으면 학생 "나" 탭에 보인다', async ({ page, browser }) => {
   await loginAsEmu(page, ADMIN, '관리자');
   await expect(page.getByRole('tab', { name: '출석' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByText(`${formatMonthDay(THIS_SUNDAY)} 주일`)).toBeVisible();
@@ -58,8 +60,7 @@ test('교사가 출석을 찍으면 학생 "나" 탭에 보인다', async ({ pag
   const hash = studentHash(await readClipboard(page));
 
   // 학생 링크 → 나 탭
-  const student = await context.newPage();
-  await student.goto(hash);
+  const { page: student } = await openStudent(browser, hash);
   await student.getByRole('tab', { name: '나' }).click();
   await expect(student.getByText('연속 출석 1주')).toBeVisible();
   await expect(student.getByRole('img', { name: `${formatMonthDay(THIS_SUNDAY)} 출석, 이번 주` })).toBeVisible();

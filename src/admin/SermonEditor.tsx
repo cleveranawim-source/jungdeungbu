@@ -12,7 +12,7 @@ import { Icon } from '../ui/icons';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
 import { EditorBar, EditorHead, StateBadge } from './EditorBar';
-import { newKey } from './editorUtils';
+import { hasStrings, isRows, newKey } from './editorUtils';
 import { useEditorDraft } from './useEditorDraft';
 import ed from './editor.module.css';
 import s from './SermonEditor.module.css';
@@ -35,11 +35,15 @@ const toDoc = (f: Form): Doc => ({
   questions: f.questions.map((q) => q.text.trim()).filter(Boolean),
 });
 
+/** sessionStorage 복구본이 이 폼 모양인지(깨졌으면 버린다) */
+const isForm = (x: unknown): x is Form =>
+  hasStrings(x, ['title', 'scripture', 'summary', 'body']) && isRows((x as Form).questions, ['text']);
+
 /** 관리 → 설교 작성. 주일을 고르고 제목·본문·요약·원고·적용 질문을 써서 저장. 학생 "말씀" 탭에 보인다. */
 export function SermonEditor({ thisSunday }: { thisSunday: string }) {
   const { show } = useToast();
   const [date, setDate] = useState(thisSunday);
-  const draft = useEditorDraft<Form>('sermon', date, setDate, toDoc);
+  const draft = useEditorDraft<Form>('sermon', date, setDate, toDoc, isForm);
   const [busy, setBusy] = useState(false);
   const [titleError, setTitleError] = useState<string | null>(null);
   const [savedDate, setSavedDate] = useState<string | null>(null); // 이 화면에서 저장한 날짜(새 설교 → 저장됨)

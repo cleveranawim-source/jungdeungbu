@@ -1,16 +1,18 @@
 import { expect, test } from '@playwright/test';
 import { doc, setDoc } from 'firebase/firestore';
-import { expectToast, loginAsEmu, readClipboard, studentHash } from './helpers';
+import { closeStudents, expectToast, loginAsEmu, openStudent, readClipboard, studentHash } from './helpers';
 import { clear, seed, seedAdmin } from './seed';
 
 const ADMIN = 'admin@example.com';
+
+test.afterEach(closeStudents);
 
 test.beforeEach(async () => {
   await clear();
   await seedAdmin(ADMIN);
 });
 
-test('관리자가 반·학생을 만들고 학생 링크가 열린다', async ({ page, context }) => {
+test('관리자가 반·학생을 만들고 학생 링크가 열린다', async ({ page, browser }) => {
   await loginAsEmu(page, ADMIN, '관리자');
 
   // 관리 → 반·교사 → 반 추가 '1반'
@@ -40,8 +42,7 @@ test('관리자가 반·학생을 만들고 학생 링크가 열린다', async (
   const hash = studentHash(text);
   await expect(page.getByLabel('학생 링크')).toHaveValue(text.split(' → ')[1]);
 
-  const page2 = await context.newPage();
-  await page2.goto(hash);
+  const { page: page2 } = await openStudent(browser, hash);
   await expect(page2.getByText('김하늘')).toBeVisible();
   await expect(page2.getByRole('tab', { name: '나' })).toBeVisible();
 });
@@ -55,7 +56,7 @@ test('초대 없는 계정은 안내 화면', async ({ page }) => {
   await expect(page.getByRole('button', { name: '에뮬레이터 로그인' })).toBeVisible();
 });
 
-test('일괄 등록 미리보기, 링크 재발급, 비활성화', async ({ page, context }) => {
+test('일괄 등록 미리보기, 링크 재발급, 비활성화', async ({ page, browser }) => {
   await seed((db) => setDoc(doc(db, 'classes/classA'), { name: '1반', grade: 1, order: 1 }));
   await loginAsEmu(page, ADMIN, '관리자');
   await page.goto('#/t/admin/roster');
@@ -82,11 +83,9 @@ test('일괄 등록 미리보기, 링크 재발급, 비활성화', async ({ page
   const newHash = studentHash(await readClipboard(page));
   expect(newHash).not.toBe(oldHash);
 
-  const oldPage = await context.newPage();
-  await oldPage.goto(oldHash);
+  const { page: oldPage } = await openStudent(browser, oldHash);
   await expect(oldPage.getByText('선생님께 링크를 다시 받아주세요')).toBeVisible();
-  const newPage = await context.newPage();
-  await newPage.goto(newHash);
+  const { page: newPage } = await openStudent(browser, newHash);
   await expect(newPage.getByText('이바다')).toBeVisible();
 
   // 비활성화: 확인 뒤 목록에서 빠진다

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLeaveGuard, type LeaveBlocker } from '../app/leaveGuard';
+import { afterSave, openDraft, type DraftState } from './draftState';
 
 // 편집 화면(주보·설교) 공통: 날짜마다 폼 하나. 저장된 값(base)과 다르면 dirty.
 // dirty 인 동안 폼을 sessionStorage 에 그대로 적어 두고(앱이 꺼져도 이 탭에서 다시 열면 복구),
@@ -7,10 +8,11 @@ import { useLeaveGuard, type LeaveBlocker } from '../app/leaveGuard';
 
 const STORE = 'jdb:draft:';
 
-function readStored<T>(key: string): T | null {
+/** 모양은 아직 모른다(부르는 쪽이 isValid 로 따진다) */
+function readStored(key: string): unknown {
   try {
     const raw = sessionStorage.getItem(STORE + key);
-    return raw === null ? null : (JSON.parse(raw) as T);
+    return raw === null ? null : (JSON.parse(raw) as unknown);
   } catch {
     return null; // 개인 정보 보호 모드·막힌 저장소·깨진 값
   }
@@ -24,7 +26,6 @@ function clearStored(key: string): void {
 
 export type Pending = { kind: 'date'; date: string } | { kind: 'nav'; go(): void };
 
-interface State<T> { key: string; base: T; value: T; recovered: boolean }
 
 export interface EditorDraft<T> {
   /** 지금 날짜의 폼이 준비됐으면 그 값, 아니면 undefined(불러오는 중) */
@@ -35,8 +36,11 @@ export interface EditorDraft<T> {
   recovered: boolean;
   /** 불러온 저장값으로 폼을 연다(복구본이 있으면 그걸로). 같은 날짜로 이미 열려 있으면 아무것도 안 한다 */
   open(base: T): void;
-  /** 저장 성공: 이 값이 새 저장값, 복구본 지움 */
-  saved(v: T): void;
+  /**
+   * 저장 성공: sent(저장을 누른 순간의 폼으로 만든 값)가 새 저장값. 그 사이 더 고친 내용은 그대로 남아
+   * 계속 "저장 안 한 내용"(복구본도 남음). 열려 있던 날짜 이동 확인은 닫는다.
+   */
+  saved(sent: T): void;
   /** 복구본 버리고 저장된 값으로 되돌리기 */
   revert(): void;
   /** 날짜 바꾸기(저장 안 한 내용이 있으면 pending 으로 붙잡는다) */
@@ -52,15 +56,17 @@ export interface EditorDraft<T> {
  * @param prefix sessionStorage 키 앞부분('bulletin' | 'sermon')
  * @param date 지금 날짜, setDate 날짜 바꾸기(부르는 쪽 상태)
  * @param comparable 비교할 모양(줄 key 같은 화면용 값을 뺀 것)
+ * @param isValid sessionStorage 복구본의 모양 검사(깨졌으면 조용히 버린다)
  */
 export function useEditorDraft<T>(
   prefix: string,
   date: string,
   setDate: (d: string) => void,
   comparable: (v: T) => unknown,
+  isValid: (x: unknown) => x is T,
 ): EditorDraft<T> {
   const key = `${prefix}:${date}`;
-  const [state, setState] = useState<State<T> | null>(null);
+  const [state, setState] = useState<DraftState<T> | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
   const ready = state !== null && state.key === key;
   const same = useCallback((a: T, b: T) => JSON.stringify(comparable(a)) === JSON.stringify(comparable(b)), [comparable]);
@@ -74,22 +80,18 @@ export function useEditorDraft<T>(
   }, [state, key, same]);
 
   const open = useCallback((base: T) => {
-    setState((prev) => {
-      if (prev && prev.key === key) return prev;
-      const stored = readStored<T>(key);
-      const recovered = stored !== null && !same(stored, base);
-      return { key, base, value: recovered ? stored : base, recovered };
-    });
-  }, [key, same]);
+    setState((prev) => (prev && prev.key === key ? prev : openDraft(prev, key, base, readStored(key), same, isValid)));
+  }, [key, same, isValid]);
 
   const set = useCallback((update: (prev: T) => T) => {
     setState((prev) => (prev && prev.key === key ? { ...prev, value: update(prev.value) } : prev));
   }, [key]);
 
-  const saved = useCallback((v: T) => {
-    clearStored(key);
-    setState((prev) => (prev && prev.key === key ? { key, base: v, value: v, recovered: false } : prev));
-  }, [key]);
+  const saved = useCallback((sent: T) => {
+    // 복구본은 위 효과가 정리한다: 더 고친 것이 없으면 지우고, 있으면 그 내용으로 다시 적는다
+    setState((prev) => afterSave(prev, key, sent, same));
+    setPending(null);
+  }, [key, same]);
 
   const revert = useCallback(() => {
     clearStored(key);
