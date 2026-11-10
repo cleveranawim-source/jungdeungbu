@@ -37,7 +37,7 @@ export function HomeTab({ student, token, sundayId }: StudentTabProps) {
   return (
     <>
       {bulletin ? (
-        <Card tone="accent" as="section" className={s.week}>
+        <Card as="section" className={s.week}>
           <p className={s.date}>
             <Icon name="calendar" size={18} />
             {formatMonthDay(sundayId)} 주일
@@ -45,7 +45,7 @@ export function HomeTab({ student, token, sundayId }: StudentTabProps) {
           <h2 className={s.title}>{bulletin.sermonTitle || '이번 주 주보'}</h2>
           {bulletin.scripture && <p className={s.scripture}>{bulletin.scripture}</p>}
           <div className={s.actions}>
-            <LinkButton href={studentHref(token, 'bulletin')} variant="secondary" size="sm" icon={<Icon name="bulletin" size={18} />}>
+            <LinkButton href={studentHref(token, 'bulletin')} block icon={<Icon name="bulletin" size={18} />}>
               주보 보기
             </LinkButton>
           </div>

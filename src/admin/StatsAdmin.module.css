@@ -30,7 +30,7 @@
   display: block;
   height: 100%;
   border-radius: var(--radius-pill);
-  background: var(--ok);
+  background: var(--accent);
 }
 
 /* 표: 열 머리는 눈에 보이게, 비율 칸은 숫자 아래 막대 */
