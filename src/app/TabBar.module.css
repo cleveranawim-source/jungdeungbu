@@ -35,23 +35,21 @@
 }
 .tab:focus-visible { outline-offset: -3px; border-radius: var(--radius-md); }
 
-/* 선택된 탭: 탭 바 윗선(지평선) 위로 작은 해가 떠오른다 */
-.tab::before {
+/* 선택된 탭: 남색 굵은 글자 + 아래 금색 짧은 밑줄 */
+.tab::after {
   content: '';
   position: absolute;
-  top: -11px;
+  bottom: 5px;
   left: 50%;
-  width: 22px;
-  height: 11px;
-  margin-left: -11px;
-  border-radius: 11px 11px 0 0;
-  background: var(--accent);
-  transform: scaleY(0);
-  transform-origin: bottom;
+  width: 18px;
+  height: 3px;
+  margin-left: -9px;
+  border-radius: 2px;
+  background: var(--gold);
+  transform: scaleX(0);
   transition: transform var(--dur-fast) var(--ease-out);
 }
 .tab[aria-selected='true'] { color: var(--ink); font-weight: var(--weight-bold); }
-.tab[aria-selected='true']::before { transform: scaleY(1); }
-.tab[aria-selected='true'] .icon { color: var(--accent-text); }
+.tab[aria-selected='true']::after { transform: scaleX(1); }
 .tab:active .icon { transform: scale(0.9); }
 .icon { display: grid; transition: transform var(--dur-press) var(--ease-out); }

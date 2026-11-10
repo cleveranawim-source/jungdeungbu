@@ -29,7 +29,7 @@
 .primary { background: var(--accent); color: var(--accent-ink); }
 .primary:active:not(:disabled) { background: var(--accent-press); }
 
-.secondary { background: var(--card); color: var(--ink); border-color: var(--line-strong); }
+.secondary { background: var(--card); color: var(--ink); border-color: var(--line); }
 .secondary:active:not(:disabled) { background: var(--accent-soft); }
 
 .ghost { background: transparent; color: var(--accent-text); }
