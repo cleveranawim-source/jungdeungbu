@@ -15,7 +15,7 @@ import { Loading } from '../ui/Loading';
 import type { StudentTabProps } from './types';
 import s from './HomeTab.module.css';
 
-/** 홈: 이번 주 주보 요약(귤빛 카드 하나) → 축하 → 이번 주 광고. */
+/** 홈: 이번 주 주보 요약(흰 카드 + 남색 버튼) → 축하 → 이번 주 광고. */
 export function HomeTab({ student, token, sundayId }: StudentTabProps) {
   const { data, error, reload } = useLoader(useCallback(async () => {
     const [bulletin, announcements] = await Promise.all([getBulletin(db, sundayId), activeAnnouncements(db, sundayId)]);

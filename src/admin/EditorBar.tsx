@@ -121,7 +121,7 @@ export function EditorHead({ label, date, thisSunday, latest, onRequestDate, dis
   );
 }
 
-/** 상태 배지: 게시됨(초록) · 임시저장(귤빛) · 새로(점선). 글자로 알린다. */
+/** 상태 배지: 게시됨(초록) · 임시저장(베이지) · 새로(점선). 글자로 알린다. */
 export function StateBadge({ tone, children }: { tone: 'ok' | 'draft' | 'new'; children: ReactNode }) {
   return <span className={[s.badge, s[tone]].join(' ')}>{children}</span>;
 }

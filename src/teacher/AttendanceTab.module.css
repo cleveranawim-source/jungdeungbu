@@ -45,7 +45,7 @@
   .student[aria-pressed='true']:hover { background: var(--accent-press); border-color: var(--accent-press); }
 }
 
-/* 체크 동그라미: 안 찍음 = 빈 동그라미, 찍음 = 남색 동그라미 + 귤빛 체크(색만으로 알리지 않게) */
+/* 체크 동그라미: 안 찍음 = 빈 동그라미, 찍음 = 버튼 색과 반전된 동그라미 + 체크(색만으로 알리지 않게) */
 .tick {
   position: relative;
   display: grid;
