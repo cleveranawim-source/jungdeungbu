@@ -28,6 +28,8 @@ export interface AuthRole {
    * 로그아웃하면 화면을 새로 불러오므로 그 경우엔 끝나지 않는다고 보면 된다.
    */
   signOut(force?: boolean): Promise<'unsynced' | void>;
+  /** 관리 화면에서 내 이름·호칭을 바꾼 뒤 교사 문서를 다시 읽어 화면 위 이름 줄에 바로 반영한다. */
+  refreshTeacher(): Promise<void>;
 }
 
 /** 로그아웃 전에 대기 중인 쓰기를 기다리는 시간 */
@@ -81,5 +83,12 @@ export function useAuthRole(): AuthRole {
     location.reload();
   }, []);
 
-  return { ...state, signIn, signInEmu, signOut };
+  const refreshTeacher = useCallback(async () => {
+    const u = auth.currentUser;
+    if (!u || u.isAnonymous || !u.email) return;
+    const teacher = await ensureTeacher(db, { uid: u.uid, email: u.email });
+    setState((s) => (s.user?.uid === u.uid && teacher ? { ...s, teacher } : s));
+  }, []);
+
+  return { ...state, signIn, signInEmu, signOut, refreshTeacher };
 }

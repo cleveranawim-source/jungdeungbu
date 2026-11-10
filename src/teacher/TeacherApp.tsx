@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { withTitle } from '../lib/korean';
 import { AdminTab } from '../admin/AdminTab';
 import { findAdminSection } from '../admin/sections';
 import { EmuLogin } from '../app/EmuLogin';
@@ -54,7 +55,7 @@ export function TeacherApp({ tab, sub }: TeacherAppProps) {
   }
   return (
     <LeaveGuardProvider>
-      <Ready user={role.user} teacher={role.teacher} tab={tab} sub={sub} onSignOut={role.signOut} />
+      <Ready user={role.user} teacher={role.teacher} tab={tab} sub={sub} onSignOut={role.signOut} onProfileChanged={role.refreshTeacher} />
     </LeaveGuardProvider>
   );
 }
@@ -225,8 +226,8 @@ function AuthError({ message, onSignOut }: { message: string; onSignOut: SignOut
   );
 }
 
-function Ready({ user, teacher, tab, sub, onSignOut }: {
-  user: AuthUser; teacher: Teacher; tab: string; sub?: string; onSignOut: SignOut;
+function Ready({ user, teacher, tab, sub, onSignOut, onProfileChanged }: {
+  user: AuthUser; teacher: Teacher; tab: string; sub?: string; onSignOut: SignOut; onProfileChanged(): Promise<void>;
 }) {
   const [unsynced, setUnsynced] = useState(false);
   const isAdmin = teacher.role === 'admin';
@@ -239,7 +240,7 @@ function Ready({ user, teacher, tab, sub, onSignOut }: {
   const navigate = useGuardedNavigate();
 
   let body;
-  if (current.key === 'admin') body = <AdminTab sub={sub} myUid={user.uid} thisSunday={thisSunday} />;
+  if (current.key === 'admin') body = <AdminTab sub={sub} myUid={user.uid} thisSunday={thisSunday} onProfileChanged={onProfileChanged} />;
   else if (current.key === 'attendance') body = <AttendanceTab {...props} />;
   else if (current.key === 'class') body = <ClassTab {...props} />;
   else if (current.key === 'bulletin') body = <BulletinTab {...props} />;
@@ -248,7 +249,7 @@ function Ready({ user, teacher, tab, sub, onSignOut }: {
   return (
     <Screen
       title={section?.label ?? current.label}
-      sub={`${teacher.name} 선생님`}
+      sub={withTitle(teacher.name, teacher.title)}
       actions={<SignOutButton onSignOut={onSignOut} onUnsynced={() => setUnsynced(true)} />}
       tabBar={
         <TabBar items={items} current={current.key} label="교사 메뉴"
