@@ -2,8 +2,8 @@ import type { Timestamp } from 'firebase/firestore';
 
 export type Role = 'admin' | 'teacher';
 
-export interface Teacher { email: string; name: string; role: Role; classIds: string[] }
-export interface Invite { name: string; role: Role; classIds: string[] }
+export interface Teacher { email: string; name: string; role: Role; classIds: string[]; title?: string }
+export interface Invite { name: string; role: Role; classIds: string[]; title?: string }
 export interface ClassDoc { name: string; grade: number; order: number }
 export interface Student { name: string; classId: string; birthday: string | null; active: boolean; streak: number; lastPresent: string | null }
 export interface AttendanceDoc { date: string; present: boolean; by: string; at: Timestamp }

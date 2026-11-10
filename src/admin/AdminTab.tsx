@@ -19,10 +19,12 @@ export interface AdminTabProps {
   myUid: string;
   /** 이번 주일(yyyy-mm-dd). 주보·설교·광고 편집의 기본 날짜 */
   thisSunday: string;
+  /** 내 이름·호칭을 바꿨을 때(화면 위 이름 줄을 새로 그리게) */
+  onProfileChanged(): Promise<void>;
 }
 
 /** 관리 탭: 메뉴 목록 → 각 화면. 제목(h1)은 TeacherApp 의 Screen 이 그린다. */
-export function AdminTab({ sub, myUid, thisSunday }: AdminTabProps) {
+export function AdminTab({ sub, myUid, thisSunday, onProfileChanged }: AdminTabProps) {
   const section = findAdminSection(sub);
   const guardedClick = useGuardedLinkClick();
   if (!section) return <AdminMenu />;
@@ -39,7 +41,7 @@ export function AdminTab({ sub, myUid, thisSunday }: AdminTabProps) {
       {section.key === 'announcements' && <AnnouncementsAdmin thisSunday={thisSunday} />}
       {section.key === 'roster' && <RosterAdmin />}
       {section.key === 'attendance' && <StatsAdmin thisSunday={thisSunday} />}
-      {section.key === 'classes' && <ClassesTeachersAdmin myUid={myUid} />}
+      {section.key === 'classes' && <ClassesTeachersAdmin myUid={myUid} onProfileChanged={onProfileChanged} />}
       {!section.ready && (
         <EmptyState icon={section.icon} title="준비 중이에요">{section.label} 화면은 곧 채워질 거예요.</EmptyState>
       )}

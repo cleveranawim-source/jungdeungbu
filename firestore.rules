@@ -22,6 +22,11 @@ service cloud.firestore {
         && request.auth.token.email_verified == true;
     }
 
+    // 호칭(목사님·전도사님 등): 없으면 화면에서 "선생님". 있으면 10자 이하 글자.
+    function validTitle(d) {
+      return !('title' in d) || (d.title is string && d.title.size() <= 10);
+    }
+
     function inviteOf(email) {
       return get(/databases/$(database)/documents/invites/$(email));
     }
@@ -109,9 +114,10 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.auth.uid == uid
         && hasVerifiedEmail()
-        && request.resource.data.keys().hasOnly(['email', 'name', 'role', 'classIds'])
+        && request.resource.data.keys().hasOnly(['email', 'name', 'role', 'classIds', 'title'])
         && request.resource.data.email == myEmail()
         && request.resource.data.name == inviteOf(myEmail()).data.name
+        && request.resource.data.get('title', '') == inviteOf(myEmail()).data.get('title', '')
         && request.resource.data.role == inviteOf(myEmail()).data.role
         && request.resource.data.classIds == inviteOf(myEmail()).data.classIds;
       allow update, delete: if isAdmin();
@@ -122,7 +128,8 @@ service cloud.firestore {
       allow list, delete: if isAdmin();
       allow create, update: if isAdmin()
         && email == email.lower()
-        && request.resource.data.role in ['admin', 'teacher'];
+        && request.resource.data.role in ['admin', 'teacher']
+        && validTitle(request.resource.data);
     }
 
     // ---------- classes · students ----------

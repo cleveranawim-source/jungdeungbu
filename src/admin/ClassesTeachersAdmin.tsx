@@ -2,8 +2,9 @@ import { useCallback, useState, type FormEvent } from 'react';
 import { describeError, useToast } from '../app/Toast';
 import { useLoader } from '../app/useLoader';
 import { createClass, listClasses, updateClass } from '../data/classes';
-import { deleteInvite, listInvites, listTeachers, removeTeacher, saveInvite, updateTeacher } from '../data/teachers';
+import { deleteInvite, listInvites, listTeachers, removeTeacher, saveInvite, saveTeacherProfile } from '../data/teachers';
 import { db } from '../lib/firebase';
+import { withTitle } from '../lib/korean';
 import type { ClassDoc, Invite, Role, Teacher, WithId } from '../types';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -15,6 +16,7 @@ import { List, ListRow } from '../ui/List';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
 import s from './ClassesTeachersAdmin.module.css';
+import { TitleField } from './TitleField';
 
 type Cls = WithId<ClassDoc>;
 
@@ -31,8 +33,11 @@ async function loadAll() {
   return { classes, invites, teachers };
 }
 
-/** 관리 → 반·교사: 반 목록(고치기·추가), 선생님 초대(대기 중 초대 고치기·취소), 등록된 선생님(역할·담당 반, 내보내기). */
-export function ClassesTeachersAdmin({ myUid }: { myUid: string }) {
+/**
+ * 관리 → 반·교사: 반 목록(고치기·추가), 선생님 초대(대기 중 초대 고치기·취소),
+ * 등록된 선생님(이름·호칭·역할·담당 반, 내보내기). 내 줄에서는 내 이름·호칭만 고친다.
+ */
+export function ClassesTeachersAdmin({ myUid, onProfileChanged }: { myUid: string; onProfileChanged(): Promise<void> }) {
   const { data, error, loading, reload } = useLoader(useCallback(loadAll, []));
   const [open, setOpen] = useState<string | null>(null); // 펼친 줄: 'c:반ID' | 'i:이메일' | 't:uid'
   const toggle = (k: string) => setOpen((o) => (o === k ? null : k));
@@ -73,7 +78,7 @@ export function ClassesTeachersAdmin({ myUid }: { myUid: string }) {
             <h3>아직 로그인하지 않은 초대</h3>
             <List label="대기 중인 초대">
               {pending.map((inv) => (
-                <ListRow key={inv.id} title={inv.name} meta={inv.id} aside={ROLE_LABEL[inv.role]}
+                <ListRow key={inv.id} title={withTitle(inv.name, inv.title)} meta={inv.id} aside={ROLE_LABEL[inv.role]}
                   open={open === `i:${inv.id}`} onToggle={() => toggle(`i:${inv.id}`)}>
                   <InviteEdit invite={inv} classes={classes}
                     onDone={async () => { setOpen(null); await reload(); }} />
@@ -90,12 +95,13 @@ export function ClassesTeachersAdmin({ myUid }: { myUid: string }) {
         ) : (
           <List label="등록된 선생님">
             {teachers.map((t) => (
-              <ListRow key={t.id} title={t.id === myUid ? `${t.name} (나)` : t.name}
+              <ListRow key={t.id} title={t.id === myUid ? `${withTitle(t.name, t.title)} (나)` : withTitle(t.name, t.title)}
                 meta={<>{t.email}<br />{t.role === 'admin' ? '모든 반' : classList(t.classIds)}</>}
                 aside={ROLE_LABEL[t.role]}
                 open={open === `t:${t.id}`} onToggle={() => toggle(`t:${t.id}`)}>
                 {t.id === myUid ? (
-                  <p className={s.muted}>내 계정의 역할과 담당 반은 다른 관리자가 바꿀 수 있어요.</p>
+                  <SelfEdit teacher={t}
+                    onDone={async () => { setOpen(null); await Promise.all([reload(), onProfileChanged()]); }} />
                 ) : (
                   <TeacherEdit teacher={t} classes={classes}
                     onDone={async () => { setOpen(null); await reload(); }} />
@@ -235,6 +241,7 @@ function NewInvite({ classes, registered, onSaved }: { classes: Cls[]; registere
   const { show } = useToast();
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [title, setTitle] = useState('');
   const [role, setRole] = useState<Role>('teacher');
   const [classIds, setClassIds] = useState<string[]>([]);
   const [errors, setErrors] = useState<{ email?: string; name?: string }>({});
@@ -251,9 +258,9 @@ function NewInvite({ classes, registered, onSaved }: { classes: Cls[]; registere
     if (Object.keys(errs).length) return;
     setBusy(true);
     try {
-      await saveInvite(db, id, { name: name.trim(), role, classIds });
+      await saveInvite(db, id, { name: name.trim(), title, role, classIds });
       show('초대했어요');
-      setEmail(''); setName(''); setRole('teacher'); setClassIds([]);
+      setEmail(''); setName(''); setTitle(''); setRole('teacher'); setClassIds([]);
       await onSaved();
     } catch (err) {
       show(describeError(err), 'error');
@@ -269,6 +276,7 @@ function NewInvite({ classes, registered, onSaved }: { classes: Cls[]; registere
         onChange={(e) => setEmail(e.target.value)} placeholder="teacher@gmail.com" error={errors.email} />
       <Field label="선생님 이름" autoComplete="off" value={name} maxLength={20}
         onChange={(e) => setName(e.target.value)} placeholder="김선생" error={errors.name} />
+      <TitleField value={title} onChange={setTitle} />
       <Assignment role={role} classIds={classIds} classes={classes} onRole={setRole} onClassIds={setClassIds} />
       <Button type="submit" variant="secondary" block busy={busy} icon={<Icon name="mail" size={20} />}>초대하기</Button>
     </form>
@@ -278,6 +286,7 @@ function NewInvite({ classes, registered, onSaved }: { classes: Cls[]; registere
 function InviteEdit({ invite, classes, onDone }: { invite: WithId<Invite>; classes: Cls[]; onDone(): Promise<void> }) {
   const { show } = useToast();
   const [name, setName] = useState(invite.name);
+  const [title, setTitle] = useState(invite.title ?? '');
   const [role, setRole] = useState<Role>(invite.role);
   const [classIds, setClassIds] = useState<string[]>(invite.classIds);
   const [nameError, setNameError] = useState<string | null>(null);
@@ -288,7 +297,7 @@ function InviteEdit({ invite, classes, onDone }: { invite: WithId<Invite>; class
     if (!name.trim()) { setNameError('이름을 적어 주세요'); return; }
     setBusy(true);
     try {
-      await saveInvite(db, invite.id, { name: name.trim(), role, classIds });
+      await saveInvite(db, invite.id, { name: name.trim(), title, role, classIds });
       show('초대를 고쳤어요');
       await onDone();
     } catch (err) {
@@ -300,6 +309,7 @@ function InviteEdit({ invite, classes, onDone }: { invite: WithId<Invite>; class
   return (
     <form className={s.form} onSubmit={submit} noValidate>
       <Field label="이름" autoComplete="off" value={name} maxLength={20} onChange={(e) => setName(e.target.value)} error={nameError} />
+      <TitleField value={title} onChange={setTitle} />
       <Assignment role={role} classIds={classIds} classes={classes} onRole={setRole} onClassIds={setClassIds} />
       <div className={s.actions}>
         <Button type="submit" variant="secondary" busy={busy}>초대 고치기</Button>
@@ -313,17 +323,21 @@ function InviteEdit({ invite, classes, onDone }: { invite: WithId<Invite>; class
 
 function TeacherEdit({ teacher, classes, onDone }: { teacher: WithId<Teacher>; classes: Cls[]; onDone(): Promise<void> }) {
   const { show } = useToast();
+  const [name, setName] = useState(teacher.name);
+  const [title, setTitle] = useState(teacher.title ?? '');
   const [role, setRole] = useState<Role>(teacher.role);
   const [classIds, setClassIds] = useState<string[]>(teacher.classIds);
+  const [nameError, setNameError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const label = withTitle(teacher.name, teacher.title);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (!name.trim()) { setNameError('이름을 적어 주세요'); return; }
     setBusy(true);
     try {
-      await updateTeacher(db, teacher.id, { role, classIds });
-      // 초대도 같게 맞춘다(교사 문서가 지워졌다 다시 생길 때 옛 값으로 돌아가지 않게)
-      await saveInvite(db, teacher.email, { name: teacher.name, role, classIds });
+      // 교사 문서와 초대를 한 번에 같게 맞춘다(교사 문서가 지워졌다 다시 생길 때 옛 값으로 돌아가지 않게)
+      await saveTeacherProfile(db, teacher.id, teacher.email, { name: name.trim(), title, role, classIds });
       show('저장했어요');
       await onDone();
     } catch (err) {
@@ -333,18 +347,53 @@ function TeacherEdit({ teacher, classes, onDone }: { teacher: WithId<Teacher>; c
   }
 
   return (
-    <form className={s.form} onSubmit={submit} noValidate>
+    <form className={s.form} onSubmit={submit} noValidate aria-label={`${label} 고치기`}>
+      <Field label="이름" autoComplete="off" value={name} maxLength={20} onChange={(e) => setName(e.target.value)} error={nameError} />
+      <TitleField value={title} onChange={setTitle} />
       <Assignment role={role} classIds={classIds} classes={classes} onRole={setRole} onClassIds={setClassIds} />
       <div className={s.actions}>
         <Button type="submit" variant="secondary" busy={busy}>저장</Button>
         <ConfirmAction label="교사 내보내기" icon="userOff" confirmLabel="내보내기"
-          message={<>{teacher.name} 선생님은 더 이상 들어올 수 없어요. 다시 들이려면 새로 초대해야 해요.</>}
+          message={<>{label} 계정으로는 더 이상 들어올 수 없어요. 다시 들이려면 새로 초대해야 해요.</>}
           onConfirm={async () => {
             await removeTeacher(db, teacher.id, teacher.email);
-            show(`${teacher.name} 선생님을 내보냈어요`);
+            show(`${label} 계정을 내보냈어요`);
             await onDone();
           }} />
       </div>
+    </form>
+  );
+}
+
+/** 내 줄: 이름·호칭만(역할·담당 반과 내보내기는 다른 관리자가 한다 — 스스로 관리자 권한을 잃지 않게). */
+function SelfEdit({ teacher, onDone }: { teacher: WithId<Teacher>; onDone(): Promise<void> }) {
+  const { show } = useToast();
+  const [name, setName] = useState(teacher.name);
+  const [title, setTitle] = useState(teacher.title ?? '');
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) { setNameError('이름을 적어 주세요'); return; }
+    setBusy(true);
+    try {
+      await saveTeacherProfile(db, teacher.id, teacher.email,
+        { name: name.trim(), title, role: teacher.role, classIds: teacher.classIds });
+      show('저장했어요');
+      await onDone();
+    } catch (err) {
+      show(describeError(err), 'error');
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form className={s.form} onSubmit={submit} noValidate aria-label="내 이름·호칭 고치기">
+      <Field label="이름" autoComplete="off" value={name} maxLength={20} onChange={(e) => setName(e.target.value)} error={nameError} />
+      <TitleField value={title} onChange={setTitle} />
+      <p className={s.muted}>내 역할과 담당 반은 다른 관리자가 바꿀 수 있어요.</p>
+      <Button type="submit" variant="secondary" busy={busy}>저장</Button>
     </form>
   );
 }

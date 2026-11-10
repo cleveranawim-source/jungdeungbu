@@ -157,3 +157,35 @@ describe('invites', () => {
     await assertFails(updateDoc(doc(admin, 'invites/a@example.com'), { role: 'superuser' }))
   })
 })
+
+describe('호칭(title)', () => {
+  const TITLED = { name: '김전도', role: 'teacher', classIds: ['classA'], title: '전도사님' }
+
+  test('호칭이 있는 초대는 같은 호칭으로만 교사 문서를 만든다', async () => {
+    await seed(env(), (db) => setDoc(doc(db, 'invites/new@example.com'), TITLED))
+    const db = asUser(env(), NEW)
+    await assertFails(setDoc(doc(db, 'teachers/tNew'), { email: NEW.email, ...TITLED, title: '목사님' }))
+    await assertFails(setDoc(doc(db, 'teachers/tNew'), { email: NEW.email, name: TITLED.name, role: TITLED.role, classIds: TITLED.classIds }))
+    await assertSucceeds(setDoc(doc(db, 'teachers/tNew'), { email: NEW.email, ...TITLED }))
+  })
+
+  test('호칭 없는 초대에 호칭을 붙여 만들 수 없다', async () => {
+    await seed(env(), (db) => setDoc(doc(db, 'invites/new@example.com'), NEW_INVITE))
+    const db = asUser(env(), NEW)
+    await assertFails(setDoc(doc(db, 'teachers/tNew'), { ...NEW_TEACHER, title: '목사님' }))
+    await assertSucceeds(setDoc(doc(db, 'teachers/tNew'), NEW_TEACHER))
+  })
+
+  test('초대의 호칭은 10자 이하 글자만', async () => {
+    const db = asUser(env(), ADMIN)
+    await assertSucceeds(setDoc(doc(db, 'invites/t1@example.com'), { ...TITLED }))
+    await assertSucceeds(setDoc(doc(db, 'invites/t2@example.com'), { ...TITLED, title: '부장 집사님' }))
+    await assertFails(setDoc(doc(db, 'invites/t3@example.com'), { ...TITLED, title: '아주아주아주긴호칭입니다' }))
+    await assertFails(setDoc(doc(db, 'invites/t4@example.com'), { ...TITLED, title: 3 }))
+  })
+
+  test('관리자는 교사의 이름·호칭을 고치고, 교사 본인은 못 고친다', async () => {
+    await assertFails(updateDoc(doc(asUser(env(), TEACHER_A), 'teachers/tA'), { title: '목사님' }))
+    await assertSucceeds(updateDoc(doc(asUser(env(), ADMIN), 'teachers/tA'), { name: '김하나', title: '전도사님' }))
+  })
+})

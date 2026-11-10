@@ -7,6 +7,7 @@ import {
 import {
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -55,6 +56,7 @@ export async function ensureTeacher(db: Firestore, user: { uid: string; email: s
     throw e;
   }
   const teacher: Teacher = { email, name: invite.name, role: invite.role, classIds: invite.classIds };
+  if (invite.title) teacher.title = invite.title; // 규칙: 초대의 호칭과 같아야 만든다
   await setDoc(ref, teacher);
   return teacher;
 }
@@ -83,8 +85,27 @@ export async function listInvites(db: Firestore): Promise<WithId<Invite>[]> {
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Invite) }));
 }
 
+/** 호칭은 앞뒤 빈칸을 지우고, 비면 칸 자체를 두지 않는다(화면에서 "선생님"). */
+function cleanInvite(invite: Invite): Invite {
+  const { title, ...rest } = invite;
+  const t = title?.trim();
+  return t ? { ...rest, title: t } : rest;
+}
+
 export async function saveInvite(db: Firestore, email: string, invite: Invite): Promise<void> {
-  await setDoc(doc(db, 'invites', inviteId(email)), invite);
+  await setDoc(doc(db, 'invites', inviteId(email)), cleanInvite(invite));
+}
+
+/**
+ * 이미 로그인한 교사의 이름·호칭·역할·담당 반을 바꾼다(관리자).
+ * 교사 문서와 초대를 한 배치로 같게 맞춘다 — 초대가 다르면 교사 문서를 지웠다 다시 만들 때 옛 값으로 돌아간다.
+ */
+export async function saveTeacherProfile(db: Firestore, uid: string, email: string, profile: Invite): Promise<void> {
+  const invite = cleanInvite(profile);
+  const batch = writeBatch(db);
+  batch.update(doc(db, 'teachers', uid), { ...invite, title: invite.title ?? deleteField() });
+  batch.set(doc(db, 'invites', inviteId(email)), invite);
+  await batch.commit();
 }
 
 export async function deleteInvite(db: Firestore, email: string): Promise<void> {

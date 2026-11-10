@@ -8,6 +8,7 @@ import {
   listTeachers,
   removeTeacher,
   saveInvite,
+  saveTeacherProfile,
   updateTeacher,
 } from '../../src/data/teachers'
 import { ADMIN, asUser, OUTSIDER, seed, TEACHER_A, useRulesEnv } from '../rules/setup'
@@ -85,4 +86,35 @@ test('isRegisteredTeacher: 교사는 true, 초대 없는 Google 계정은 false'
   expect(await isRegisteredTeacher(asUser(env(), OUTSIDER), OUTSIDER.uid)).toBe(false)
   // 남의 교사 문서는 막힌다(permission-denied) → 교사가 아니라고 본다
   expect(await isRegisteredTeacher(asUser(env(), OUTSIDER), TEACHER_A.uid)).toBe(false)
+})
+
+test('ensureTeacher: 초대의 호칭도 함께 옮긴다', async () => {
+  await seed(env(), (db) =>
+    setDoc(doc(db, 'invites/new@example.com'), { name: '김전도', role: 'teacher', classIds: [], title: '전도사님' }),
+  )
+  const user = { uid: 'newU', email: 'new@example.com' }
+  expect(await ensureTeacher(asUser(env(), user), user)).toEqual({
+    email: 'new@example.com', name: '김전도', role: 'teacher', classIds: [], title: '전도사님',
+  })
+})
+
+test('saveInvite: 호칭은 앞뒤 빈칸을 지우고, 비면 칸을 남기지 않는다', async () => {
+  const admin = asUser(env(), ADMIN)
+  await saveInvite(admin, 'x1@example.com', { name: '가', role: 'teacher', classIds: [], title: ' 목사님 ' })
+  expect((await getDoc(doc(admin, 'invites/x1@example.com'))).data()?.title).toBe('목사님')
+  await saveInvite(admin, 'x1@example.com', { name: '가', role: 'teacher', classIds: [], title: '  ' })
+  expect((await getDoc(doc(admin, 'invites/x1@example.com'))).data()).not.toHaveProperty('title')
+})
+
+test('saveTeacherProfile: 이름·호칭·역할·반을 교사 문서와 초대에 함께 저장, 빈 호칭은 지운다', async () => {
+  const admin = asUser(env(), ADMIN)
+  await saveTeacherProfile(admin, TEACHER_A.uid, 'A@Example.com', { name: '김하나', title: '전도사님', role: 'teacher', classIds: ['classA'] })
+  expect((await getDoc(doc(admin, 'teachers/tA'))).data()).toMatchObject({ name: '김하나', title: '전도사님', classIds: ['classA'] })
+  expect((await getDoc(doc(admin, 'invites/a@example.com'))).data()).toEqual({ name: '김하나', title: '전도사님', role: 'teacher', classIds: ['classA'] })
+  await saveTeacherProfile(admin, TEACHER_A.uid, 'a@example.com', { name: '김하나', title: '', role: 'teacher', classIds: ['classA'] })
+  expect((await getDoc(doc(admin, 'teachers/tA'))).data()).not.toHaveProperty('title')
+  expect((await getDoc(doc(admin, 'invites/a@example.com'))).data()).not.toHaveProperty('title')
+  await expect(
+    saveTeacherProfile(asUser(env(), TEACHER_A), TEACHER_A.uid, 'a@example.com', { name: '나', title: '목사님', role: 'teacher', classIds: [] }),
+  ).rejects.toMatchObject({ code: 'permission-denied' })
 })
