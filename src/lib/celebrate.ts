@@ -26,3 +26,13 @@ export function celebrations(
   }
   return out;
 }
+
+export interface EmphasisPart { text: string; strong: boolean }
+
+/** 축하 문구에서 "8주" 같은 주수만 강조 조각으로 나눈다(화면에서 금색 글자로 쓴다). */
+export function emphasisParts(text: string): EmphasisPart[] {
+  return text
+    .split(/(\d+주)/)
+    .filter((t) => t !== '')
+    .map((t) => ({ text: t, strong: /^\d+주$/.test(t) }));
+}

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#ff8b3d"/>
-  <defs><clipPath id="c"><rect x="0" y="0" width="512" height="340"/></clipPath></defs>
-  <g clip-path="url(#c)"><circle cx="256" cy="340" r="124" fill="#1e2540"/></g>
-  <rect x="96" y="334" width="320" height="14" rx="7" fill="#1e2540"/>
+  <rect width="512" height="512" rx="112" fill="#1B2A41"/>
+  <!-- 금색 가는 십자: 세로 28×260, 가로 28×168, 가로 막대 중심은 위에서 40% -->
+  <rect x="242" y="126" width="28" height="260" rx="14" fill="#B08A43"/>
+  <rect x="172" y="191" width="168" height="28" rx="14" fill="#B08A43"/>
 </svg>

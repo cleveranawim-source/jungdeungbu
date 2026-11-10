@@ -28,12 +28,12 @@ h1, h2, h3, h4, p, ul, ol, figure { margin: 0; }
 h1, h2, h3, h4 { line-height: var(--leading-tight); }
 h1 {
   font-family: var(--font-display);
-  /* Jua 는 한 굵기뿐: 가짜 굵게는 막고, Jua 를 못 받았을 때 시스템 글꼴은 굵게 */
+  /* 고운바탕 700 을 쓴다. 글꼴이 아직 안 왔을 때 가짜 굵게로 번지지 않게 막는다 */
   font-weight: var(--weight-bold);
   font-synthesis: none;
   font-size: var(--text-xl);
 }
-h2 { font-size: var(--text-lg); font-weight: var(--weight-bold); }
+h2 { font-family: var(--font-display); font-size: var(--text-lg); font-weight: var(--weight-bold); font-synthesis: none; }
 h3 { font-size: var(--text-md); font-weight: var(--weight-bold); }
 
 a { color: var(--accent-text); text-underline-offset: 3px; }

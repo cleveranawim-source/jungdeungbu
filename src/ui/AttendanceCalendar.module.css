@@ -51,7 +51,6 @@
   background: var(--accent);
   color: var(--accent-ink);
   font-weight: var(--weight-bold);
-  box-shadow: 0 0 0 2px var(--sun-halo);
 }
 .present .day { transform: none; }
 /* 이번 주: 아직 출석 전이면 점선 고리로 자리만 */

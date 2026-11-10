@@ -15,7 +15,7 @@ import { Loading } from '../ui/Loading';
 import type { StudentTabProps } from './types';
 import s from './HomeTab.module.css';
 
-/** 홈: 이번 주 주보 요약(귤빛 카드 하나) → 축하 → 이번 주 광고. */
+/** 홈: 이번 주 주보 요약(흰 카드 + 남색 버튼) → 축하 → 이번 주 광고. */
 export function HomeTab({ student, token, sundayId }: StudentTabProps) {
   const { data, error, reload } = useLoader(useCallback(async () => {
     const [bulletin, announcements] = await Promise.all([getBulletin(db, sundayId), activeAnnouncements(db, sundayId)]);
@@ -37,7 +37,7 @@ export function HomeTab({ student, token, sundayId }: StudentTabProps) {
   return (
     <>
       {bulletin ? (
-        <Card tone="accent" as="section" className={s.week}>
+        <Card as="section" className={s.week}>
           <p className={s.date}>
             <Icon name="calendar" size={18} />
             {formatMonthDay(sundayId)} 주일
@@ -45,7 +45,7 @@ export function HomeTab({ student, token, sundayId }: StudentTabProps) {
           <h2 className={s.title}>{bulletin.sermonTitle || '이번 주 주보'}</h2>
           {bulletin.scripture && <p className={s.scripture}>{bulletin.scripture}</p>}
           <div className={s.actions}>
-            <LinkButton href={studentHref(token, 'bulletin')} variant="secondary" size="sm" icon={<Icon name="bulletin" size={18} />}>
+            <LinkButton href={studentHref(token, 'bulletin')} block icon={<Icon name="bulletin" size={18} />}>
               주보 보기
             </LinkButton>
           </div>

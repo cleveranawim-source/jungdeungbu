@@ -1,4 +1,3 @@
-import { Sunrise } from '../ui/Sunrise';
 import s from './InvalidLink.module.css';
 
 /**
@@ -8,8 +7,8 @@ import s from './InvalidLink.module.css';
 export function InvalidLink() {
   return (
     <main className={s.page}>
-      <Sunrise at={0.32} className={s.art} />
       <h1 className={s.title}>선생님께 링크를 다시 받아주세요</h1>
+      <span className={s.rule} aria-hidden="true" />
       <p className={s.body}>이 링크로는 들어올 수 없어요. 반 선생님께 말하면 새 링크를 바로 보내 주실 거예요.</p>
     </main>
   );

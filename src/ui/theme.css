@@ -1,61 +1,64 @@
 /*
- * 디자인 토큰 — "주일 아침 햇살"
+ * 디자인 토큰 — "차분하고 단정한 교회"
+ * 남색 잉크 · 아이보리 바탕 · 은은한 금색. 제목은 고운바탕, 본문은 프리텐다드.
  * 이 파일에는 토큰(CSS 변수)만 둔다. 요소 기본값은 base.css, 컴포넌트 모양은 각 *.module.css.
  * 각 토큰의 쓰임새는 docs/design.md 에 적혀 있다. 색은 반드시 이 변수로만 쓴다(컴포넌트에 hex 금지).
+ * 대비는 tests/unit/theme-contrast.test.ts 가 두 모드 모두 지킨다.
  */
 :root {
   color-scheme: light dark;
 
-  /* ── 색: 밝은 모드 (새벽 하늘 남색 잉크 + 해 뜨는 귤빛) ── */
-  --bg: #fff9f3;            /* 화면 바탕: 아침 햇빛이 살짝 도는 흰색 */
-  --card: #ffffff;          /* 카드·탭 바·입력칸 바탕 */
-  --card-raised: #ffffff;   /* 카드 위에 또 올리는 면(시트·메뉴) */
-  --ink: #1e2540;           /* 본문 글자. bg 위 14.4:1 */
-  --muted: #5b6177;         /* 보조 글자(날짜·힌트·비활성 탭). bg 위 5.9:1 */
-  --line: #eadfd2;          /* 카드 테두리·구분선 */
-  --line-strong: #9a8b78;   /* 입력칸 테두리처럼 꼭 보여야 하는 선. card 위 3.3:1 */
+  /* ── 색: 밝은 모드 ── */
+  --bg: #F7F5F0;            /* 화면 바탕: 아이보리 */
+  --card: #FFFFFF;          /* 카드·탭 바·입력칸 바탕 */
+  --card-raised: #FFFFFF;   /* 카드 위에 또 올리는 면(시트·메뉴) */
+  --ink: #1B2A41;           /* 본문 글자(남색). bg 위 13.3:1 */
+  --muted: #5B6474;         /* 보조 글자(날짜 옆 설명·힌트·비활성 탭). bg 위 5.5:1 */
+  --line: #E4DED3;          /* 카드 테두리·구분선 */
+  --line-strong: #9A8F7E;   /* 입력칸 테두리처럼 꼭 보여야 하는 선. card 위 3.2:1 */
 
-  --accent: #ff8b3d;        /* 귤빛 해: 주요 버튼 채움, 선택된 탭 표시 */
-  --accent-press: #f2761f;  /* 주요 버튼을 누르는 동안 */
-  --accent-ink: #1e2540;    /* accent 위 글자. 6.5:1 (흰 글자는 대비 부족이라 쓰지 않는다) */
-  --accent-text: #b8430a;   /* 바탕 위에 귤빛 글자를 쓸 때(링크·강조 숫자). bg 위 5.2:1 */
-  --accent-soft: #ffebda;   /* 은은한 귤빛 면: 선택된 탭 알약, 축하·강조 카드 */
+  --accent: #1B2A41;        /* 주요 버튼 채움, 체크된 출석 이름, 선택된 칩(남색) */
+  --accent-press: #2A3D5C;  /* 주요 버튼을 누르는 동안. 흰 글자 10.9:1 */
+  --accent-ink: #FFFFFF;    /* accent 위 글자 */
+  --accent-text: #7F6430;   /* 바탕 위 금색 글자(날짜·강조 숫자·링크). bg 위 5.1:1 */
+  --accent-soft: #F0EBE0;   /* 은은한 면: 축하 띠, 강조 카드, 눌림 */
 
-  --sun: #ffb13b;           /* 장식 전용 해 그림(글자 X) */
-  --sun-halo: #ffd9a8;      /* 해 둘레 빛무리(장식 전용) */
+  --gold: #B08A43;          /* 장식 전용 금색(선택된 탭 밑줄, 첫 화면 짧은 선). 글자에 쓰지 않는다 */
+  --gold-text: var(--accent-text); /* 금색 글자가 필요할 때 */
 
-  --ok: #237a36;            /* 출석·완료 글자/아이콘. card 위 5.4:1 */
-  --ok-soft: #e3f4e6;       /* 출석 표시 면 */
+  --ok: #237a36;            /* 완료 글자/아이콘. card 위 5.4:1 */
+  --ok-soft: #e3f4e6;
   --danger: #c92a2a;        /* 오류·삭제 글자/아이콘. card 위 5.5:1 */
-  --danger-soft: #fce8e8;   /* 오류 면 */
+  --danger-soft: #fce8e8;
   --danger-ink: #ffffff;    /* danger 채움 버튼 위 글자 */
 
-  --notice-bg: #1e2540;     /* 오프라인 띠·토스트 바탕(반전) */
-  --notice-ink: #fff9f3;    /* 오프라인 띠·토스트 글자 */
+  --notice-bg: #1B2A41;     /* 오프라인 띠·토스트 바탕(반전) */
+  --notice-ink: #F7F5F0;
 
-  --focus: #2f4bc7;         /* 키보드 초점 고리. 2px 띄워 그리므로 바탕 대비가 기준: bg 위 6.8:1 */
-  --scrim: rgb(30 37 64 / 0.45); /* 시트·대화상자 뒤 가림막 */
+  --focus: #2f4bc7;         /* 키보드 초점 고리. bg 위 6.8:1 */
+  --scrim: rgb(27 42 65 / 0.45); /* 시트·대화상자 뒤 가림막 */
 
-  --shadow-card: 0 1px 2px rgb(30 37 64 / 0.05), 0 8px 24px -12px rgb(30 37 64 / 0.18);
-  --shadow-float: 0 4px 12px rgb(30 37 64 / 0.12), 0 16px 40px -16px rgb(30 37 64 / 0.35);
+  --shadow-card: none;      /* 카드는 그림자 없이 얇은 테두리로만 구분한다 */
+  --shadow-float: 0 4px 12px rgb(27 42 65 / 0.10), 0 16px 40px -16px rgb(27 42 65 / 0.30); /* 시트·토스트만 */
 
   /* ── 글꼴 ── */
-  --font-body: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
-  --font-display: "Jua", var(--font-body); /* 화면 제목·랜딩 제목만. 둥근 손글씨 느낌의 한글 */
+  --font-body: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-display: "Gowun Batang", "Noto Serif KR", serif; /* 화면 제목·말씀 제목·섹션 제목·첫 화면 */
 
   --text-xs: 13px;   /* 탭 라벨, 배지 */
   --text-sm: 15px;   /* 힌트·날짜·보조 설명 */
   --text-md: 17px;   /* 본문 기본 */
   --text-lg: 20px;   /* 카드 제목 */
   --text-xl: 26px;   /* 화면 제목(h1) */
-  --text-2xl: 34px;  /* 랜딩·안내 화면의 큰 제목 */
-  --text-display: 64px; /* 랜딩의 "중등부" 한 곳만 */
+  --text-2xl: 34px;  /* 안내 화면의 큰 제목 */
+  --text-display: 56px; /* 첫 화면의 "중등부" 한 곳만 */
 
   --leading-body: 1.65;  /* 한글 본문 줄간격 */
-  --leading-tight: 1.25; /* 제목 줄간격 */
+  --leading-tight: 1.3;  /* 제목 줄간격(명조는 조금 넉넉하게) */
 
   --weight-regular: 400;
   --weight-medium: 500;
+  --weight-semibold: 600;
   --weight-bold: 700;
 
   /* ── 간격 (4/8 리듬) ── */
@@ -71,11 +74,11 @@
   --gutter: var(--space-4);
   --content-max: 640px;
 
-  /* ── 모서리 (위계마다 다르게) ── */
-  --radius-sm: 8px;      /* 배지·작은 칩 */
-  --radius-md: 14px;     /* 버튼·입력칸 */
-  --radius-lg: 22px;     /* 카드 */
-  --radius-pill: 999px;  /* 탭 선택 알약, 토스트 */
+  /* ── 모서리: 살짝만 둥글게 ── */
+  --radius-sm: 6px;      /* 배지·작은 칩 */
+  --radius-md: 10px;     /* 버튼·입력칸 */
+  --radius-lg: 14px;     /* 카드 */
+  --radius-pill: 999px;  /* 둥근 아이콘 버튼 등 꼭 필요한 곳만 */
 
   /* ── 크기 ── */
   --touch: 48px;         /* 버튼·입력칸 최소 높이 (44px 이상) */
@@ -86,11 +89,10 @@
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 
-  /* ── 움직임 ── */
+  /* ── 움직임: 짧고 조용하게 ── */
   --dur-press: 90ms;     /* 누름 반응 */
   --dur-fast: 160ms;     /* 탭 전환 표시, 색 변화 */
   --dur-base: 240ms;     /* 토스트 등장, 펼침 */
-  --dur-slow: 900ms;     /* 랜딩 해돋이 한 번 */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);   /* 들어올 때 */
   --ease-in: cubic-bezier(0.4, 0, 1, 1);        /* 나갈 때 */
 
@@ -99,39 +101,37 @@
   --z-sheet: 20;
 }
 
-/* ── 어두운 모드: 해 뜨기 전 남색 하늘 ── */
+/* ── 어두운 모드: 깊은 남색 바탕, 크림색 글자, 버튼은 금색 채움으로 뒤집는다 ── */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #141a2e;
-    --card: #1d2540;
-    --card-raised: #243052;
-    --ink: #f3eee7;          /* bg 위 15:1, card 위 13:1 */
-    --muted: #a9b0c6;        /* card 위 7:1 */
-    --line: #2e3756;
-    --line-strong: #6b7a99;  /* card 위 3.5:1 */
+    --bg: #121A2B;
+    --card: #1A2438;
+    --card-raised: #22304A;
+    --ink: #EEE9DF;          /* bg 위 14.4:1 */
+    --muted: #A7B0C2;        /* card 위 7.1:1 */
+    --line: #2A3550;
+    --line-strong: #6B7894;  /* card 위 3.5:1 */
 
-    --accent: #ff8b3d;
-    --accent-press: #ffa066;
-    --accent-ink: #141a2e;   /* 7.4:1 */
-    --accent-text: #ffa066;  /* card 위 7.5:1 */
-    --accent-soft: #3a2c33;
+    --accent: #D9BC7E;
+    --accent-press: #E6CD96;
+    --accent-ink: #121A2B;   /* 9.5:1 */
+    --accent-text: #D9BC7E;  /* card 위 8.5:1 */
+    --accent-soft: #23304A;
 
-    --sun: #ffb13b;
-    --sun-halo: #553b33;
+    --gold: #D9BC7E;
 
     --ok: #69db7c;
     --ok-soft: #1f3b30;
     --danger: #ff8787;
     --danger-soft: #3d2330;
-    --danger-ink: #141a2e;
+    --danger-ink: #121A2B;
 
-    --notice-bg: #f3eee7;
-    --notice-ink: #141a2e;
+    --notice-bg: #EEE9DF;
+    --notice-ink: #121A2B;
 
     --focus: #8ea6ff;
     --scrim: rgb(5 8 20 / 0.6);
 
-    --shadow-card: 0 0 0 1px rgb(0 0 0 / 0);
     --shadow-float: 0 12px 32px -12px rgb(0 0 0 / 0.6);
   }
 }
@@ -142,6 +142,5 @@
     --dur-press: 1ms;
     --dur-fast: 1ms;
     --dur-base: 1ms;
-    --dur-slow: 1ms;
   }
 }

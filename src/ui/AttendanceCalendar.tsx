@@ -12,7 +12,7 @@ export interface AttendanceCalendarProps {
 
 /**
  * 주일만 모은 출석 달력. 달마다 한 줄(9월 ○ ○ · ○), 오래된 달이 위, 이번 주가 맨 끝.
- * 출석 = 귤빛 해(날짜가 안에), 결석·기록 없음 = 같은 옅은 점(탓하지 않으려고 겉모습은 같다).
+ * 출석 = 남색(어두운 모드 금색) 채운 동그라미(날짜가 안에), 결석·기록 없음 = 같은 옅은 점(탓하지 않으려고 겉모습은 같다).
  * 칸마다 화면 읽기용 이름("11월 8일 출석" / "결석" / "기록 없음").
  */
 export function AttendanceCalendar({ records, from, to }: AttendanceCalendarProps) {
