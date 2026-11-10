@@ -9,9 +9,11 @@
 .section + .section { margin-top: var(--space-5); border-top: 1px solid var(--line); }
 .heading {
   margin-bottom: var(--space-3);
-  color: var(--accent-text);
-  font-size: var(--text-sm);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
   font-weight: var(--weight-bold);
+  font-synthesis: none;
 }
 
 /* 예배 순서: 순서 이름 ······ 맡은 사람·제목 */

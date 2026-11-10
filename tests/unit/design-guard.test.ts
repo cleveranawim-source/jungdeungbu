@@ -27,3 +27,20 @@ test('햇살 장식과 Jua 가 남지 않는다', () => {
 test('모듈 CSS 에 hex 색이 없다(색은 theme.css 토큰으로만)', () => {
   expect(hits(src.filter((p) => p.endsWith('.module.css')), /#[0-9a-fA-F]{3,8}\b/)).toEqual([]);
 });
+
+/** CSS 모듈에서 `.이름 { … }` 블록 하나를 꺼낸다. */
+function rule(path: string, selector: string): string {
+  const css = readFileSync(path, 'utf8');
+  const m = css.match(new RegExp(`^\\${selector}\\s*\\{([^}]*)\\}`, 'm'));
+  if (!m) throw new Error(`${path} 에 ${selector} 규칙이 없어요`);
+  return m[1];
+}
+
+test('주보의 구역 제목(예배 순서·찬양 등)은 고운바탕', () => {
+  expect(rule('src/ui/BulletinView.module.css', '.heading')).toContain('var(--font-display)');
+});
+
+test('제목 안의 숫자 세기는 프리텐다드(누를 때 폭이 흔들리지 않게)', () => {
+  expect(rule('src/teacher/AttendanceTab.module.css', '.count')).toContain('var(--font-body)');
+  expect(rule('src/teacher/TeacherPrayerTab.module.css', '.count')).toContain('var(--font-body)');
+});

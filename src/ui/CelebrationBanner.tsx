@@ -1,4 +1,4 @@
-import { celebrations } from '../lib/celebrate';
+import { celebrations, emphasisParts } from '../lib/celebrate';
 import type { Student } from '../types';
 import s from './CelebrationBanner.module.css';
 
@@ -13,7 +13,11 @@ export function CelebrationBanner({ student, sundayId }: CelebrationBannerProps)
   if (items.length === 0) return null;
   return (
     <section className={s.banner} aria-label="축하해요">
-      {items.map((c) => <p key={c.kind} className={s.line}>{c.text}</p>)}
+      {items.map((c) => (
+        <p key={c.kind} className={s.line}>
+          {emphasisParts(c.text).map((part, i) => (part.strong ? <strong key={i} className={s.num}>{part.text}</strong> : part.text))}
+        </p>
+      ))}
     </section>
   );
 }

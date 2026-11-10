@@ -8,3 +8,4 @@
 }
 .line { font-size: var(--text-md); font-weight: var(--weight-bold); line-height: var(--leading-tight); }
 .line + .line { padding-top: var(--space-2); border-top: 1px solid var(--line); }
+.num { color: var(--accent-text); font-weight: inherit; }
