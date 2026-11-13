@@ -59,6 +59,7 @@
 .previewChoice label { min-height:var(--touch-min); display:flex; align-items:center; gap:var(--space-2); }
 .previewChoice input { accent-color:var(--accent); width:20px; height:20px; }
 .previewRead { max-width:640px; margin-inline:auto; display:flex; flex-direction:column; gap:var(--space-4); }
-.errorJump { min-height:var(--touch-min); border:0; border-radius:var(--radius-sm); padding:var(--space-2); background:var(--danger-soft); color:var(--danger); font:inherit; font-size:var(--text-sm); font-weight:var(--weight-bold); text-align:left; cursor:pointer; }
 .total { font-size:var(--text-xl); font-weight:var(--weight-bold); font-variant-numeric:tabular-nums; }
 .stack input, .stack textarea { scroll-margin-block:100px 260px; }
+
+.reviewPanel { padding: 0 var(--space-5); background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); }

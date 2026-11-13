@@ -167,6 +167,7 @@ test('임시저장 주보는 학생에게 안 보인다', async ({ page, browser
   await expect(page.getByText('초안', { exact: true })).toBeVisible();
   await expect(page.getByLabel('설교 제목')).toHaveValue('아직 비밀인 제목');
   await page.getByRole('tab', { name: '주보' }).click();
+  await expect(page.getByText('이번 주 주보가 아직 없어요')).toBeVisible();
   await expect(page.getByText('아직 비밀인 제목')).toHaveCount(0);
 });
 

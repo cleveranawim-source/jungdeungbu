@@ -9,7 +9,7 @@ import { InfoCard } from '../ui/InfoCard';
 import { Field, TextArea } from '../ui/Field';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
-import { EditorBar } from './EditorBar';
+import { EditorBar, EditorErrorLink } from './EditorBar';
 import { PairRows } from './PairRows';
 import { EditorLayout, EditorSection } from './EditorLayout';
 import { MAP_ERROR, fromSaved, readForm, snapshot, type Form } from './infoAdminForm';
@@ -232,9 +232,9 @@ export function InfoAdmin() {
         note="모든 주보의 중등부 안내에 반영돼요."
         validation={
           mapError ? (
-            <button type="button" className={s.errorJump} onClick={() => setFocusBad((n) => n + 1)}>
+            <EditorErrorLink onClick={() => setFocusBad((n) => n + 1)}>
               지도 링크를 확인해 주세요 — 고칠 곳으로
-            </button>
+            </EditorErrorLink>
           ) : undefined
         }
         leave={

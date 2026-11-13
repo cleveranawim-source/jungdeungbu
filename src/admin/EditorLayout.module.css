@@ -35,3 +35,5 @@
   .withPreview .desktopNav { grid-column: auto; position: sticky; }
   .withPreview .links { grid-template-columns: 1fr; }
 }
+
+.section:has(> .body > :only-child > h3) > .body { padding-block: 0; }

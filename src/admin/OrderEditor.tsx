@@ -1,4 +1,4 @@
-import { Fragment, useLayoutEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Button } from '../ui/Button';
 import { Icon } from '../ui/icons';
 import { newKey } from './formShape';
@@ -19,6 +19,13 @@ export function OrderEditor({
   scripture: string;
   sermonTitle: string;
 }) {
+  const [wide, setWide] = useState(() => matchMedia('(min-width: 900px)').matches);
+  useEffect(() => {
+    const mq = matchMedia('(min-width: 900px)');
+    const change = () => setWide(mq.matches);
+    mq.addEventListener('change', change);
+    return () => mq.removeEventListener('change', change);
+  }, []);
   const [open, setOpen] = useState<string | null>(null);
   const root = useRef<HTMLDivElement>(null);
   const addRef = useRef<HTMLButtonElement>(null);
@@ -61,7 +68,7 @@ export function OrderEditor({
   }
   return (
     <div ref={root}>
-      <table className={s.table} aria-label="예배 순서 줄">
+      <table className={s.table} role={wide ? undefined : "presentation"} aria-label={wide ? "예배 순서 줄" : undefined}>
         <colgroup>
           <col className={s.numberCol} />
           <col className={s.typeCol} />
@@ -98,16 +105,18 @@ export function OrderEditor({
                       aria-expanded={expanded}
                       aria-controls={id}
                       aria-label={`${n}번 ${r.type || '새 순서'} 편집`}
+                      aria-describedby={`${id}-summary`}
                       onClick={() => setOpen(expanded ? null : r.k)}
                     >
                       <span className={s.number}>{n}</span>
                       <span className={s.summaryCopy}>
                         <strong>{r.type || '새 순서'}</strong>
-                        <span>
-                          {view?.title || '내용을 비워 두었어요'}
+                        <span id={`${id}-summary`}>
+                          {view?.title || ''}
                           {r.detail && <span className={s.person}>{r.detail}</span>}
-                        </span>
+                        {r.standing && <span className="sr-only">일어서서</span>}
                         {view?.from && <small>이번 주 말씀에서 가져와요</small>}
+                        </span>
                       </span>
                       {r.standing && <span className={s.standingMark}>일어서서</span>}
                       <Icon name="chevronDown" size={18} />

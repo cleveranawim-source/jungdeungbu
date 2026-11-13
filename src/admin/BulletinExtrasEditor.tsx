@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { describeError, useToast } from '../app/Toast';
 import { loadBulletinExtras } from '../data/bulletinExtras';
 import { formatBirthdayLines } from '../lib/bulletin';
@@ -39,6 +39,7 @@ export function BulletinExtrasEditor({
   value,
   onChange,
   errors,
+  revealErrors,
 }: {
   /** 주보 날짜 */
   date: string;
@@ -47,12 +48,19 @@ export function BulletinExtrasEditor({
   onChange(update: (prev: ExtrasForm) => Partial<ExtrasForm>): void;
   /** 저장을 눌러 막혔을 때만 */
   errors: ExtrasErrors | null;
+  revealErrors: number;
 }) {
   const { show } = useToast();
   const [loading, setLoading] = useState(false);
   const att = value.att;
   const [classesOpen, setClassesOpen] = useState(false);
   const [peopleOpen, setPeopleOpen] = useState(false);
+  useLayoutEffect(() => {
+    if (revealErrors) {
+      if (errors?.classes.length) setClassesOpen(true);
+      if (errors?.birthdays) setPeopleOpen(true);
+    }
+  }, [revealErrors]);
   const parsed = readExtras(value);
   const counts = parsed.attendance?.students;
   const names = value.newFriends.split('\n').filter((x) => x.trim());
@@ -127,7 +135,7 @@ export function BulletinExtrasEditor({
           <Disclosure
             title="반별 인원 고치기"
             sub={`${att.classes.length}개 반 · 학생 이름은 싣지 않아요`}
-            open={classesOpen || Boolean(errors?.classes.length)}
+            open={classesOpen}
             onOpenChange={setClassesOpen}
           >
             <ul className={s.tallies}>
@@ -172,7 +180,7 @@ export function BulletinExtrasEditor({
       <Disclosure
         title="새 친구·생일 고치기"
         sub={`새 친구 ${names.length}명 · 생일 ${birthdayCount}명`}
-        open={peopleOpen || Boolean(errors?.birthdays)}
+        open={peopleOpen}
         onOpenChange={setPeopleOpen}
       >
         <div className={s.fields}>
@@ -248,7 +256,7 @@ function TallyRow({
       {field('present', '출석', present, onPresent)}
       {field('total', '전체', total, onTotal)}
       {error && (
-        <span className={s.error} id={msg} role="alert">
+        <span className={s.error} id={msg}>
           <Icon name="alert" size={16} />
           {NUMBER_ERROR}
         </span>

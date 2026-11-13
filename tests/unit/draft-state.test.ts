@@ -58,3 +58,24 @@ test('openDraft: 같은 날짜로 이미 열려 있으면 그대로', () => {
   const prev = st({ k: 'a', title: '' }, { k: 'a', title: '고치는 중' });
   expect(openDraft(prev, KEY, { k: 'z', title: '새로 불러온 값' }, null, same, isF)).toBe(prev);
 });
+
+
+test('복구본보다 서버 저장이 새로우면 경고하고 두 값을 보존한다', () => {
+  const base = {k:'a',title:'서버의 새 내용'};
+  const value = {k:'b',title:'이 탭의 내용'};
+  const next = openDraft(null, KEY, base, {draftVersion:1,savedAt:100,value}, same,isF,200);
+  expect(next.serverNewer).toBe(true);
+  expect(next.localSavedAt).toBe(100);
+  expect(next.value).toEqual(value);
+  expect(next.base).toEqual(base);
+});
+test('복구본이 최신이면 경고하지 않고 잘못된 저장 시각은 복구하지 않는다', () => {
+  const base = {k:'a',title:'서버'};
+  const value = {k:'b',title:'로컬'};
+  expect(openDraft(null, KEY, base, {draftVersion:1,savedAt:300,value},same,isF,200).serverNewer).toBeUndefined();
+  expect(openDraft(null, KEY, base, {draftVersion:1,savedAt:'잘못된 날짜',value},same,isF,200).recovered).toBe(false);
+});
+test('저장 시각 없는 기존 복구본도 서버와 비교해 주의를 알린다', () => {
+  const base = {k:'a',title:'서버'};
+  expect(openDraft(null, KEY,base,{k:'b',title:'로컬'},same,isF,200).serverNewer).toBe(true);
+});

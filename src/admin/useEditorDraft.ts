@@ -19,8 +19,8 @@ function readStored(key: string): unknown {
     return null; // 개인 정보 보호 모드·막힌 저장소·깨진 값
   }
 }
-function writeStored(key: string, v: unknown): void {
-  try { sessionStorage.setItem(STORE + key, JSON.stringify(v)); } catch { /* 저장소가 막혀도 편집은 계속 */ }
+function writeStored(key: string, v: unknown, savedAt = Date.now()): void {
+  try { sessionStorage.setItem(STORE + key, JSON.stringify({ draftVersion: 1, savedAt, value: v })); } catch { /* 저장소가 막혀도 편집은 계속 */ }
 }
 function clearStored(key: string): void {
   try { sessionStorage.removeItem(STORE + key); } catch { /* 위와 같음 */ }
@@ -36,8 +36,9 @@ export interface EditorDraft<T> {
   dirty: boolean;
   /** 열 때 sessionStorage 에서 저장 안 된 내용을 되살렸는지 */
   recovered: boolean;
+  serverNewer: boolean;
   /** 불러온 저장값으로 폼을 연다(복구본이 있으면 그걸로). 같은 날짜로 이미 열려 있으면 아무것도 안 한다 */
-  open(base: T): void;
+  open(base: T, serverSavedAt?: number): void;
   /**
    * 저장 성공: sent(저장을 누른 순간의 폼으로 만든 값)가 새 저장값. 그 사이 더 고친 내용은 그대로 남아
    * 계속 "저장 안 한 내용"(복구본도 남음). 열려 있던 날짜 이동 확인은 닫는다.
@@ -82,15 +83,15 @@ export function useEditorDraft<T>(
   useEffect(() => {
     if (!state || state.key !== key) return;
     if (same(state.value, state.base)) clearStored(key);
-    else writeStored(key, state.value);
+    else writeStored(key, state.value, state.localSavedAt);
   }, [state, key, same]);
 
-  const open = useCallback((base: T) => {
-    setState((prev) => (prev && prev.key === key ? prev : openDraft(prev, key, base, readStored(key), same, isValid)));
+  const open = useCallback((base: T, serverSavedAt = 0) => {
+    setState((prev) => (prev && prev.key === key ? prev : openDraft(prev, key, base, readStored(key), same, isValid, serverSavedAt)));
   }, [key, same, isValid]);
 
   const set = useCallback((update: (prev: T) => T) => {
-    setState((prev) => (prev && prev.key === key ? { ...prev, value: update(prev.value) } : prev));
+    setState((prev) => (prev && prev.key === key ? { ...prev, value: update(prev.value), localSavedAt: Date.now() } : prev));
   }, [key]);
 
   const saved = useCallback((sent: T) => {
@@ -110,7 +111,7 @@ export function useEditorDraft<T>(
     setPending(null);
   }, [key]);
   const keepLocal = useCallback(() => {
-    if (state?.key === key && !same(state.value, state.base)) writeStored(key, state.value);
+    if (state?.key === key && !same(state.value, state.base)) writeStored(key, state.value, state.localSavedAt);
   }, [state, key, same]);
 
   const requestDate = useCallback((d: string) => {
@@ -144,6 +145,7 @@ export function useEditorDraft<T>(
     set,
     dirty,
     recovered: ready && state.recovered,
+    serverNewer: ready && Boolean(state.serverNewer),
     open,
     saved,
     revert,

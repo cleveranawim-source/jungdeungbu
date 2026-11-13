@@ -60,7 +60,7 @@ async function loadExtras(page: Page): Promise<void> {
 test('새 주보: 종이 주보 순서와 다음 호수로 시작한다', async ({ page }) => {
   await openEditor(page);
   await expect(page.getByLabel('호수')).toHaveValue('2026-42호');
-  await expect(page.getByRole('table', { name: '예배 순서 줄' }).locator('[data-order-summary]')).toHaveCount(12);
+  await expect(page.locator('#editor-order [data-order-summary]')).toHaveCount(12);
   await expect(page.getByLabel('2번 일어서서', { exact: true })).toBeChecked();
   await expect(page.getByLabel('1번 일어서서', { exact: true })).not.toBeChecked();
   // 자동으로 불러오지 않는다(버튼만)
@@ -103,7 +103,7 @@ test('불러오기 → 고치기 → 게시하면 학생에게 보인다', async
   await expect(student.getByText('한가람 학생')).toBeVisible();
   await expect(student.getByText('학생 2 / 3명')).toBeVisible();
   await expect(student.getByText('교사 13 / 15명')).toBeVisible();
-  await expect(student.getByRole('region', { name: '새 친구' }).getByText('새봄')).toBeVisible();
+  await expect(student.getByRole('region', { name: '새 친구로 맞이해요' }).getByText('새봄')).toBeVisible();
   await expect(student.getByRole('region', { name: '이번 달 생일' }).getByText('새봄')).toBeVisible();
 });
 
@@ -115,10 +115,12 @@ test('숫자가 틀리면 저장하지 않고 그 칸에 알려 준다', async (
   await present.fill('9'); // 전체 3보다 많다
 
   await page.getByRole('button', { name: '초안 저장', exact: true }).click();
-  await expectToast(page, '고칠 곳이 있어요', 'error');
+  await expect(page.getByRole('status').filter({ hasText: '출석 인원을 확인해 주세요 — 고칠 곳으로' })).toBeVisible();
   await expect(page.getByText(NUMBER_ERROR)).toBeVisible();
   await expect(present).toHaveAttribute('aria-invalid', 'true');
   await expect(present).toBeFocused();
+  await page.getByRole('button', { name: /반별 인원 고치기/ }).click();
+  await expect(page.getByLabel('1-1 출석', { exact: true })).toBeHidden();
   await page.getByRole('button', { name: '출석 인원을 확인해 주세요 — 고칠 곳으로' }).click();
   await expect(present).toBeFocused();
   await expect(page.getByText('새 주보', { exact: true })).toBeVisible(); // 저장 안 됨
@@ -186,7 +188,7 @@ test('다시 열어도 그대로이고, 출석 지우기로 뺄 수 있다', asy
   await expectToast(page, '게시했어요');
 
   const { page: student } = await openStudent(browser, `#/s/${TOKEN_GA}/bulletin`);
-  await expect(student.getByRole('region', { name: '새 친구' }).getByText('새봄')).toBeVisible();
+  await expect(student.getByRole('region', { name: '새 친구로 맞이해요' }).getByText('새봄')).toBeVisible();
   await expect(student.getByText('지난 주 함께한 인원')).toHaveCount(0);
   await expect(student.getByText('인도: 정한결 선생님')).toBeVisible();
 });

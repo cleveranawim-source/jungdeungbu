@@ -86,6 +86,9 @@ test('게시 내리기는 학생에게 숨기고 작성 내용은 남긴다', as
   const { page: student } = await openStudent(browser, `#/s/${TOKEN}/bulletin`);
   await expect(student.getByText('이번 주 주보가 아직 없어요')).toBeVisible();
   await expect(student.getByText(BEFORE)).toHaveCount(0);
+  await page.getByRole('tab', { name: '주보' }).click();
+  await expect(page.getByText('학생에게는 아직 보이지 않아요')).toBeVisible();
+  await expect(page.getByRole('cell', { name: BEFORE, exact: true })).toBeVisible();
 });
 test('초안을 버리면 게시본으로 돌아가며 학생 화면은 유지된다', async ({ page, browser }) => {
   await published(page);

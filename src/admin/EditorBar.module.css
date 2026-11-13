@@ -101,3 +101,6 @@
   .bar > button { grid-column: 1 / -1; grid-row: 2; }
   .bar > .confirm { grid-column: 1 / -1; grid-row: 1; }
 }
+
+.errorJump { min-height:var(--touch-min); border:0; border-radius:var(--radius-sm); padding:var(--space-2); background:var(--danger-soft); color:var(--danger); font:inherit; font-size:var(--text-sm); font-weight:var(--weight-bold); text-align:left; cursor:pointer; }
+.recoveredText strong { display:block; font-weight:var(--weight-medium); margin-top:var(--space-1); }

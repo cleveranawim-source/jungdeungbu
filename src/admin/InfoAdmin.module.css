@@ -9,5 +9,4 @@
 .intro p { font-size:var(--text-sm); }
 .kicker { color:var(--cover-muted); }
 .previewTitle { font-family:var(--font-display); font-size:var(--text-lg); margin-bottom:var(--space-2); }
-.errorJump { min-height:var(--touch-min); border:0; border-radius:var(--radius-sm); padding:var(--space-2); background:var(--danger-soft); color:var(--danger); font:inherit; font-size:var(--text-sm); text-align:left; cursor:pointer; }
 .stack input, .stack textarea { scroll-margin-block:100px 240px; }

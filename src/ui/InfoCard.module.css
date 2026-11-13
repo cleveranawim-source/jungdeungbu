@@ -14,3 +14,5 @@
 .pairs dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .bullets { margin: 0; padding-left: 1.2em; font-size: var(--text-sm); }
 .bullets li + li { margin-top: var(--space-3); }
+
+.pairs dd { white-space: pre-line; }

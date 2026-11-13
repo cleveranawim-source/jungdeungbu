@@ -1,34 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { BULLETIN_BRAND } from '../app/brand';
 import { teacherHref } from '../app/router';
-import { describeError, useToast } from '../app/Toast';
 import { useLoader } from '../app/useLoader';
 import {
   activeAnnouncements,
   getSermon,
   getTemplate,
   listBulletins,
-  saveTemplate,
 } from '../data/content';
-import {
-  loadBulletinForEdit,
-  saveBulletinDraft,
-  publishBulletin,
-  unpublishBulletin,
-  discardBulletinDraft,
-} from '../data/bulletinDrafts';
+import { loadBulletinForEdit } from '../data/bulletinDrafts';
 import { getChurchInfo, getMemberInfo } from '../data/info';
 import { nextIssue } from '../lib/bulletin';
 import { formatAgo, formatMonthDay, shiftDateId } from '../lib/dates';
 import { db } from '../lib/firebase';
 import { EMPTY_BULLETIN_EXTRAS, type Bulletin, type BulletinEditStatus } from '../types';
 import { AnnouncementList } from '../ui/AnnouncementList';
-import { BulletinView } from '../ui/BulletinView';
 import { Button, LinkButton } from '../ui/Button';
-import { ConfirmAction } from '../ui/ConfirmAction';
 import { Disclosure } from '../ui/Disclosure';
 import { Field, TextArea } from '../ui/Field';
-import { InfoCard } from '../ui/InfoCard';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
 import { BulletinExtrasEditor } from './BulletinExtrasEditor';
@@ -38,17 +26,19 @@ import {
   isForm,
   readForm,
   toHymns,
-  toOrder,
   toRows,
   type BulletinForm,
 } from './bulletinEditorForm';
-import { EditorBar, EditorHead, StateBadge } from './EditorBar';
+import { EditorBar, EditorErrorLink, EditorHead, StateBadge } from './EditorBar';
 import { EditorLayout, EditorSection } from './EditorLayout';
 import { HymnEditor } from './HymnEditor';
 import { OrderEditor } from './OrderEditor';
 import { PairRows } from './PairRows';
 import { useEditorDraft } from './useEditorDraft';
 import { useNow } from './editorUtils';
+import { useBulletinActions } from './useBulletinActions';
+import { BulletinPreview } from './BulletinPreview';
+import { PublishManagement } from './PublishManagement';
 import s from './BulletinEditor.module.css';
 
 const STATUS: Record<BulletinEditStatus, string> = {
@@ -57,11 +47,6 @@ const STATUS: Record<BulletinEditStatus, string> = {
   published: '게시 중',
   'published-with-draft': '게시 중 · 고친 초안 있음',
 };
-interface Meta {
-  status: BulletinEditStatus;
-  draftAt: number | null;
-  publishedAt: number | null;
-}
 export function BulletinEditor({
   myUid,
   thisSunday,
@@ -73,13 +58,8 @@ export function BulletinEditor({
   initialDate?: string;
   onDateChange?(date: string): void;
 }) {
-  const { show } = useToast();
   const [date, setDate] = useState(initialDate);
   const draft = useEditorDraft<BulletinForm>('bulletin', date, setDate, comparable, isForm);
-  const [busy, setBusy] = useState<
-    'draft' | 'publish' | 'template' | 'unpublish' | 'discard' | null
-  >(null);
-  const [savedMeta, setSavedMeta] = useState<{ date: string; meta: Meta } | null>(null);
   const [copied, setCopied] = useState<{
     date: string;
     from: string;
@@ -87,16 +67,9 @@ export function BulletinEditor({
   } | null>(null);
   const [checked, setChecked] = useState<string | null>(null);
   const [focusBad, setFocusBad] = useState(0);
-  const [publicPreview, setPublicPreview] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
   const refocusTitle = useRef(false);
-  useEffect(() => {
-    if (!busy && refocusTitle.current) {
-      refocusTitle.current = false;
-      titleRef.current?.focus();
-    }
-  }, [busy]);
   const now = useNow();
   useEffect(() => {
     onDateChange?.(date);
@@ -147,11 +120,29 @@ export function BulletinEditor({
             },
             null,
           ),
+      Math.max(loaded.edit.draftSavedAt?.toMillis() ?? 0, loaded.edit.publishedAt?.toMillis() ?? 0),
     );
   }, [loaded, open]);
   useEffect(() => {
-    if (focusBad) rootRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+    if (!focusBad) return;
+    const frame = requestAnimationFrame(() => rootRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus());
+    return () => cancelAnimationFrame(frame);
   }, [focusBad]);
+  function focusProblem() {
+    setChecked(date);
+    setFocusBad((n) => n + 1);
+  }
+  const { busy, meta, hasPublished, save, saveAsTemplate, takeDown, discard } = useBulletinActions({
+    date, myUid, edit:loaded?.edit, draft, focusProblem,
+    onSaved: (published) => { setCopied(null); setChecked(null); if(published) void past.reload(); },
+    onDestructive: () => { refocusTitle.current = true; },
+  });
+  useEffect(() => {
+    if (!busy && refocusTitle.current) {
+      refocusTitle.current = false;
+      titleRef.current?.focus();
+    }
+  }, [busy]);
   const form = draft.value;
   if (!loaded || !form)
     return one.error && !one.loading ? (
@@ -159,100 +150,13 @@ export function BulletinEditor({
     ) : (
       <Loading />
     );
-  const meta: Meta =
-    savedMeta?.date === date
-      ? savedMeta.meta
-      : {
-          status: loaded.edit.status,
-          draftAt: loaded.edit.draftSavedAt?.toMillis() ?? null,
-          publishedAt: loaded.edit.publishedAt?.toMillis() ?? null,
-        };
-  const hasPublished = meta.status === 'published' || meta.status === 'published-with-draft';
   const read = readForm(form);
   const errors = checked === date ? read.errors : null;
   const source = past.data?.find((b) => b.date < date);
   const update = (patch: Partial<BulletinForm>) => draft.set((f) => ({ ...f, ...patch }));
-  function focusProblem() {
-    setChecked(date);
-    setFocusBad((n) => n + 1);
-  }
-  async function save(published: boolean) {
-    const sent = readForm(form!);
-    if (sent.errors) {
-      focusProblem();
-      show('고칠 곳이 있어요', 'error');
-      return;
-    }
-    setBusy(published ? 'publish' : 'draft');
-    try {
-      const content = { date, ...sent.doc };
-      if (published) await publishBulletin(db, myUid, content, sent.members);
-      else await saveBulletinDraft(db, myUid, content, sent.members);
-      draft.saved(fromSaved(sent.doc, sent.members));
-      setSavedMeta({
-        date,
-        meta: {
-          status: published ? 'published' : hasPublished ? 'published-with-draft' : 'draft',
-          draftAt: published ? null : Date.now(),
-          publishedAt: published ? Date.now() : meta.publishedAt,
-        },
-      });
-      setCopied(null);
-      setChecked(null);
-      show(published ? '게시했어요' : '초안을 저장했어요');
-      if (published) void past.reload();
-    } catch (e) {
-      show(describeError(e), 'error');
-    } finally {
-      setBusy(null);
-    }
-  }
-  async function saveAsTemplate() {
-    setBusy('template');
-    try {
-      await saveTemplate(db, { order: toOrder(form!.order) });
-      show('기본 순서를 저장했어요');
-    } catch (e) {
-      show(describeError(e), 'error');
-    } finally {
-      setBusy(null);
-    }
-  }
   function copyFrom(b: Bulletin) {
     setCopied({ date, from: b.date, before: { order: form!.order, hymns: form!.hymns } });
     update({ order: toRows(b.order), hymns: toHymns(b.hymns) });
-  }
-  async function takeDown() {
-    setBusy('unpublish');
-    try {
-      await unpublishBulletin(db, myUid, date);
-      setSavedMeta({ date, meta: { ...meta, status: 'draft', publishedAt: null } });
-      refocusTitle.current = true;
-      show('게시를 내렸어요');
-    } finally {
-      setBusy(null);
-    }
-  }
-  async function discard() {
-    setBusy('discard');
-    try {
-      await discardBulletinDraft(db, date);
-      const edit = await loadBulletinForEdit(db, date);
-      if (edit.content) draft.replace(fromSaved(edit.content, edit.members));
-      setSavedMeta({
-        date,
-        meta: {
-          status: edit.status,
-          draftAt: edit.draftSavedAt?.toMillis() ?? null,
-          publishedAt: edit.publishedAt?.toMillis() ?? null,
-        },
-      });
-      setChecked(null);
-      refocusTitle.current = true;
-      show('초안을 버렸어요');
-    } finally {
-      setBusy(null);
-    }
   }
   const pending = draft.pending;
   const status = (
@@ -270,8 +174,9 @@ export function BulletinEditor({
             ? `${formatAgo(meta.publishedAt, now)} 게시`
             : meta.status === 'new'
               ? '기본 순서로 시작했어요'
-              : '아직 게시하지 않았어요'}
+              : '학생에게 보이지 않아요'}
       </span>
+      {meta.draftAt && meta.publishedAt && <span>학생이 보는 게시본: {formatAgo(meta.publishedAt, now)} 게시</span>}
     </>
   );
   return (
@@ -285,6 +190,7 @@ export function BulletinEditor({
         onRequestDate={draft.requestDate}
         confirmDate={pending?.kind === 'date' ? { onStay: draft.stay, onLeave: draft.leave } : null}
         recovered={draft.recovered}
+        serverNewer={draft.serverNewer}
         onRevert={draft.revert}
         status={status}
       />
@@ -478,87 +384,13 @@ export function BulletinEditor({
               date={date}
               value={form}
               errors={errors}
+              revealErrors={focusBad}
               onChange={(fn) => draft.set((f) => ({ ...f, ...fn(f) }))}
             />
           </EditorSection>
           <section id="editor-preview" tabIndex={-1} className={s.previewSection}>
-            <Disclosure title="게시 전 미리보기" level={2}>
-              {read.errors ? (
-                <p>미리보기 전에 출석 인원과 생일을 확인해 주세요.</p>
-              ) : (
-                <>
-                  <fieldset className={s.previewChoice}>
-                    <legend>미리보기 범위</legend>
-                    <label>
-                      <input
-                        type="radio"
-                        name="preview"
-                        checked={!publicPreview}
-                        onChange={() => setPublicPreview(false)}
-                      />
-                      개인 링크 화면
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        name="preview"
-                        checked={publicPreview}
-                        onChange={() => setPublicPreview(true)}
-                      />
-                      공개 안내만
-                    </label>
-                  </fieldset>
-                  <div className={s.previewRead}>
-                    <BulletinView
-                      bulletin={{ date, ...read.doc }}
-                      sermon={loaded.sermon}
-                      members={publicPreview ? null : read.members}
-                      announcements={news.data ?? []}
-                      coverLabel={BULLETIN_BRAND.label}
-                      coverDescription={BULLETIN_BRAND.description}
-                    />
-                    {info.data && (
-                      <InfoCard
-                        info={info.data.church}
-                        members={publicPreview ? null : info.data.members}
-                      />
-                    )}
-                  </div>
-                </>
-              )}
-            </Disclosure>
-            {(hasPublished || meta.status === 'published-with-draft') && (
-              <Disclosure title="게시 관리" level={2}>
-                <div
-                  className={s.fields}
-                  onFocus={(event) => {
-                    // 저장 줄에 가리지 않게 확인 설명과 버튼을 함께 보여 줘요.
-                    (event.target as HTMLElement)
-                      .closest('[role="group"]')
-                      ?.scrollIntoView({ block: 'center' });
-                  }}
-                >
-                  {hasPublished && (
-                    <ConfirmAction
-                      label="게시 내리기"
-                      message="학생 화면에서 이 주보가 내려가요. 내용은 남아 있어 다시 게시할 수 있어요."
-                      confirmLabel="게시를 내려요"
-                      disabled={busy !== null}
-                      onConfirm={takeDown}
-                    />
-                  )}
-                  {meta.status === 'published-with-draft' && (
-                    <ConfirmAction
-                      label="초안 버리기"
-                      message="서버 초안과 지금 고친 내용을 버리고, 학생이 보고 있는 게시본으로 돌아가요."
-                      confirmLabel="초안을 버리고 돌아가기"
-                      disabled={busy !== null}
-                      onConfirm={discard}
-                    />
-                  )}
-                </div>
-              </Disclosure>
-            )}
+            <BulletinPreview date={date} read={read} sermon={loaded.sermon} announcements={news.data ?? []} info={info.data} />
+            <PublishManagement hasPublished={hasPublished} hasDraft={meta.status === 'published-with-draft'} busy={busy !== null} takeDown={takeDown} discard={discard} />
           </section>
         </EditorLayout>
       </div>
@@ -571,10 +403,10 @@ export function BulletinEditor({
         }
         validation={
           errors ? (
-            <button className={s.errorJump} type="button" onClick={focusProblem}>
+            <EditorErrorLink onClick={focusProblem}>
               {errors.classes.length || errors.teachers ? '출석 인원' : '생일 날짜'}을 확인해 주세요
               — 고칠 곳으로
-            </button>
+            </EditorErrorLink>
           ) : undefined
         }
         leave={pending?.kind === 'nav' ? { onStay: draft.stay, onLeave: draft.leave } : null}
