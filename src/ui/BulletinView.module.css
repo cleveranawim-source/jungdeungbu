@@ -6,7 +6,7 @@
 .heading { font-family: var(--font-display); font-size: var(--text-lg); font-weight: var(--weight-bold); font-synthesis: none; }
 .worshipHead { border-bottom: 2px solid var(--ink); padding-bottom: var(--space-4); text-align: center; }
 .leaderName { color: var(--muted); font-size: var(--text-sm); margin-top: var(--space-2); text-align: right; }
-.opening { margin: var(--space-5) 0; padding: var(--space-4); background: var(--accent-soft); border-radius: var(--radius-sm); font-size: var(--text-sm); text-align: center; }
+.opening { margin: var(--space-3) 0; padding: var(--space-2) 0; font-size: var(--text-sm); text-align: center; }
 .opening cite { display: block; font-style: normal; color: var(--muted); margin-top: var(--space-2); }
 .order { border-collapse: collapse; table-layout: fixed; width: 100%; margin-top: var(--space-4); }
 .typeCol { width: 27%; } .titleCol { width: 46%; } .personCol { width: 27%; }

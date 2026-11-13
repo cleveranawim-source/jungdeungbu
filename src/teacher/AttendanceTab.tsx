@@ -66,7 +66,7 @@ export function AttendanceTab({ uid, teacher, thisSunday }: TeacherTabProps) {
 
   return (
     <div className={s.layout}>
-      <Card className={s.controls} title="함께 예배하는 주일" tone="gold">
+      <Card className={s.controls}>
         <SundayStepper
           label="출석 날짜"
           value={dateId}
@@ -80,7 +80,7 @@ export function AttendanceTab({ uid, teacher, thisSunday }: TeacherTabProps) {
         key={current}
         marks={marks}
         classId={current}
-        className={classes.data.length < 2 ? klass.name : undefined}
+        className={klass.name}
         dateId={dateId}
         thisSunday={thisSunday}
         isAdmin={isAdmin}

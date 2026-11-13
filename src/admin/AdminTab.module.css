@@ -20,12 +20,11 @@
   overflow: hidden;
 }
 .groupHead {
-  background: var(--sage-bg);
-  color: var(--sage-ink);
+  border-bottom: 1px solid var(--line);
   padding: var(--space-5);
 }
 .groupHead h2 {
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
 }
 .groupHead p {
   margin-top: var(--space-2);
@@ -36,6 +35,7 @@
   color: var(--cover-ink);
   padding-block: var(--space-6);
 }
+.week .groupHead h2 { font-size: var(--text-xl); }
 .week .groupHead p {
   color: var(--cover-muted);
 }
@@ -67,7 +67,7 @@
 .mark {
   display: grid;
   flex-shrink: 0;
-  color: var(--accent-text);
+  color: var(--muted);
 }
 .text {
   flex: 1;

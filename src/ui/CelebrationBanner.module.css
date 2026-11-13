@@ -7,6 +7,7 @@
   background: var(--sage-bg);
   color: var(--sage-ink);
 }
-.line { font-size: var(--text-md); font-weight: var(--weight-bold); line-height: var(--leading-tight); }
+.line { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-md); font-weight: var(--weight-medium); line-height: var(--leading-tight); }
+.line > svg { flex-shrink: 0; }
 .line + .line { padding-top: var(--space-2); border-top: 1px solid currentColor; }
-.num { color: var(--sage-ink); font-weight: inherit; }
+.num { color: var(--sage-ink); font-weight: var(--weight-bold); }

@@ -111,7 +111,7 @@ function Roster({
     );
   }
   return (
-    <Card title={`${className} ${students.data.length}명`} tone="sage">
+    <Card title={`${className} ${students.data.length}명`} tone="work">
       <ul className={s.list} aria-label="학생 목록">
         {students.data.map((st) => {
           const streak = activeStreak(st, thisSunday);

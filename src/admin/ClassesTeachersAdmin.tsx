@@ -72,7 +72,7 @@ export function ClassesTeachersAdmin({
 
   return (
     <div className={s.stack} aria-busy={loading || undefined}>
-      <Card title="반" tone="sage">
+      <Card title="반" tone="work">
         {classes.length === 0 ? (
           <p className={s.muted}>아직 반이 없어요. 아래에서 첫 반을 만들어 주세요.</p>
         ) : (
@@ -104,7 +104,7 @@ export function ClassesTeachersAdmin({
         />
       </Card>
 
-      <Card title="선생님 초대" tone="gold">
+      <Card title="선생님 초대" tone="work">
         <NewInvite classes={classes} registered={registered} onSaved={reload} />
         {pending.length > 0 && (
           <div className={s.sub}>
@@ -134,7 +134,7 @@ export function ClassesTeachersAdmin({
         )}
       </Card>
 
-      <Card title="등록된 선생님" tone="sage">
+      <Card title="등록된 선생님" tone="work">
         {teachers.length === 0 ? (
           <p className={s.muted}>초대받은 선생님이 로그인하면 여기에 보여요.</p>
         ) : (

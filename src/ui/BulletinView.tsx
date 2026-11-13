@@ -66,6 +66,7 @@ export function BulletinView({
       <div className={s.layout} data-reading-columns={information ? 'double' : 'single'}>
         <div className={s.main}>
           <IllustratedCover
+            compact
             title={
               <>
                 {formatMonthDay(bulletin.date)} <br />

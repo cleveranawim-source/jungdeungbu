@@ -23,6 +23,14 @@
 .body > * + * {
   margin-top: var(--space-3);
 }
+.work > .title {
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
 
 .gold,
 .sage {

@@ -213,17 +213,19 @@ export function BulletinEditor({
             tone="gold"
           >
             <div className={s.fields}>
-              <Field
-                ref={titleRef}
-                label="설교 제목"
-                value={form.sermonTitle}
-                onChange={(e) => update({ sermonTitle: e.target.value })}
-              />
-              <Field
-                label="성경 본문"
-                value={form.scripture}
-                onChange={(e) => update({ scripture: e.target.value })}
-              />
+              <div className={s.wordPair}>
+                <Field
+                  ref={titleRef}
+                  label="설교 제목"
+                  value={form.sermonTitle}
+                  onChange={(e) => update({ sermonTitle: e.target.value })}
+                />
+                <Field
+                  label="성경 본문"
+                  value={form.scripture}
+                  onChange={(e) => update({ scripture: e.target.value })}
+                />
+              </div>
               {loaded.sermon?.title && loaded.sermon.title !== form.sermonTitle && (
                 <Button
                   variant="secondary"
@@ -253,17 +255,19 @@ export function BulletinEditor({
                   onChange={(e) => update({ leader: e.target.value })}
                 />
               </div>
-              <TextArea
-                label="여는 말씀"
-                rows={2}
-                value={form.openingText}
-                onChange={(e) => update({ openingText: e.target.value })}
-              />
-              <Field
-                label="말씀 출처"
-                value={form.openingRef}
-                onChange={(e) => update({ openingRef: e.target.value })}
-              />
+              <div className={s.openingPair}>
+                <TextArea
+                  label="여는 말씀"
+                  rows={2}
+                  value={form.openingText}
+                  onChange={(e) => update({ openingText: e.target.value })}
+                />
+                <Field
+                  label="말씀 출처"
+                  value={form.openingRef}
+                  onChange={(e) => update({ openingRef: e.target.value })}
+                />
+              </div>
             </div>
           </EditorSection>
           <EditorSection

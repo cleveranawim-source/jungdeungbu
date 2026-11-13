@@ -65,7 +65,7 @@ export function AnnouncementsAdmin({ thisSunday }: { thisSunday: string }) {
 
   return (
     <div className={s.stack} aria-busy={loading || undefined}>
-      <Card title="광고" tone="sage">
+      <Card title="광고" tone="work">
         {ads.length === 0 ? (
           <p className={s.muted}>아직 광고가 없어요. 아래에서 첫 광고를 추가해 주세요.</p>
         ) : (
@@ -126,7 +126,7 @@ export function AnnouncementsAdmin({ thisSunday }: { thisSunday: string }) {
         )}
       </Card>
 
-      <Card title="새 광고" tone="gold">
+      <Card title="새 광고" tone="work">
         <AdForm
           thisSunday={thisSunday}
           label="새 광고"

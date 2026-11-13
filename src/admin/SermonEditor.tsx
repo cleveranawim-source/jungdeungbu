@@ -133,7 +133,7 @@ export function SermonEditor({ thisSunday }: { thisSunday: string }) {
       />
 
       <div className={s.columns}>
-        <Card title="설교" tone="gold">
+        <Card title="설교" tone="work">
           <div className={s.fields}>
             <Field
               ref={titleRef}
@@ -174,7 +174,7 @@ export function SermonEditor({ thisSunday }: { thisSunday: string }) {
           </div>
         </Card>
 
-        <Card title="적용 질문" tone="sage">
+        <Card title="적용 질문" tone="work">
           <QuestionEditor
             questions={form.questions}
             onChange={(questions) => update({ questions })}

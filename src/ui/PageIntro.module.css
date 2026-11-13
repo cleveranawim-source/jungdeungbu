@@ -1,13 +1,12 @@
 .intro {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-5);
-  padding: var(--space-6);
-  border-radius: var(--radius-lg);
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--line);
 }
 .intro h2 {
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   text-wrap: balance;
 }
 .intro p {
@@ -15,7 +14,12 @@
   font-size: var(--text-sm);
   max-width: 42em;
 }
-.intro > svg {
+.mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
   flex-shrink: 0;
 }
 .sage {

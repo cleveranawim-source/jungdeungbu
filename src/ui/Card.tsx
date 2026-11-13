@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import s from './Card.module.css';
 
-export type CardTone = 'default' | 'accent' | 'quiet' | 'gold' | 'sage';
+export type CardTone = 'default' | 'accent' | 'quiet' | 'gold' | 'sage' | 'work';
 
 export interface CardProps {
   /** 카드 제목(h2). 화면 제목(h1)은 Screen 이 맡는다. */

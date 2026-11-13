@@ -30,6 +30,27 @@ test.beforeEach(async () => {
   });
 });
 
+test('네 반 이상은 선택 칸에서 반을 바꾸고, 반 ID는 DOM에 남기지 않아요', async ({ page }) => {
+  await seed(async db => {
+    await setDoc(doc(db, 'classes', 'classC'), { name: '3반', grade: 1, order: 3 });
+    await setDoc(doc(db, 'classes', 'classD'), { name: '4반', grade: 1, order: 4 });
+  });
+  await page.setViewportSize({ width: 360, height: 800 });
+  await loginAsEmu(page, ADMIN, '관리자');
+  const picker = page.getByRole('combobox', { name: '반', exact: true });
+  await expect(picker).toHaveValue('0');
+  await expect(page.getByRole('button', { name: /김하늘/ })).toBeVisible();
+  await picker.selectOption({ label: '2반' });
+  await expect(page.getByRole('button', { name: /이바다/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /김하늘/ })).toHaveCount(0);
+  await picker.selectOption({ label: '4반' });
+  await expect(page.getByRole('heading', { name: '이 반에는 아직 학생이 없어요' })).toBeVisible();
+  await page.getByRole('tab', { name: '우리 반' }).click();
+  await page.getByRole('combobox', { name: '반', exact: true }).selectOption({ label: '1반' });
+  await expect(page.getByRole('link', { name: /김하늘/ })).toBeVisible();
+  expect(await page.locator('html').innerHTML()).not.toMatch(/\bclass[A-D]\b/);
+});
+
 test('교사가 출석을 찍으면 학생 "나" 탭에 보인다', async ({ page, browser }) => {
   await loginAsEmu(page, ADMIN, '관리자');
   await expect(page.getByRole('tab', { name: '출석' })).toHaveAttribute('aria-selected', 'true');

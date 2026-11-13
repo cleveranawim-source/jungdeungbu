@@ -159,7 +159,7 @@ export function RosterAdmin() {
 
       <div className={s.columns}>
         <Card
-          tone="sage"
+          tone="work"
           title={
             filter === ALL ? `학생 ${students.length}명` : `${className(filter)} ${shown.length}명`
           }
@@ -399,7 +399,7 @@ function NewStudent({
   }
 
   return (
-    <Card title="학생 추가" tone="gold">
+    <Card title="학생 추가" tone="work">
       <form className={s.form} onSubmit={submit} noValidate aria-label="학생 추가">
         <Field
           label="학생 이름"

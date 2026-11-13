@@ -10,15 +10,17 @@ export function IllustratedCover({
   subtitle,
   children,
   titleAs = 'h2',
+  compact = false,
 }: {
   title: ReactNode;
   subtitle?: string;
   children: ReactNode;
   titleAs?: 'h2' | 'p';
+  compact?: boolean;
 }) {
   const Title = titleAs;
   return (
-    <section className={s.cover}>
+    <section className={[s.cover, compact && s.compact].filter(Boolean).join(' ')}>
       <div className={s.art}>
         <img
           className={s.image}

@@ -109,7 +109,7 @@ export function StatsAdmin({ thisSunday }: { thisSunday: string }) {
 
   return (
     <div className={s.stack} aria-busy={att.loading || undefined}>
-      <Card title="기간" tone="gold" className={s.range}>
+      <Card title="기간" tone="work" className={s.range}>
         <SundayStepper
           label="시작 주일"
           showLabel
@@ -146,7 +146,7 @@ export function StatsAdmin({ thisSunday }: { thisSunday: string }) {
         </EmptyState>
       ) : (
         <>
-          <Card title="주일별 출석" tone="sage">
+          <Card title="주일별 출석" tone="work">
             <table className={s.table}>
               <caption className="sr-only">주일별 출석</caption>
               <thead>
@@ -173,7 +173,7 @@ export function StatsAdmin({ thisSunday }: { thisSunday: string }) {
             </table>
           </Card>
 
-          <Card title="반별 평균" tone="sage">
+          <Card title="반별 평균" tone="work">
             <table className={s.table}>
               <caption className="sr-only">반별 평균 출석률</caption>
               <thead>

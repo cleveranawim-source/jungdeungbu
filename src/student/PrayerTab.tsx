@@ -6,7 +6,6 @@ import { db } from '../lib/firebase';
 import { formatMonthDay, toDateId } from '../lib/dates';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
-import { PageIntro } from '../ui/PageIntro';
 import { ChoiceChips, type Choice } from '../ui/ChoiceChips';
 import { ConfirmAction } from '../ui/ConfirmAction';
 import { EmptyState } from '../ui/EmptyState';
@@ -118,13 +117,9 @@ export function PrayerTab({
 
   return (
     <div className={s.layout}>
-      <div className={s.intro}>
-        <PageIntro title="작은 마음도 함께 나눠요" icon="prayer">
-          기도 제목을 적고, 함께 볼 사람을 골라요.
-        </PageIntro>
-      </div>
-      <Card title="기도 제목 올리기" tone="sage">
+      <Card title="작은 마음도 함께 나눠요">
         <form className={s.form} onSubmit={submit} noValidate>
+          <p className={s.hint}>기도 제목을 적고, 함께 볼 사람을 골라요.</p>
           <fieldset className={s.fields} disabled={teacherDevice || busy}>
             <TextArea
               label="기도 제목"

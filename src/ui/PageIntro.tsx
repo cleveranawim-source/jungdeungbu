@@ -14,12 +14,12 @@ export function PageIntro({
   tone?: 'sage' | 'gold';
 }) {
   return (
-    <section className={`${s.intro} ${s[tone]}`}>
+    <section className={s.intro}>
+      <span className={`${s.mark} ${s[tone]}`}><Icon name={icon} size={24} /></span>
       <div>
         <h2>{title}</h2>
         <p>{children}</p>
       </div>
-      <Icon name={icon} size={40} />
     </section>
   );
 }
