@@ -48,6 +48,7 @@
 .what { grid-area: what; min-width: 0; overflow-wrap: anywhere; }
 .who { grid-area: who; justify-self: end; min-width: 0; overflow-wrap: anywhere; color: var(--muted); font-size: var(--text-sm); text-align: right; }
 /* 좁은 화면: 순서·맡은 사람이 첫 줄, 내용이 둘째 줄 전체 폭 */
+/* 420/421px 경계는 BulletinEditor.module.css · PairRows.module.css · BulletinView.module.css 가 같이 쓴다(바꾸면 셋 다) */
 @media (max-width: 420px) {
   .step {
     grid-template-columns: 1fr auto;

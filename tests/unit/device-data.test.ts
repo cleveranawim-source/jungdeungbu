@@ -22,3 +22,24 @@ test('Firestore 캐시를 못 지워도 던지지 않고, 학생 링크는 지�
   await expect(clearDeviceData(async () => { throw new Error('failed-precondition'); }, st)).resolves.toBeUndefined();
   expect(getLastStudentToken(st)).toBeNull();
 });
+
+function fakeSession(entries: Record<string, string>): Pick<Storage, 'key' | 'removeItem'> & { readonly length: number; keys(): string[] } {
+  const map = new Map(Object.entries(entries));
+  return {
+    get length() { return map.size; },
+    key: (i) => [...map.keys()][i] ?? null,
+    removeItem: (k) => { map.delete(k); },
+    keys: () => [...map.keys()],
+  };
+}
+
+test('로그아웃 정리: 편집 임시본(jdb:draft:*)을 sessionStorage 에서 지우고 다른 키는 둔다', async () => {
+  // 주보 임시본에는 새 친구 이름·생일이 들어 있다
+  const session = fakeSession({
+    'jdb:draft:bulletin:2026-11-15': '{"newFriends":"새봄"}',
+    'jdb:draft:sermon:2026-11-15': '{}',
+    'other:key': 'keep',
+  });
+  await clearDeviceData(async () => {}, fakeStorage(), session);
+  expect(session.keys()).toEqual(['other:key']);
+});

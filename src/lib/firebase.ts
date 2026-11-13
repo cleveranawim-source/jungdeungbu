@@ -43,7 +43,7 @@ if (USING_EMULATOR) {
 }
 
 /**
- * 이 기기에 남은 흔적을 지운다: 마지막으로 연 학생 링크(jdb:lastStudentToken)와 Firestore 오프라인 캐시(IndexedDB).
+ * 이 기기에 남은 흔적을 지운다: 마지막으로 연 학생 링크(jdb:lastStudentToken), 편집 임시본(jdb:draft:*), Firestore 오프라인 캐시(IndexedDB).
  * 교회 공용 기기에서 선생님이 로그아웃한 뒤 학생 명단·기도 제목이 남지 않게. 지운 뒤 db 는 더 쓸 수 없으므로
  * 부른 쪽이 화면을 새로 불러와야 한다. 다른 탭이 열려 있으면 캐시 지우기가 실패할 수 있다(failed-precondition) — 조용히 넘어간다.
  * **오프라인 쓰기 대기열도 함께 지워지므로**, 부르기 전에 flushPendingWrites 로 서버에 닿았는지 확인한다.

@@ -172,6 +172,7 @@ export function InfoAdmin() {
           <Field label="지도 링크" autoComplete="off" inputMode="url" value={form.mapUrl} error={mapError}
             onChange={(e) => update({ mapUrl: e.target.value })} />
           <Field label="교회 전화" type="tel" inputMode="tel" autoComplete="off" value={form.churchPhone}
+            hint="누구나 볼 수 있어요"
             onChange={(e) => update({ churchPhone: e.target.value })} />
           <PairRows legend="연락처" labelA="이름" labelB="전화번호" addLabel="연락처 추가" inputModeB="tel"
             rows={form.contacts} onChange={(contacts) => update({ contacts })} />

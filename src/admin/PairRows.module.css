@@ -13,6 +13,7 @@
 .cell { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
 .remove { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
 
+/* 420/421px 경계는 BulletinEditor.module.css · PairRows.module.css · BulletinView.module.css 가 같이 쓴다(바꾸면 셋 다) */
 @container (min-width: 421px) {
   .row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
   .row + .row { padding-top: 0; border-top: 0; }

@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLeaveGuard, type LeaveBlocker } from '../app/leaveGuard';
+import { DRAFT_STORE_PREFIX } from '../lib/deviceData';
 import { afterSave, openDraft, type DraftState } from './draftState';
 
 // 편집 화면(주보·설교) 공통: 날짜마다 폼 하나. 저장된 값(base)과 다르면 dirty.
 // dirty 인 동안 폼을 sessionStorage 에 그대로 적어 두고(앱이 꺼져도 이 탭에서 다시 열면 복구),
 // 날짜를 바꾸거나 앱 안 메뉴로 나가려 하면 pending 으로 붙잡아 화면이 그 자리에서 묻게 한다.
 
-const STORE = 'jdb:draft:';
+// 선생님이 로그아웃하면 lib/deviceData 가 이 앞부분의 키를 모두 지운다
+const STORE = DRAFT_STORE_PREFIX;
 
 /** 모양은 아직 모른다(부르는 쪽이 isValid 로 따진다) */
 function readStored(key: string): unknown {

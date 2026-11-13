@@ -14,7 +14,6 @@ import s from './BulletinEditor.module.css';
 
 // 폼 ↔ 저장값(readExtras 등)은 bulletinExtrasForm.ts — 반 문서 ID는 폼에도 저장값에도 없다.
 
-
 // ---------- 화면 ----------
 
 /** "2026-11-08" → "11.8" (주보 보는 화면과 같은 꼴) */
@@ -51,7 +50,7 @@ export function BulletinExtrasEditor({ date, value, onChange, errors }: {
         show(`${dotDate(found.sunday)} 주일 출석을 불러왔어요`);
       } else {
         onChange(() => ({ birthdays }));
-        show('최근 8주 안에 출석 기록이 없어요');
+        show('출석 기록이 없어서 생일만 불러왔어요');
       }
     } catch (e) {
       show(describeError(e), 'error');
@@ -102,10 +101,10 @@ export function BulletinExtrasEditor({ date, value, onChange, errors }: {
       )}
 
       <TextArea label="새 친구" rows={3} value={value.newFriends}
-        hint="한 줄에 한 명. 학생 링크를 받은 사람만 볼 수 있어요"
+        hint="한 줄에 한 명. 학생 링크를 받은 사람과 선생님만 볼 수 있어요"
         onChange={(e) => { const v = e.target.value; onChange(() => ({ newFriends: v })); }} />
       <TextArea label="이번 달 생일" rows={4} value={value.birthdays}
-        hint='한 줄에 "11-20 이름". 학생 링크를 받은 사람만 볼 수 있어요'
+        hint='한 줄에 "11-20 이름". 학생 링크를 받은 사람과 선생님만 볼 수 있어요'
         error={errors?.birthdays ? BIRTHDAY_ERROR : null}
         onChange={(e) => { const v = e.target.value; onChange(() => ({ birthdays: v })); }} />
     </div>

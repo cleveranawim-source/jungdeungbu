@@ -22,6 +22,7 @@
 .acts { grid-area: acts; align-self: center; display: flex; gap: var(--space-2); }
 /* 내용·맡은 사람: 휴대폰 폭에서는 위아래로(찬양 제목 같은 긴 내용이 잘리지 않게), 넓으면 나란히 */
 .pair { grid-area: pair; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+/* 420/421px 경계는 BulletinEditor.module.css · PairRows.module.css · BulletinView.module.css 가 같이 쓴다(바꾸면 셋 다) */
 @container (min-width: 421px) {
   .pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
