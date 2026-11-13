@@ -28,7 +28,7 @@ export function InfoCard({ info, members }: { info: ChurchInfo; members: MemberI
         <p className={s.eyebrow}>우리의 표어</p>
         {motto.title && <p className={s.motto}>{motto.title}</p>}
         {motto.subtitle && <p className={s.subtitle}>{motto.subtitle}</p>}
-        {motto.verse && <p className={s.verse}>{motto.verse}{motto.ref && <span className={s.ref}> ({motto.ref})</span>}</p>}
+        {motto.verse && <Disclosure title="올해 표어 말씀" tone="cover"><p className={s.verse}>{motto.verse}{motto.ref && <span className={s.ref}> ({motto.ref})</span>}</p></Disclosure>}
       </div>}
       <div className={s.body}>
         {hasPlace && <section className={s.place} aria-labelledby="info-place"><h3 id="info-place">오시는 길</h3>

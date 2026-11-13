@@ -99,7 +99,9 @@ test('학생 주보: 종이 주보와 같은 순서표와 덧붙임이 보인다
   await expect(rows.nth(3)).toContainText('이승열 목사님');
   await expect(rows.nth(2)).toContainText(SCRIPTURE);
   // 순서표에 다 나왔으므로 말씀 구역은 없다
-  await expect(page.getByRole('heading', { name: '말씀' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: '말씀', exact: true })).toHaveCount(0);
+  await expect(page.getByText(SERMON_TITLE, { exact: true })).toHaveCount(1);
+  await expect(page.getByText(SCRIPTURE, { exact: true })).toHaveCount(1);
 
   await expect(page.getByRole('heading', { name: '다음 주 예배위원' })).toBeVisible();
   await expect(page.getByText('한가람 학생')).toBeHidden();

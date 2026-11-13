@@ -5,7 +5,7 @@
 .eyebrow { color: var(--cover-muted); font-size: var(--text-xs); letter-spacing: .08em; }
 .motto { font-family: var(--font-display); font-size: var(--text-xl); font-weight: var(--weight-bold); font-synthesis: none; margin-top: var(--space-3); line-height: var(--leading-tight); }
 .subtitle { margin-top: var(--space-3); font-size: var(--text-sm); color: var(--cover-muted); }
-.verse { margin-top: var(--space-5); font-size: var(--text-sm); }
+.verse { font-size: var(--text-sm); }
 .ref { color: var(--cover-muted); }
 .body { padding: var(--space-5); }
 .placeName { margin-top: var(--space-3); font-weight: var(--weight-semibold); }

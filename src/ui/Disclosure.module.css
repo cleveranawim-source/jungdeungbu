@@ -7,3 +7,7 @@
 .title > svg { flex-shrink: 0; transition: transform var(--dur-fast) var(--ease-out); }
 .disclosure[open] > .summary svg { transform: rotate(180deg); }
 .body { padding: var(--space-3) 0; min-width: 0; }
+
+.onCover { position: relative; border-color: var(--cover-line); color: var(--cover-ink); }
+.onCover .sub { color: var(--cover-muted); }
+.onCover .summary:focus-visible { outline-color: var(--cover-focus); }
