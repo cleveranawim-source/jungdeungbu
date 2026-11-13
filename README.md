@@ -77,7 +77,7 @@ GitHub Actions(`.github/workflows/pages.yml`)는 `main` 푸시 때 타입 검사
 
 ## 데이터 구조 한 줄 요약
 
-`teachers`·`invites`(교사) / `classes` · `students/{토큰}/attendance`(반·학생·출석) / `bulletins`·`sermons`·`announcements`(주보·설교·광고) / `classes/{id}/prayers`(반 공개 기도) · `prayers`(선생님만) / `studentSessions`(익명 UID ↔ 토큰).
+`teachers`·`invites`(교사) / `classes` · `students/{토큰}/attendance`(반·학생·출석) / `bulletins`·`sermons`·`announcements`(주보·설교·광고) / `bulletinDrafts/{날짜}`(주보 초안 — 관리자만, 게시본과 따로 저장) / `classes/{id}/prayers`(반 공개 기도) · `prayers`(선생님만) / `studentSessions`(익명 UID ↔ 토큰).
 
 중등부 안내와 이름이 든 덧붙임: `settings/info`(표어·에티켓·오시는 길·교회 전화 — 누구나 읽음) / `memberInfo/main`(섬기는 분들·개인 번호) · `bulletins/{날짜}/members/main`(새 친구·이번 달 생일 — 둘 다 선생님과 학생 링크를 연 기기만, 주보 쪽은 게시된 주보일 때만). 공개 문서(`bulletins/{날짜}`·`settings/info`)에는 새 친구·생일 명단, 개인 번호, 반 ID를 넣지 않는다.
 

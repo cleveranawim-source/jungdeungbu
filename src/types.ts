@@ -18,8 +18,20 @@ export interface Bulletin {
   date: string; order: OrderItem[]; hymns: string[]; scripture: string; sermonTitle: string; published: boolean; updatedBy: string; updatedAt: Timestamp;
   issue: string; leader: string; opening: OpeningVerse; nextServers: ServerRole[]; attendance: AttendanceSummary | null;
 }
+/** 편집기가 다루는 주보 내용: 게시 상태·저장자·저장 시각은 빼고 학생에게 보일 칸만. */
+export type BulletinContent = Omit<Bulletin, 'published' | 'updatedBy' | 'updatedAt'>;
 export interface Birthday { name: string; date: string /* mm-dd */ }
 export interface BulletinMembers { newFriends: string[]; birthdays: Birthday[] }
+/** 관리자 전용 초안(bulletinDrafts/{날짜}). 새 친구·생일 이름이 들어 있어 학생·교사에게는 열지 않는다. */
+export interface BulletinDraft { date: string; bulletin: BulletinContent; members: BulletinMembers; updatedBy: string; updatedAt: Timestamp }
+export type BulletinEditStatus = 'new' | 'draft' | 'published' | 'published-with-draft';
+export interface BulletinForEdit {
+  status: BulletinEditStatus;
+  content: BulletinContent | null;          // 'new' 일 때만 null
+  members: BulletinMembers;                 // 없으면 { newFriends: [], birthdays: [] }
+  draftSavedAt: Timestamp | null;           // 초안 문서의 updatedAt
+  publishedAt: Timestamp | null;            // 게시된 주보의 updatedAt
+}
 export interface ChurchInfo {
   motto: { title: string; subtitle: string; verse: string; ref: string };
   etiquette: string[];
