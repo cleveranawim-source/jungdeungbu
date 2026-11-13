@@ -54,7 +54,7 @@ export function BulletinView({ bulletin, sermon, announcements, members, sermonH
   const att = bulletin.attendance;
   // 잠긴 문서는 다듬지 않고 저장된 그대로 오므로 빠진 칸은 빈 목록으로 본다
   const newFriends = (members?.newFriends ?? []).filter(Boolean);
-  const birthdays = (members?.birthdays ?? []).filter((b) => b && b.name);
+  const birthdays = (members?.birthdays ?? []).filter((b) => b && b.name && typeof b.date === 'string' && b.date);
 
   const sermonText = (title: string) => (sermon && sermonHref
     ? <a className={s.sermonLink} href={sermonHref}>{title}</a>
@@ -131,10 +131,10 @@ export function BulletinView({ bulletin, sermon, announcements, members, sermonH
       {att && (
         <Section id={id('attendance')} title="지난 주 출석">
           <div className={s.counts}>
+            <p className={s.sunday}>{dotDate(att.sunday)} 주일</p>
             <p className={s.total}>
-              <span>{dotDate(att.sunday)} 주일</span>
-              {' · '}<span>학생 {att.students.present}/{att.students.total}</span>
-              {att.teachers && <>{' · '}<span>교사 {att.teachers.present}/{att.teachers.total}</span></>}
+              <span>학생 {att.students.present}/{att.students.total}</span>
+              {att.teachers && <span>교사 {att.teachers.present}/{att.teachers.total}</span>}
             </p>
             {att.classes.length > 0 && (
               <ul className={s.chips} aria-label="반별 출석">
