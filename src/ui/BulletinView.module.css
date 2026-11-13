@@ -3,6 +3,7 @@
 
 .head { padding-bottom: var(--space-4); border-bottom: 2px solid var(--ink); }
 .date { font-size: var(--text-lg); }
+.issue { margin-top: var(--space-1); color: var(--muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
 .kind { margin-top: var(--space-1); color: var(--muted); font-size: var(--text-sm); }
 
 .section { padding: var(--space-5) 0 0; }
@@ -16,32 +17,44 @@
   font-synthesis: none;
 }
 
-/* 예배 순서: 순서 이름 ······ 맡은 사람·제목 */
+/* 주일예배: 제목 오른쪽에 인도(좁으면 아래로) */
+.worshipHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  column-gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+.worshipHead .heading { margin-bottom: 0; }
+.leaderName { color: var(--muted); font-size: var(--text-sm); }
+.opening { margin-bottom: var(--space-3); font-size: var(--text-sm); line-height: var(--leading-body); }
+
+/* 예배 순서: 순서 | 내용 | 맡은 사람 세 칸 */
 .order { list-style: none; margin: 0; padding: 0; }
 .step {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
+  display: grid;
+  grid-template-columns: minmax(5.5em, auto) 1fr auto;
+  grid-template-areas: "type what who";
+  align-items: baseline;
+  column-gap: var(--space-3);
+  row-gap: 2px;
   padding: var(--space-2) 0;
   line-height: var(--leading-tight);
 }
-.type { flex-shrink: 0; font-weight: var(--weight-bold); }
-/* 점선 이음: 두 줄짜리 항목에서도 첫 줄 글자 바닥에 맞춘다 */
-.leader {
-  flex: 1 1 var(--space-4);
-  min-width: var(--space-4);
-  height: 0.95em;
-  border-bottom: 2px dotted var(--line-strong);
+.step + .step { border-top: 1px solid var(--line); }
+.type { grid-area: type; font-weight: var(--weight-bold); }
+.star { margin-right: 2px; }
+.what { grid-area: what; min-width: 0; }
+.who { grid-area: who; justify-self: end; color: var(--muted); font-size: var(--text-sm); text-align: right; }
+/* 좁은 화면: 순서·맡은 사람이 첫 줄, 내용이 둘째 줄 전체 폭 */
+@media (max-width: 420px) {
+  .step {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "type who" "what what";
+  }
 }
-.what {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  max-width: 68%;
-  text-align: right;
-}
-.stepTitle { line-height: var(--leading-tight); }
-.detail { margin-top: 2px; color: var(--muted); font-size: var(--text-sm); line-height: var(--leading-tight); }
+.note { margin-top: var(--space-2); color: var(--muted); font-size: var(--text-sm); }
 
 .hymns { margin: 0; padding: 0; list-style: none; }
 .hymns li { padding: var(--space-1) 0; }
@@ -58,3 +71,25 @@
   margin: calc((var(--touch-min) - 1lh) / -2) 0;
   border-radius: var(--radius-sm);
 }
+
+/* 다음 주 예배위원: 역할 — 이름 */
+.pairs { margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.pairs > div { display: flex; gap: var(--space-4); align-items: baseline; }
+.pairs dt { flex-shrink: 0; min-width: 3em; color: var(--muted); font-size: var(--text-sm); }
+.pairs dd { margin: 0; }
+
+/* 지난 주 출석: 숫자는 프리텐다드 고정폭 숫자 */
+.counts { font-family: var(--font-body); font-variant-numeric: tabular-nums; }
+.total { font-weight: var(--weight-semibold); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+.chip {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+.chipName { color: var(--muted); }
+
+/* 새 친구·생일: 줄바꿈되는 이름 나열 */
+.names { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); margin: 0; padding: 0; list-style: none; }
+.birthDate { color: var(--muted); font-family: var(--font-body); font-variant-numeric: tabular-nums; }

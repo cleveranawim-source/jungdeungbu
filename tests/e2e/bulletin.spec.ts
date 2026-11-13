@@ -41,7 +41,7 @@ test('학생이 이번 주 주보·설교·광고를 본다', async ({ page }) =
       order: [
         { type: '묵도', title: '', detail: '' },
         { type: '기도', title: '대표기도', detail: '박은혜 선생님' },
-        { type: '설교', title: SERMON_TITLE, detail: '' },
+        { type: '설교', title: '', detail: '' },
       ],
       hymns: [HYMN],
       scripture: '마가복음 4:35-41',
@@ -74,13 +74,21 @@ test('학생이 이번 주 주보·설교·광고를 본다', async ({ page }) =
   await expect(page.getByRole('heading', { name: SERMON_TITLE })).toBeVisible();
   await expect(page.getByText(ANNOUNCEMENT)).toBeVisible();
 
-  // 주보: 예배 순서 항목과 찬양
+  // 주보: 세 칸 순서표(순서 | 내용 | 맡은 사람)와 찬양
   await page.getByRole('tab', { name: '주보' }).click();
   await expect(page.getByRole('tab', { name: '주보' })).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByText('박은혜 선생님')).toBeVisible();
-  await expect(page.getByText(HYMN)).toBeVisible();
-  // 설교 제목은 말씀 화면으로 가는 링크
-  await expect(page.getByRole('link', { name: SERMON_TITLE })).toBeVisible();
+  const rows = page.getByRole('list', { name: '예배 순서' }).getByRole('listitem');
+  await expect(rows).toHaveCount(3);
+  await expect(rows.nth(1)).toContainText('기도');
+  await expect(rows.nth(1)).toContainText('대표기도');
+  await expect(rows.nth(1)).toContainText('박은혜 선생님');
+  await expect(page.getByRole('region', { name: '찬양' }).getByText(HYMN)).toBeVisible();
+  // 빈 설교 줄은 설교 제목으로 채워지고, 그 제목이 말씀 화면으로 가는 링크
+  await expect(rows.nth(2).getByRole('link', { name: SERMON_TITLE })).toBeVisible();
+  // 순서표에 성경봉독 줄이 없으니 본문은 말씀 구역에 남는다(설교는 순서표에 나왔으므로 빠진다)
+  const word = page.getByRole('region', { name: '말씀' });
+  await expect(word).toContainText('마가복음 4:35-41');
+  await expect(word).not.toContainText(SERMON_TITLE);
 
   // 말씀: 목록 → 상세(요약·적용 질문)
   await page.getByRole('tab', { name: '말씀' }).click();

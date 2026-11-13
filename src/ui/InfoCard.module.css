@@ -1,0 +1,46 @@
+/* 중등부 안내: 구역마다 얇은 선으로 나눈다(주보 한 장과 같은 결) */
+.block + .block { padding-top: var(--space-4); border-top: 1px solid var(--line); }
+
+.heading {
+  margin-bottom: var(--space-2);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  font-synthesis: none;
+}
+
+/* 표어 */
+.motto {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  font-synthesis: none;
+  line-height: var(--leading-tight);
+}
+.subtitle { margin-top: var(--space-1); color: var(--muted); font-size: var(--text-sm); }
+.verse { margin-top: var(--space-3); font-size: var(--text-sm); }
+.ref { color: var(--muted); }
+
+/* 역할 — 이름, 이름 — 번호 */
+.pairs { margin: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.pairs > div { display: flex; flex-wrap: wrap; column-gap: var(--space-4); align-items: baseline; }
+.pairs dt { min-width: 4em; color: var(--muted); font-size: var(--text-sm); }
+.pairs dd { margin: 0; }
+
+.bullets { margin: 0; padding-left: 1.2em; font-size: var(--text-sm); }
+.bullets li + li { margin-top: var(--space-1); }
+
+.placeName { font-weight: var(--weight-semibold); }
+.address { color: var(--muted); font-size: var(--text-sm); }
+.map { margin-top: var(--space-3); }
+
+/* 전화번호 링크: 터치 대상 44px, 숫자는 프리텐다드 고정폭 */
+.tel {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-min);
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
+  border-radius: var(--radius-sm);
+}

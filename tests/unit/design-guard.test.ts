@@ -44,3 +44,8 @@ test('제목 안의 숫자 세기는 프리텐다드(누를 때 폭이 흔들리
   expect(rule('src/teacher/AttendanceTab.module.css', '.count')).toContain('var(--font-body)');
   expect(rule('src/teacher/TeacherPrayerTab.module.css', '.count')).toContain('var(--font-body)');
 });
+
+test('순서표·출석 숫자는 프리텐다드, 중등부 안내 표어는 고운바탕', () => {
+  expect(rule('src/ui/BulletinView.module.css', '.counts')).toContain('var(--font-body)');
+  expect(rule('src/ui/InfoCard.module.css', '.motto')).toContain('var(--font-display)');
+});
