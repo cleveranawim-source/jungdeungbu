@@ -6,6 +6,7 @@ import { Icon } from '../ui/icons';
 import { AnnouncementsAdmin } from './AnnouncementsAdmin';
 import { BulletinEditor } from './BulletinEditor';
 import { ClassesTeachersAdmin } from './ClassesTeachersAdmin';
+import { InfoAdmin } from './InfoAdmin';
 import { RosterAdmin } from './RosterAdmin';
 import { SermonEditor } from './SermonEditor';
 import { StatsAdmin } from './StatsAdmin';
@@ -39,6 +40,7 @@ export function AdminTab({ sub, myUid, thisSunday, onProfileChanged }: AdminTabP
       {section.key === 'bulletin' && <BulletinEditor myUid={myUid} thisSunday={thisSunday} />}
       {section.key === 'sermon' && <SermonEditor thisSunday={thisSunday} />}
       {section.key === 'announcements' && <AnnouncementsAdmin thisSunday={thisSunday} />}
+      {section.key === 'info' && <InfoAdmin />}
       {section.key === 'roster' && <RosterAdmin />}
       {section.key === 'attendance' && <StatsAdmin thisSunday={thisSunday} />}
       {section.key === 'classes' && <ClassesTeachersAdmin myUid={myUid} onProfileChanged={onProfileChanged} />}
