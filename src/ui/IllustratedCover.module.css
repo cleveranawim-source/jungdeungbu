@@ -1,0 +1,15 @@
+.cover { margin: 0; overflow: hidden; border-radius: var(--radius-cover); background: var(--cover-bg); color: var(--cover-ink); }
+.art { position: relative; isolation: isolate; min-height: 244px; background: var(--illustration-bg); }
+.image { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; }
+.art::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, var(--illustration-bg) 51%, transparent 75%); }
+.copy { padding: var(--space-6) var(--space-5); width: 54%; min-width: 0; }
+.title { font-family: var(--font-display); font-size: var(--text-cover); line-height: 1.22; color: var(--illustration-ink); overflow-wrap: anywhere; }
+.subtitle { margin-top: var(--space-4); font-size: var(--text-sm); line-height: 1.5; color: var(--illustration-ink); }
+.foot { padding: var(--space-5); }
+/* 긴 표어가 그림의 밝은 길 위까지 늘어나도 글자 뒤 남색을 보장해요. 가장자리만 부드럽게 연결해요. */
+@media (min-width: 600px) {
+  .art { min-height: 324px; }
+  .copy { padding: var(--space-7); }
+  .title { font-size: var(--text-cover-wide); }
+  .foot { padding: var(--space-6) var(--space-7); }
+}

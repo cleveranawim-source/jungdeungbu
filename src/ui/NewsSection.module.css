@@ -1,0 +1,3 @@
+.section { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; scroll-margin-top: var(--space-5); }
+.heading { padding: var(--space-5); background: var(--gold-panel); color: var(--gold-panel-ink); font-family: var(--font-display); font-size: var(--text-lg); }
+.body { padding: var(--space-5); }

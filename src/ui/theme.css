@@ -1,5 +1,5 @@
 /*
- * 디자인 토큰 — "차분하고 단정한 교회"
+ * 디자인 토큰 — "함께 걷는 주보"
  * 남색 잉크 · 아이보리 바탕 · 은은한 금색. 제목은 고운바탕, 본문은 프리텐다드.
  * 이 파일에는 토큰(CSS 변수)만 둔다. 요소 기본값은 base.css, 컴포넌트 모양은 각 *.module.css.
  * 각 토큰의 쓰임새는 docs/design.md 에 적혀 있다. 색은 반드시 이 변수로만 쓴다(컴포넌트에 hex 금지).
@@ -21,7 +21,7 @@
   --accent-press: #2A3D5C;  /* 주요 버튼을 누르는 동안. 흰 글자 10.9:1 */
   --accent-ink: #FFFFFF;    /* accent 위 글자 */
   --accent-text: #7F6430;   /* 바탕 위 금색 글자(날짜·강조 숫자·링크). bg 위 5.1:1 */
-  --accent-soft: #F0EBE0;   /* 은은한 면: 축하 띠, 강조 카드, 눌림 */
+  --accent-soft: #F0EBE0;   /* 은은한 면: 선택, 강조 카드, 눌림 */
 
   --gold: #B08A43;          /* 장식 전용 금색(선택된 탭 밑줄, 첫 화면 짧은 선). 글자에 쓰지 않는다 */
   --gold-text: var(--accent-text); /* 금색 글자가 필요할 때 */
@@ -40,6 +40,26 @@
 
   --shadow-card: none;      /* 카드는 그림자 없이 얇은 테두리로만 구분한다 */
   --shadow-float: 0 4px 12px rgb(27 42 65 / 0.10), 0 16px 40px -16px rgb(27 42 65 / 0.30); /* 시트·토스트만 */
+
+  /* 동행 표지와 구역별 면. 모든 글자 쌍은 theme-contrast 시험에서 4.5:1 이상 검사해요. */
+  --cover-bg: #1B2A41;
+  --cover-ink: #F7F5F0;       /* cover-bg 위 13.25:1 */
+  --cover-muted: #D6DCE6;     /* cover-bg 위 10.48:1 */
+  --cover-line: #A5AFBF;      /* cover-bg 위 6.52:1, 표지 링크 경계 */
+  --cover-button: #F7F5F0;
+  --cover-button-ink: #1B2A41; /* cover-button 위 13.25:1 */
+  --cover-button-hover: #EEE4CE; /* cover-button-ink 와 11.43:1 */
+  --cover-focus: #D9BC7E;     /* cover-bg 위 7.87:1 */
+  --illustration-bg: #1B2A41; /* 그림 자체의 남색은 두 모드에서 같아요. */
+  --illustration-ink: #F7F5F0; /* illustration-bg 위 13.25:1 */
+  --sage-bg: #EDF1EB;
+  --sage-ink: #344B3C;        /* sage-bg 위 8.29:1 */
+  --gold-panel: #EEE4CE;
+  --gold-panel-ink: #584421;  /* gold-panel 위 7.34:1 */
+  --reading-layout-max: 1080px;
+  --radius-cover: 16px;
+  --text-cover: 34px;
+  --text-cover-wide: 48px;
 
   /* ── 글꼴 ── */
   --font-body: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
@@ -131,6 +151,21 @@
 
     --focus: #8ea6ff;
     --scrim: rgb(5 8 20 / 0.6);
+
+    --cover-bg: #22304A;
+    --cover-ink: #F7F5F0;      /* cover-bg 위 12.12:1 */
+    --cover-muted: #D6DCE6;    /* cover-bg 위 9.59:1 */
+    --cover-line: #A5AFBF;     /* cover-bg 위 5.97:1 */
+    --cover-button: #F7F5F0;
+    --cover-button-ink: #1B2A41;
+    --cover-button-hover: #EEE4CE; /* cover-button-ink 와 11.43:1 */
+    --cover-focus: #D9BC7E;    /* cover-bg 위 7.20:1 */
+    --illustration-bg: #1B2A41;
+    --illustration-ink: #F7F5F0; /* illustration-bg 위 13.25:1 */
+    --sage-bg: #22362C;
+    --sage-ink: #D5E3D6;       /* sage-bg 위 9.67:1 */
+    --gold-panel: #383123;
+    --gold-panel-ink: #E6CF9D; /* gold-panel 위 8.44:1 */
 
     --shadow-float: 0 12px 32px -12px rgb(0 0 0 / 0.6);
   }
