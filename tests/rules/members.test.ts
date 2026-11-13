@@ -1,5 +1,5 @@
 import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing'
-import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore'
+import { collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, setDoc } from 'firebase/firestore'
 import { beforeEach, describe, test } from 'vitest'
 import { ADMIN, asAnon, asStudent, asUser, OUTSIDER, seed, STUDENT_A, STUDENT_A_UID, TEACHER_A, TOKEN_A, useRulesEnv } from './setup'
 
@@ -88,5 +88,30 @@ describe('잠긴 문서: members · memberInfo', () => {
       await assertFails(getDocs(collection(db, 'memberInfo')))
       await assertFails(getDocs(collection(db, 'bulletins', DATE, 'members')))
     }
+  })
+
+  test('members 컬렉션 그룹 질의는 누구도 안 된다', async () => {
+    for (const db of [asAnon(env()), asStudent(env(), STUDENT_A_UID), asUser(env(), TEACHER_A), asUser(env(), ADMIN)]) {
+      await assertFails(getDocs(collectionGroup(db, 'members')))
+    }
+  })
+
+  test('members·memberInfo 삭제는 선생님·학생 세션이 못 하고, 관리자도 main 이 아닌 문서는 못 지운다', async () => {
+    for (const db of [asUser(env(), TEACHER_A), asStudent(env(), STUDENT_A_UID)]) {
+      await assertFails(deleteDoc(doc(db, MEMBERS)))
+      await assertFails(deleteDoc(doc(db, INFO)))
+    }
+    const admin = asUser(env(), ADMIN)
+    await assertFails(deleteDoc(doc(admin, `bulletins/${DATE}/members/other`)))
+    await assertFails(deleteDoc(doc(admin, 'memberInfo/other')))
+    await assertSucceeds(deleteDoc(doc(admin, MEMBERS)))
+    await assertSucceeds(deleteDoc(doc(admin, INFO)))
+  })
+
+  test('부모 주보가 없는 members 는 학생 세션이 못 읽는다', async () => {
+    const ORPHAN = '2026-11-22'
+    await seed(env(), (db) => setDoc(doc(db, `bulletins/${ORPHAN}/members/main`), { newFriends: ['다온'], birthdays: [] }))
+    await assertFails(getDoc(doc(asStudent(env(), STUDENT_A_UID), `bulletins/${ORPHAN}/members/main`)))
+    await assertSucceeds(getDoc(doc(asUser(env(), TEACHER_A), `bulletins/${ORPHAN}/members/main`)))
   })
 })
