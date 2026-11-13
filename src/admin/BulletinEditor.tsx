@@ -4,7 +4,7 @@ import { useLoader } from '../app/useLoader';
 import { getBulletin, getSermon, getTemplate, listBulletins, saveBulletin, saveTemplate } from '../data/content';
 import { formatAgo, formatMonthDay, shiftDateId } from '../lib/dates';
 import { db } from '../lib/firebase';
-import type { Bulletin, OrderItem } from '../types';
+import { EMPTY_BULLETIN_EXTRAS, type Bulletin, type OrderItem } from '../types';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Field } from '../ui/Field';
@@ -94,7 +94,7 @@ export function BulletinEditor({ myUid, thisSunday }: { myUid: string; thisSunda
     const doc = toDoc(form!);
     setBusy(published ? 'publish' : 'draft');
     try {
-      await saveBulletin(db, myUid, { date, ...doc, published });
+      await saveBulletin(db, myUid, { date, ...EMPTY_BULLETIN_EXTRAS, ...doc, published });
       draft.saved(fromDoc(doc));
       setSavedMeta({ date, meta: { published, by: myUid, at: Date.now() } });
       setCopied(null);

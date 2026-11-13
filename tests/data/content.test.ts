@@ -15,7 +15,7 @@ import {
   saveSermon,
   saveTemplate,
 } from '../../src/data/content'
-import { DEFAULT_ORDER } from '../../src/types'
+import { DEFAULT_ORDER, EMPTY_BULLETIN_EXTRAS } from '../../src/types'
 import { ADMIN, asAnon, asUser, TEACHER_A, useRulesEnv } from '../rules/setup'
 
 const env = useRulesEnv()
@@ -27,6 +27,7 @@ const bulletin = (date: string, published: boolean) => ({
   scripture: '시편 23:1',
   sermonTitle: `설교 ${date}`,
   published,
+  ...EMPTY_BULLETIN_EXTRAS,
 })
 
 test('saveBulletin·getBulletin: updatedBy·updatedAt을 붙인다', async () => {
