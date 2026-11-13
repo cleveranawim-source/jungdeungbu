@@ -1,6 +1,12 @@
 import { expect, test } from 'vitest';
 import { EMPTY_BULLETIN_EXTRAS } from '../../src/types';
-import { comparable, fromSaved, isForm, readForm } from '../../src/admin/bulletinEditorForm';
+import {
+  comparable,
+  fromSaved,
+  isForm,
+  readForm,
+  previewOrder,
+} from '../../src/admin/bulletinEditorForm';
 const content = {
   ...EMPTY_BULLETIN_EXTRAS,
   order: [{ type: '설교', title: '', detail: '', standing: true }],
@@ -54,4 +60,19 @@ test('복구본 모양이 깨지면 거절하고 새 화면 key는 dirty로 세�
   const b = fromSaved(content, null);
   expect(isForm(a)).toBe(true);
   expect(comparable(a)).toEqual(comparable(b));
+});
+
+test('연결 순서 미리보기는 공백만 적은 내용도 저장 후 표시와 똑같이 채운다', () => {
+  const rows = [
+    { k: 'empty', type: ' ', title: '', detail: '', standing: false },
+    { k: 'reading', type: ' 성경봉독 ', title: ' ', detail: '', standing: false },
+    { k: 'sermon', type: '설교', title: ' ', detail: '', standing: false },
+    { k: 'manual', type: '설교', title: ' 직접 적은 제목 ', detail: '', standing: false },
+  ];
+  const preview = previewOrder(rows, ' 미가 6:8 ', ' 동행 ');
+  expect(preview.get('empty')).toBeUndefined();
+  expect(preview.get('reading')).toMatchObject({ title: '미가 6:8', from: 'scripture' });
+  expect(preview.get('sermon')).toMatchObject({ title: '동행', from: 'sermon' });
+  expect(preview.get('manual')).toMatchObject({ title: '직접 적은 제목' });
+  expect(preview.get('manual')).not.toHaveProperty('from');
 });

@@ -1,9 +1,8 @@
 import { Fragment, useLayoutEffect, useRef, useState } from 'react';
-import { displayOrder } from '../lib/bulletin';
 import { Button } from '../ui/Button';
 import { Icon } from '../ui/icons';
 import { newKey } from './formShape';
-import type { OrderRow } from './bulletinEditorForm';
+import { previewOrder, type OrderRow } from './bulletinEditorForm';
 import ed from './editor.module.css';
 import s from './OrderEditor.module.css';
 
@@ -24,11 +23,7 @@ export function OrderEditor({
   const root = useRef<HTMLDivElement>(null);
   const addRef = useRef<HTMLButtonElement>(null);
   const focus = useRef<Focus | null>(null);
-  const views = displayOrder(rows, scripture, sermonTitle).rows;
-  let viewIndex = 0;
-  const previews = new Map(
-    rows.map((r) => [r.k, r.type || r.title || r.detail ? views[viewIndex++] : undefined]),
-  );
+  const previews = previewOrder(rows, scripture, sermonTitle);
   useLayoutEffect(() => {
     const f = focus.current;
     if (!f) return;

@@ -1,4 +1,5 @@
 // 편집 폼 ↔ 깨끗한 주보 내용. Firebase·React 없이 시험해요.
+import { displayOrder } from '../lib/bulletin';
 import type { BulletinContent, BulletinMembers, OrderItem } from '../types';
 import { extrasFromSaved, isAttForm, readExtras, type ExtrasForm } from './bulletinExtrasForm';
 import { hasStrings, isRows, newKey } from './formShape';
@@ -50,6 +51,18 @@ export const toOrder = (rows: OrderRow[]): OrderItem[] =>
       ...(r.standing ? { standing: true } : {}),
     }))
     .filter((r) => r.type || r.title || r.detail);
+/** 저장할 때와 같은 공백 정리를 거쳐 각 편집 줄의 실제 표시값을 연결해요. */
+export function previewOrder(rows: OrderRow[], scripture: string, sermonTitle: string) {
+  const views = displayOrder(toOrder(rows), scripture.trim(), sermonTitle.trim()).rows;
+  let index = 0;
+  return new Map(
+    rows.map((row) => [
+      row.k,
+      row.type.trim() || row.title.trim() || row.detail.trim() ? views[index++] : undefined,
+    ]),
+  );
+}
+
 export function readForm(f: BulletinForm) {
   // 반 ID가 공개 문서로 나가지 않도록 반드시 기존 readExtras를 거쳐요.
   const extras = readExtras(f);
