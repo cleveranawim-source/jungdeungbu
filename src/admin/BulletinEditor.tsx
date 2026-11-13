@@ -94,7 +94,7 @@ export function BulletinEditor({ myUid, thisSunday }: { myUid: string; thisSunda
     const doc = toDoc(form!);
     setBusy(published ? 'publish' : 'draft');
     try {
-      await saveBulletin(db, myUid, { date, ...EMPTY_BULLETIN_EXTRAS, ...doc, published });
+      await saveBulletin(db, myUid, { date, ...EMPTY_BULLETIN_EXTRAS, ...doc, published }, { newFriends: [], birthdays: [] });
       draft.saved(fromDoc(doc));
       setSavedMeta({ date, meta: { published, by: myUid, at: Date.now() } });
       setCopied(null);

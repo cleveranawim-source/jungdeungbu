@@ -19,7 +19,7 @@ import { isPermissionDenied } from './errors';
 /** 한 배치 500 쓰기 한도보다 조금 작게. */
 export const BATCH_LIMIT = 490;
 
-type NewStudent = { name: string; classId: string; birthday: string | null };
+type NewStudent = { name: string; classId: string; birthday: string | null; newcomer?: boolean };
 
 const studentRef = (db: Firestore, token: string) => doc(db, 'students', token);
 
@@ -30,6 +30,7 @@ const freshStudent = (data: NewStudent): Student => ({
   active: true,
   streak: 0,
   lastPresent: null,
+  ...(data.newcomer === true ? { newcomer: true } : {}),
 });
 
 /**
@@ -72,7 +73,7 @@ export async function deactivateStudent(db: Firestore, token: string): Promise<v
 }
 
 /**
- * 관리자. 링크 재발급: 새 토큰 문서(같은 이름·반·생일·streak·lastPresent, active:true)와
+ * 관리자. 링크 재발급: 새 토큰 문서(같은 이름·반·생일·새 친구 표시·streak·lastPresent, active:true)와
  * 출석 기록 복사본(원래 by·at 유지)을 만들고, 옛 문서를 active:false로. 새 토큰을 돌려준다.
  * 보통 한 배치. 출석이 BATCH_LIMIT건을 넘으면 여러 배치로 나누되 옛 문서 비활성은 마지막 배치에 둔다
  * (중간에 실패해도 옛 링크가 살아 있어 다시 시도할 수 있다).
@@ -92,6 +93,7 @@ export async function reissueToken(db: Firestore, token: string): Promise<string
     active: true,
     streak: old.streak,
     lastPresent: old.lastPresent,
+    ...(old.newcomer === true ? { newcomer: true } : {}),
   };
   writes.push((b) => b.set(studentRef(db, next), nextStudent));
   for (const d of attendance.docs) {
