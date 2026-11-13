@@ -10,6 +10,8 @@ import {
   deleteField,
   doc,
   getDoc,
+  getDocFromCache,
+  runTransaction,
   getDocs,
   setDoc,
   updateDoc,
@@ -42,23 +44,38 @@ export async function signInAsEmulatorUser(auth: Auth, email: string, name: stri
  */
 export async function ensureTeacher(db: Firestore, user: { uid: string; email: string }): Promise<Teacher | null> {
   const ref = doc(db, 'teachers', user.uid);
-  const snap = await getDoc(ref);
-  if (snap.exists()) return snap.data() as Teacher;
-
-  const email = inviteId(user.email);
-  let invite: Invite;
   try {
-    const inv = await getDoc(doc(db, 'invites', email));
-    if (!inv.exists()) return null;
-    invite = inv.data() as Invite;
+    // getDoc uses the primary tab's shared watch stream, which can still carry the
+    // previous anonymous token just after another tab logs in. A transaction uses
+    // this tab's current credentials directly and makes concurrent registration atomic.
+    return await runTransaction(db, async (transaction) => {
+      const snap = await transaction.get(ref);
+      if (snap.exists()) return snap.data() as Teacher;
+      const email = inviteId(user.email);
+      let invite: Invite;
+      try {
+        const inv = await transaction.get(doc(db, 'invites', email));
+        if (!inv.exists()) return null;
+        invite = inv.data() as Invite;
+      } catch (e) {
+        if (isPermissionDenied(e)) return null;
+        throw e;
+      }
+      const teacher: Teacher = { email, name: invite.name, role: invite.role, classIds: invite.classIds };
+      if (invite.title) teacher.title = invite.title;
+      transaction.set(ref, teacher);
+      return teacher;
+    });
   } catch (e) {
-    if (isPermissionDenied(e)) return null;
+    // Preserve the existing offline entry for a previously loaded teacher. Never
+    // use the cache to hide a permission failure or register a new teacher offline.
+    const code = (e as { code?: string }).code;
+    if (code === 'unavailable' || code === 'deadline-exceeded') {
+      const cached = await getDocFromCache(ref).catch(() => null);
+      if (cached?.exists()) return cached.data() as Teacher;
+    }
     throw e;
   }
-  const teacher: Teacher = { email, name: invite.name, role: invite.role, classIds: invite.classIds };
-  if (invite.title) teacher.title = invite.title; // 규칙: 초대의 호칭과 같아야 만든다
-  await setDoc(ref, teacher);
-  return teacher;
 }
 
 /**

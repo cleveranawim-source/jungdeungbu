@@ -1,10 +1,10 @@
 // 학생 기기의 익명 세션: 학생 문서가 열리면 뒤에서 조용히 익명 로그인 → studentSessions/{uid} 에 토큰을 묶는다.
 // 읽기 화면은 이걸 기다리지 않는다. 기도 제목 올리기만 'ready' 를 필요로 한다.
 // 이 기기의 익명 uid 가 이미 다른 학생 링크에 묶여 있으면(형제가 휴대폰을 같이 씀) 새 익명 uid 로 바꾼다(studentUidFor).
-import { signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { bindStudentSession, studentUidFor } from '../data/session';
-import { isRegisteredTeacher } from '../data/teachers';
+import { ensureTeacher } from '../data/teachers';
 import { auth, db } from '../lib/firebase';
 
 /**
@@ -38,14 +38,18 @@ export function useStudentSession(token: string, enabled: boolean): StudentSessi
     const my = ++seq.current;
     const live = () => my === seq.current;
     setState('pending');
+    setUid(null);
     const timer = setTimeout(() => {
       if (live()) setState((st) => (st === 'pending' ? 'failed' : st));
     }, SESSION_TIMEOUT_MS);
     try {
       await auth.authStateReady();
+      if (!live()) return false;
       const cur = auth.currentUser;
       if (cur && !cur.isAnonymous) {
-        if (await isRegisteredTeacher(db, cur.uid)) {
+        // A different tab may have just signed in with an invite and not created
+        // teachers/{uid} yet. Checking existence alone would log that teacher out.
+        if (cur.email && await ensureTeacher(db, { uid: cur.uid, email: cur.email })) {
           if (live()) { setUid(null); setState('teacher'); }
           return false;
         }
@@ -53,9 +57,10 @@ export function useStudentSession(token: string, enabled: boolean): StudentSessi
         // 초대 없는 Google 계정: 이 기기에 남겨 둘 이유가 없다. 로그아웃하고 익명으로
         if (auth.currentUser?.uid === cur.uid) await signOut(auth);
       }
+      if (!live()) return false;
       // uid 는 이 링크의 것으로 정해진 뒤에만 내보낸다(앞 학생 uid 로 잠깐이라도 "내 글"이 보이지 않게)
       const id = await studentUidFor(auth, db, token);
-      if (!live()) return false;
+      if (!live() || auth.currentUser?.uid !== id || !auth.currentUser.isAnonymous) return false;
       setUid(id);
       await bindStudentSession(db, id, token);
       if (live()) setState('ready');
@@ -69,8 +74,18 @@ export function useStudentSession(token: string, enabled: boolean): StudentSessi
   }, [token]);
 
   useEffect(() => {
-    if (enabled) void run();
-    return () => { seq.current++; };
+    if (!enabled) return;
+    let initial = true;
+    let previousTeacher: string | null = null;
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      const teacher = user && !user.isAnonymous ? user.uid : null;
+      // Ignore our own anonymous sign-in notification; rerunning it would race
+      // the session binding. Teacher transitions, including another tab, must run.
+      if (initial || teacher !== previousTeacher) void run();
+      initial = false;
+      previousTeacher = teacher;
+    });
+    return () => { seq.current++; unsubscribe(); };
   }, [enabled, run]);
 
   return { state, uid, retry: run };
