@@ -65,3 +65,39 @@ test('이미 확인한 교사는 연결이 끊겨도 캐시로 다시 들어온�
   await expect(page.getByRole('tablist', {name:'교사 메뉴'})).toBeVisible({timeout:20000});
   await expect(page.getByText('로그인을 확인하지 못했어요')).toHaveCount(0);
 });
+
+// 로그아웃한 탭이 Firestore 캐시를 지우면(clearIndexedDbPersistence) SDK 가 같은 기기 다른 탭의 Firestore 도 끝낸다.
+// 그 탭들은 스스로 새로 불러와야 다시 동작한다.
+test('다른 탭에서 선생님이 로그아웃해도 학생 탭이 새로고침 없이 다시 동작한다', async ({ page: student, context }) => {
+  test.setTimeout(45000);
+  await student.goto(`#/s/${TOKEN}/prayer`);
+  await expect(student.getByRole('button', { name: '올리기', exact: true })).toBeEnabled();
+  const teacher = await context.newPage();
+  await loginAsEmu(teacher, EMAIL, '담당');
+  await expect(student.getByText('선생님 계정으로 로그인된 기기예요')).toBeVisible();
+  await Promise.all([teacher.waitForEvent('load'), teacher.getByRole('button', { name: '로그아웃' }).click()]);
+  await expect(teacher.getByRole('button', { name: '에뮬레이터 로그인' })).toBeVisible();
+  // 학생 탭은 손대지 않는다: 주보가 열리고(끝없는 "불러오는 중이에요"가 아니라) 다시 익명 학생으로 올리기가 된다.
+  await expect(async () => {
+    await student.getByRole('tab', { name: '주보' }).click();
+    await expect(student.getByText('이번 주 주보가 아직 없어요')).toBeVisible({ timeout: 2000 });
+  }).toPass({ timeout: 15000 });
+  await expect(student.getByText('불러오는 중이에요')).toHaveCount(0);
+  await student.getByRole('tab', { name: '기도' }).click();
+  await expect(student.getByRole('button', { name: '올리기', exact: true })).toBeEnabled({ timeout: 10000 });
+  await expect(student.getByText('선생님 계정으로 로그인된 기기예요')).toHaveCount(0);
+});
+
+test('한 탭에서 로그아웃하면 다른 교사 탭도 다시 로그인할 수 있다', async ({ page: first, context }) => {
+  test.setTimeout(45000);
+  await loginAsEmu(first, EMAIL, '담당');
+  const second = await context.newPage();
+  await second.goto('#/t');
+  await expectFirstScreen(second);
+  await Promise.all([first.waitForEvent('load'), first.getByRole('button', { name: '로그아웃' }).click()]);
+  await expect(second.getByRole('button', { name: '에뮬레이터 로그인' })).toBeVisible();
+  // 손대지 않은 두 번째 탭에서 바로 다시 로그인해도 교사 확인과 첫 화면이 된다.
+  await loginAsEmu(second, EMAIL, '담당', { expectTabBar: false });
+  await expect(second.getByText('로그인을 확인하지 못했어요')).toHaveCount(0);
+  await expectFirstScreen(second);
+});

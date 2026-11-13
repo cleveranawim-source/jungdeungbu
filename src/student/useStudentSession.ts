@@ -33,6 +33,8 @@ export function useStudentSession(token: string, enabled: boolean): StudentSessi
   const [state, setState] = useState<SessionState>('pending');
   const [uid, setUid] = useState<string | null>(null);
   const seq = useRef(0);
+  // 이 탭이 직접 로그아웃시킨 초대 없는 Google 계정 uid(그 전환은 다른 탭의 로그아웃이 아니다)
+  const signedOutHere = useRef<string | null>(null);
 
   const run = useCallback(async (): Promise<boolean> => {
     const my = ++seq.current;
@@ -55,7 +57,10 @@ export function useStudentSession(token: string, enabled: boolean): StudentSessi
         }
         if (!live()) return false;
         // 초대 없는 Google 계정: 이 기기에 남겨 둘 이유가 없다. 로그아웃하고 익명으로
-        if (auth.currentUser?.uid === cur.uid) await signOut(auth);
+        if (auth.currentUser?.uid === cur.uid) {
+          signedOutHere.current = cur.uid;
+          await signOut(auth);
+        }
       }
       if (!live()) return false;
       // uid 는 이 링크의 것으로 정해진 뒤에만 내보낸다(앞 학생 uid 로 잠깐이라도 "내 글"이 보이지 않게)
@@ -79,6 +84,14 @@ export function useStudentSession(token: string, enabled: boolean): StudentSessi
     let previousTeacher: string | null = null;
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       const teacher = user && !user.isAnonymous ? user.uid : null;
+      // 다른 탭에서 선생님이 로그아웃했다: 그 탭이 Firestore 캐시를 지우면(clearIndexedDbPersistence) SDK 가
+      // 이 탭의 Firestore 도 끝내므로 읽기·쓰기가 영영 끝나지 않는다. 새로 불러와 새 Firestore 로 익명 학생이 된다.
+      // (이 탭이 직접 로그아웃시킨 초대 없는 계정은 캐시를 지우지 않았으므로 제외.)
+      if (!initial && previousTeacher !== null && teacher === null && previousTeacher !== signedOutHere.current) {
+        seq.current++;
+        location.reload();
+        return;
+      }
       // Ignore our own anonymous sign-in notification; rerunning it would race
       // the session binding. Teacher transitions, including another tab, must run.
       if (initial || teacher !== previousTeacher) void run();
