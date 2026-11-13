@@ -77,5 +77,9 @@ test('복구본이 최신이면 경고하지 않고 잘못된 저장 시각은 �
 });
 test('저장 시각 없는 기존 복구본도 서버와 비교해 주의를 알린다', () => {
   const base = {k:'a',title:'서버'};
-  expect(openDraft(null, KEY,base,{k:'b',title:'로컬'},same,isF,200).serverNewer).toBe(true);
+  const next = openDraft(null, KEY,base,{k:'b',title:'로컬'},same,isF,200);
+  expect(next.serverNewer).toBe(true);
+  // 옛 복구본을 새 형식으로 다시 적더라도 지금 시각으로 둔갑하지 않아요.
+  const stored = {draftVersion:1,savedAt:next.localSavedAt,value:next.value};
+  expect(openDraft(null, KEY,base,stored,same,isF,200).serverNewer).toBe(true);
 });

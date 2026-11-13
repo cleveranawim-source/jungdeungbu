@@ -26,5 +26,21 @@ test('학생 탭을 둔 채 다른 탭에서 선생님 로그인하면 재시도
   await expect(student.getByText('선생님 계정으로 로그인된 기기예요')).toBeVisible();
   await expect(teacher.getByRole('tablist', { name: '교사 메뉴' })).toBeVisible();
   expect(anonymousSignIns).toBe(0);
+  await student.goto('#/');
+  await expect(student.getByRole('link', {name:'내 화면 열기'})).toHaveCount(0);
   await teacher.close();
+});
+
+
+test('이미 확인한 교사는 연결이 끊겨도 캐시로 다시 들어온다', async ({page}) => {
+  test.setTimeout(45000);
+  await loginAsEmu(page, EMAIL, '담당');
+  // A second read of the registered document populates the normal Firestore cache.
+  await page.reload();
+  await expect(page.getByRole('tablist', {name:'교사 메뉴'})).toBeVisible();
+  await page.route('**/google.firestore.v1.Firestore/**', route => route.abort());
+  await page.route('**/v1/projects/**', route => route.abort());
+  await page.reload();
+  await expect(page.getByRole('tablist', {name:'교사 메뉴'})).toBeVisible({timeout:20000});
+  await expect(page.getByText('로그인을 확인하지 못했어요')).toHaveCount(0);
 });

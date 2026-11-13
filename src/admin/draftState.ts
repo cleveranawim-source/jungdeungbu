@@ -36,7 +36,7 @@ export function openDraft<T>(
   const recovered = ok && !same(candidate, base);
   return { key, base, value: recovered ? candidate : base, recovered,
     ...(envelope && recovered ? { localSavedAt } : {}),
-    ...(recovered && serverSavedAt > localSavedAt ? { serverNewer: true } : {}),
+    ...(recovered && serverSavedAt > localSavedAt ? { serverNewer: true, localSavedAt: localSavedAt || 1 } : {}),
   };
 }
 

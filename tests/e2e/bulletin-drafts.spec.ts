@@ -130,3 +130,22 @@ test('광고 관리에 다녀와도 선택한 주일과 작성 중인 내용을 
   await expect(page.getByLabel('설교 제목')).toHaveValue('광고를 보며 쓰는 주보');
   await expect(step.getByRole('status')).toHaveText(chosen!);
 });
+
+
+test('다른 탭의 저장이 복구본보다 새로우면 알리고 서버 내용으로 되돌린다', async ({page, context}) => {
+  await published(page);
+  await page.getByLabel('설교 제목').fill('이 탭에서 쓰던 내용');
+  await expect.poll(() => page.evaluate(() => Object.entries(sessionStorage).some(([k,v]) => k.startsWith('jdb:draft:bulletin:') && v.includes('이 탭에서 쓰던 내용')))).toBe(true);
+  const other = await context.newPage();
+  await other.goto('#/t/admin/bulletin');
+  await expect(other.getByLabel('설교 제목')).toHaveValue(BEFORE);
+  await other.getByLabel('설교 제목').fill('다른 탭의 최근 내용');
+  await other.getByRole('button',{name:'초안 저장',exact:true}).click();
+  await expectToast(other,'초안을 저장했어요');
+  await page.reload();
+  await expect(page.getByText('서버에 더 최근에 저장한 내용이 있어요. 되돌리면 그 내용을 가져와요.')).toBeVisible();
+  await expect(page.getByLabel('설교 제목')).toHaveValue('이 탭에서 쓰던 내용');
+  await page.getByRole('button',{name:'되돌리기',exact:true}).click();
+  await expect(page.getByLabel('설교 제목')).toHaveValue('다른 탭의 최근 내용');
+  await other.close();
+});

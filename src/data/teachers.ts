@@ -45,6 +45,15 @@ export async function signInAsEmulatorUser(auth: Auth, email: string, name: stri
 export async function ensureTeacher(db: Firestore, user: { uid: string; email: string }): Promise<Teacher | null> {
   const ref = doc(db, 'teachers', user.uid);
   try {
+    // Keep the normal cached/offline read path for existing teachers.
+    const snap = await getDoc(ref);
+    if (snap.exists()) return snap.data() as Teacher;
+  } catch (e) {
+    if (!isPermissionDenied(e)) throw e;
+    // A cross-tab auth switch can send this read on the primary tab's old
+    // anonymous stream. Below, use this tab's authenticated direct RPC instead.
+  }
+  try {
     // getDoc uses the primary tab's shared watch stream, which can still carry the
     // previous anonymous token just after another tab logs in. A transaction uses
     // this tab's current credentials directly and makes concurrent registration atomic.
