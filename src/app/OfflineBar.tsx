@@ -26,7 +26,7 @@ export function OfflineBar() {
       {!online && (
         <div className={s.bar}>
           <Icon name="offline" size={18} />
-          오프라인이에요. 연결되면 저장됩니다
+          오프라인이에요. 연결되면 저장돼요
         </div>
       )}
     </div>
