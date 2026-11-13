@@ -25,13 +25,13 @@ const content = (sermonTitle: string, date = DATE): BulletinContent => ({
 })
 const members = (...names: string[]): BulletinMembers => ({ newFriends: names, birthdays: [] })
 
-const raw = async (path: string) => {
+const raw = async (path: string): Promise<Record<string, unknown> | null> => {
   let out: Record<string, unknown> | null = null
   await env().withSecurityRulesDisabled(async (ctx) => {
     const snap = await getDoc(doc(ctx.firestore() as never, path))
     out = snap.exists() ? snap.data() : null
   })
-  return out
+  return out as Record<string, unknown> | null
 }
 
 const admin = () => asUser(env(), ADMIN)
@@ -42,7 +42,10 @@ async function publishedV1WithDraftV2() {
 }
 
 test('초안 저장은 게시된 주보를 건드리지 않는다', async () => {
-  await publishedV1WithDraftV2()
+  await publishBulletin(admin(), ADMIN.uid, content('A'), members('새봄'))
+  const before = [await raw(`bulletins/${DATE}`), await raw(`bulletins/${DATE}/members/main`)]
+  await saveBulletinDraft(admin(), ADMIN.uid, content('B'), members('다온'))
+  expect([await raw(`bulletins/${DATE}`), await raw(`bulletins/${DATE}/members/main`)]).toEqual(before)
   const b = await getBulletin(asAnon(env()), DATE)
   expect(b).toMatchObject({ sermonTitle: 'A', published: true })
   expect((await getBulletinMembers(asStudent(env(), STUDENT_A_UID), DATE))?.newFriends).toEqual(['새봄'])
@@ -132,7 +135,6 @@ test('관리자가 아니면 모두 거절되고 아무것도 쓰이지 않는�
   const t = asUser(env(), TEACHER_A)
   await expect(saveBulletinDraft(t, TEACHER_A.uid, content('X'), members('새봄'))).rejects.toMatchObject({ code: 'permission-denied' })
   await expect(publishBulletin(t, TEACHER_A.uid, content('X'), members('새봄'))).rejects.toMatchObject({ code: 'permission-denied' })
-  await expect(unpublishBulletin(t, TEACHER_A.uid, DATE)).rejects.toBeTruthy()
   await expect(discardBulletinDraft(t, DATE)).rejects.toMatchObject({ code: 'permission-denied' })
   await expect(loadBulletinForEdit(t, DATE)).rejects.toMatchObject({ code: 'permission-denied' })
   expect(await raw(`bulletinDrafts/${DATE}`)).toBeNull()
@@ -140,10 +142,22 @@ test('관리자가 아니면 모두 거절되고 아무것도 쓰이지 않는�
   expect(await raw(`bulletins/${DATE}/members/main`)).toBeNull()
 
   // 이미 게시된 주보도 교사가 내리거나 지우지 못한다
-  await publishBulletin(admin(), ADMIN.uid, content('A'), members('새봄'))
-  await saveBulletinDraft(admin(), ADMIN.uid, content('B'), members('다온'))
+  await publishedV1WithDraftV2()
   await expect(unpublishBulletin(t, TEACHER_A.uid, DATE)).rejects.toMatchObject({ code: 'permission-denied' })
   await expect(discardBulletinDraft(t, DATE)).rejects.toMatchObject({ code: 'permission-denied' })
   expect(await raw(`bulletins/${DATE}`)).toMatchObject({ published: true, sermonTitle: 'A' })
   expect(await raw(`bulletinDrafts/${DATE}`)).toMatchObject({ bulletin: { sermonTitle: 'B' } })
+})
+
+test('넓은 객체를 넘겨도 정해진 칸만 저장된다', async () => {
+  const wide = { ...content('A'), published: false, updatedBy: 'x', foo: 1 } as unknown as BulletinContent
+  await saveBulletinDraft(admin(), ADMIN.uid, wide, members('새봄'))
+  const allowed = ['attendance', 'date', 'hymns', 'issue', 'leader', 'nextServers', 'opening', 'order', 'scripture', 'sermonTitle']
+  const draft = (await raw(`bulletinDrafts/${DATE}`)) as { bulletin: Record<string, unknown> }
+  expect(Object.keys(draft.bulletin).sort()).toEqual(allowed)
+  await publishBulletin(admin(), ADMIN.uid, wide, members('새봄'))
+  const pub = (await raw(`bulletins/${DATE}`)) as Record<string, unknown>
+  expect(Object.keys(pub).sort()).toEqual([...allowed, 'published', 'updatedAt', 'updatedBy'].sort())
+  expect(pub.published).toBe(true)
+  expect(pub.updatedBy).toBe(ADMIN.uid)
 })

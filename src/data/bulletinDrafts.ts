@@ -13,12 +13,27 @@ import type {
 
 const EMPTY_MEMBERS = (): BulletinMembers => ({ newFriends: [], birthdays: [] });
 
-/** 게시 상태·저장자·저장 시각을 떼고, 출석은 이름·인원만 남긴다(반 ID는 초안에도 싣지 않는다). */
-function toContent(b: Partial<Bulletin> & Pick<Bulletin, 'date'>): BulletinContent {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { published, updatedBy, updatedAt, ...content } = normalizeBulletin(b);
-  return { ...content, attendance: publicAttendance(content.attendance) };
+/**
+ * 정해진 칸만 골라 BulletinContent 를 만든다. 넓은 객체(Bulletin 전체, 폼 상태의 덤)가 와도 낯선 칸이
+ * 초안에 실려 나중에 게시 규칙(hasOnly)에서 막히는 일이 없게. 출석은 이름·인원만 남긴다(반 ID 금지).
+ */
+function pickContent(c: BulletinContent): BulletinContent {
+  return {
+    date: c.date,
+    order: c.order,
+    hymns: c.hymns,
+    scripture: c.scripture,
+    sermonTitle: c.sermonTitle,
+    issue: c.issue,
+    leader: c.leader,
+    opening: c.opening,
+    nextServers: c.nextServers,
+    attendance: publicAttendance(c.attendance),
+  };
 }
+
+/** 저장된 문서(옛 모양 포함)를 빈 칸 채워 편집용 내용으로. */
+const toContent = (b: Partial<Bulletin> & Pick<Bulletin, 'date'>): BulletinContent => pickContent(normalizeBulletin(b));
 
 const readMembers = (data: unknown): BulletinMembers => {
   const m = (data ?? {}) as Partial<BulletinMembers>;
@@ -69,7 +84,7 @@ export async function saveBulletinDraft(
 ): Promise<void> {
   await setDoc(doc(db, 'bulletinDrafts', content.date), {
     date: content.date,
-    bulletin: { ...content, attendance: publicAttendance(content.attendance) },
+    bulletin: pickContent(content),
     members,
     updatedBy: uid,
     updatedAt: serverTimestamp(),
@@ -85,8 +100,7 @@ export async function publishBulletin(
 ): Promise<void> {
   const batch = writeBatch(db);
   batch.set(doc(db, 'bulletins', content.date), {
-    ...content,
-    attendance: publicAttendance(content.attendance),
+    ...pickContent(content),
     published: true,
     updatedBy: uid,
     updatedAt: serverTimestamp(),
