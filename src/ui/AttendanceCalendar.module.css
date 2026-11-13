@@ -1,4 +1,8 @@
-.calendar { display: flex; flex-direction: column; gap: var(--space-2); }
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
 
 .legend {
   display: flex;
@@ -10,18 +14,36 @@
   color: var(--muted);
   font-size: var(--text-sm);
 }
-.legend li { display: inline-flex; align-items: center; gap: var(--space-2); }
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
 
-.month { display: flex; align-items: center; gap: var(--space-3); }
+.month {
+  display: flex;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--line);
+  align-items: flex-start;
+}
 .monthLabel {
   flex-shrink: 0;
   width: 3em;
   color: var(--muted);
   font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;
+  padding-top: var(--space-2);
+  font-weight: var(--weight-bold);
 }
-.days { display: flex; flex-wrap: wrap; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.days {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  gap: var(--space-2);
+}
 
 /* 한 칸: 36px 동그라미. 출석이면 해가 뜬다(누르는 칸이 아니므로 버튼처럼 크지 않게) */
 .mark {
@@ -36,7 +58,9 @@
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
-.day { transform: translateY(-3px); }
+.day {
+  transform: translateY(-3px);
+}
 .dot {
   position: absolute;
   bottom: 6px;
@@ -52,10 +76,31 @@
   color: var(--accent-ink);
   font-weight: var(--weight-bold);
 }
-.present .day { transform: none; }
+.present .day {
+  transform: none;
+}
 /* 이번 주: 아직 출석 전이면 점선 고리로 자리만 */
-.current:not(.present) { outline: 1.5px dashed var(--line-strong); outline-offset: -1.5px; color: var(--ink); }
+.current:not(.present) {
+  outline: 1.5px dashed var(--line-strong);
+  outline-offset: -1.5px;
+  color: var(--ink);
+}
 
 /* 범례의 작은 칸 */
-.mini { width: 16px; height: 16px; box-shadow: none; }
-.mini .dot { bottom: auto; top: 50%; margin-top: -2px; }
+.mini {
+  width: 16px;
+  height: 16px;
+  box-shadow: none;
+}
+.mini .dot {
+  bottom: auto;
+  top: 50%;
+  margin-top: -2px;
+}
+.month:last-child {
+  border-bottom: 0;
+}
+.mark:not(.mini) {
+  width: 38px;
+  height: 38px;
+}

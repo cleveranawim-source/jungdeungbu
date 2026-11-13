@@ -77,7 +77,7 @@ test('올리기가 서버에 늦게 닿으면 "연결되면 올라가요"', asyn
 test('초대 없는 Google 계정이 남은 기기에서 학생 링크를 열면 그 계정을 로그아웃하고 익명으로', async ({ page }) => {
   // 같은 브라우저(같은 기기)에서 초대 없는 계정으로 선생님 로그인을 해 본 뒤
   await loginAsEmu(page, 'nobody@example.com', '아무개', { expectTabBar: false });
-  await expect(page.getByText('등록되지 않은 계정입니다')).toBeVisible();
+  await expect(page.getByText('아직 초대되지 않은 계정이에요')).toBeVisible();
 
   await page.goto(`#/s/${TOKEN}`);
   await expect(page.getByText('김하늘')).toBeVisible();
@@ -144,7 +144,7 @@ test('닫힌(재발급·비활성) 링크는 첫 화면에서 다시 권하지 �
   }));
   await page.reload();
   await expect(page.getByText('선생님께 링크를 다시 받아주세요')).toBeVisible();
-  await page.goto('#/');
+  await page.getByRole('link', { name: '첫 화면으로' }).click();
   await expect(page.getByRole('link', { name: '선생님 로그인' })).toBeVisible();
   await expect(page.getByRole('link', { name: '내 화면 열기' })).toHaveCount(0);
 });

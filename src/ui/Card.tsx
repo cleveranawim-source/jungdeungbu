@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import s from './Card.module.css';
 
-export type CardTone = 'default' | 'accent' | 'quiet';
+export type CardTone = 'default' | 'accent' | 'quiet' | 'gold' | 'sage' | 'work';
 
 export interface CardProps {
   /** 카드 제목(h2). 화면 제목(h1)은 Screen 이 맡는다. */
@@ -13,7 +13,13 @@ export interface CardProps {
   children?: ReactNode;
 }
 
-export function Card({ title, tone = 'default', as: Tag = 'section', className, children }: CardProps) {
+export function Card({
+  title,
+  tone = 'default',
+  as: Tag = 'section',
+  className,
+  children,
+}: CardProps) {
   return (
     <Tag className={[s.card, tone !== 'default' && s[tone], className].filter(Boolean).join(' ')}>
       {title && <h2 className={s.title}>{title}</h2>}

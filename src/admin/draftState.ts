@@ -9,6 +9,8 @@ export interface DraftState<T> {
   value: T;
   /** 열 때 sessionStorage 에서 되살렸는지 */
   recovered: boolean;
+  localSavedAt?: number;
+  serverNewer?: boolean;
 }
 
 /**
@@ -22,11 +24,20 @@ export function openDraft<T>(
   stored: unknown,
   same: (a: T, b: T) => boolean,
   isValid: (x: unknown) => x is T,
+  serverSavedAt = 0,
 ): DraftState<T> {
   if (prev && prev.key === key) return prev;
-  const ok = stored !== null && stored !== undefined && isValid(stored);
-  const recovered = ok && !same(stored, base);
-  return { key, base, value: recovered ? stored : base, recovered };
+  const envelope = stored && typeof stored === 'object' && 'draftVersion' in stored
+    ? stored as { draftVersion: unknown; savedAt?: unknown; value?: unknown } : null;
+  const localSavedAt = envelope?.draftVersion === 1 && typeof envelope.savedAt === 'number' && Number.isFinite(envelope.savedAt) ? envelope.savedAt : 0;
+  if (envelope) stored = localSavedAt ? envelope.value : null;
+  const candidate = stored;
+  const ok = candidate !== null && candidate !== undefined && isValid(candidate);
+  const recovered = ok && !same(candidate, base);
+  return { key, base, value: recovered ? candidate : base, recovered,
+    ...(envelope && recovered ? { localSavedAt } : {}),
+    ...(recovered && serverSavedAt > localSavedAt ? { serverNewer: true, localSavedAt: localSavedAt || 1 } : {}),
+  };
 }
 
 /**

@@ -1,0 +1,16 @@
+.card { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--card); overflow: hidden; }
+.heading { padding: var(--space-5); font-size: var(--text-lg); }
+.mottoPanel { position: relative; overflow: hidden; background: var(--cover-bg); color: var(--cover-ink); padding: var(--space-5); }
+.mottoPanel > p { position: relative; }
+.mottoCopy { position: relative; overflow: hidden; }
+.motto { font-family: var(--font-display); font-size: var(--text-xl); font-weight: var(--weight-bold); font-synthesis: none; margin-top: var(--space-3); line-height: var(--leading-tight); }
+.subtitle { margin-top: var(--space-3); font-size: var(--text-sm); color: var(--cover-muted); }
+.verse { font-size: var(--text-sm); }
+.ref { color: var(--cover-muted); }
+.body { padding: var(--space-5); }
+.pairs { margin: 0; display: grid; grid-template-columns: minmax(3em, auto) minmax(0, 1fr); gap: var(--space-3); align-items: baseline; font-size: var(--text-sm); }
+.pairs > div { display: contents; }
+.pairs dt { color: var(--muted); }
+.pairs dd { margin: 0; min-width: 0; overflow-wrap: anywhere; white-space: pre-line; }
+.bullets { margin: 0; padding-left: 1.2em; font-size: var(--text-sm); }
+.bullets li + li { margin-top: var(--space-3); }

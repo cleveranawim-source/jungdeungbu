@@ -1,5 +1,11 @@
-.list { list-style: none; padding: 0; margin: 0; }
-.row + .row { border-top: 1px solid var(--line); }
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.row + .row {
+  border-top: 1px solid var(--line);
+}
 
 .head {
   display: flex;
@@ -11,22 +17,62 @@
   border: 0;
   background: transparent;
   text-align: left;
+  padding-inline: var(--space-2);
 }
-button.head { cursor: pointer; border-radius: var(--radius-sm); }
-button.head:focus-visible { outline-offset: 0; }
-button.head:active .title { color: var(--accent-text); }
+button.head {
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+button.head:focus-visible {
+  outline-offset: 0;
+}
+button.head:active .title {
+  color: var(--accent-text);
+}
 
-.text { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
-.title { font-size: var(--text-md); font-weight: var(--weight-bold); color: var(--ink); line-height: var(--leading-tight); }
-.meta { margin-top: 2px; color: var(--muted); font-size: var(--text-sm); line-height: var(--leading-tight); }
-.aside { flex-shrink: 0; color: var(--muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.text {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--ink);
+  line-height: var(--leading-tight);
+}
+.meta {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+}
+.aside {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
 
-.chev { display: grid; flex-shrink: 0; color: var(--muted); transition: transform var(--dur-fast) var(--ease-out); }
-.open .chev { transform: rotate(180deg); }
+.chev {
+  display: grid;
+  flex-shrink: 0;
+  color: var(--muted);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.open .chev {
+  transform: rotate(180deg);
+}
 
 .panel {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-2) 0 var(--space-5);
+  padding: var(--space-4) var(--space-2) var(--space-5);
+}
+
+button.head:hover,
+.open > .head {
+  background: var(--accent-soft);
 }

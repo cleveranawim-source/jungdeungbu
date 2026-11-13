@@ -18,7 +18,11 @@ import { Loading } from '../ui/Loading';
 import { ShareLink } from '../ui/ShareLink';
 import s from './StudentDetail.module.css';
 
-export interface StudentDetailProps { token: string; teacher: Teacher; thisSunday: string }
+export interface StudentDetailProps {
+  token: string;
+  teacher: Teacher;
+  thisSunday: string;
+}
 
 async function load(token: string) {
   const student = await getStudent(db, token);
@@ -36,14 +40,24 @@ export function StudentDetail({ token, teacher, thisSunday }: StudentDetailProps
 
   const back = (
     <div className={s.back}>
-      <LinkButton href={teacherHref('class')} variant="ghost" size="sm" icon={<Icon name="back" size={18} />}>
+      <LinkButton
+        href={teacherHref('class')}
+        variant="ghost"
+        size="sm"
+        icon={<Icon name="back" size={18} />}
+      >
         우리 반 목록
       </LinkButton>
     </div>
   );
 
   if (one.data === undefined) {
-    return <>{back}{one.error ? <LoadError error={one.error} onRetry={one.reload} /> : <Loading />}</>;
+    return (
+      <>
+        {back}
+        {one.error ? <LoadError error={one.error} onRetry={one.reload} /> : <Loading />}
+      </>
+    );
   }
   const { student, className } = one.data;
   if (!student || !student.active) {
@@ -60,36 +74,55 @@ export function StudentDetail({ token, teacher, thisSunday }: StudentDetailProps
     return (
       <>
         {back}
-        <EmptyState icon="class" title="담당 반 학생이 아니에요">목록에서 우리 반 학생을 골라 주세요.</EmptyState>
+        <EmptyState icon="class" title="담당 반 학생이 아니에요">
+          목록에서 우리 반 학생을 골라 주세요.
+        </EmptyState>
       </>
     );
   }
 
   const streak = activeStreak(student, thisSunday);
   const birthdayWeek = student.birthday !== null && isBirthdayWeek(student.birthday, thisSunday);
-  const presentCount = (att.data ?? []).filter((r) => r.present && r.date >= from && r.date <= thisSunday).length;
+  const presentCount = (att.data ?? []).filter(
+    (r) => r.present && r.date >= from && r.date <= thisSunday,
+  ).length;
 
   return (
-    <>
+    <div className={s.layout}>
       {back}
       <Card as="section" className={s.me}>
         <h2 className={s.name}>{student.name}</h2>
         <dl className={s.facts}>
-          <div><dt>반</dt><dd>{className ?? '반 없음'}</dd></div>
+          <div>
+            <dt>반</dt>
+            <dd>{className ?? '반 없음'}</dd>
+          </div>
           <div>
             <dt>생일</dt>
             <dd>
               {student.birthday ? formatBirthday(student.birthday) : '등록하지 않았어요'}
-              {birthdayWeek && <span className={s.cake}><Icon name="cake" size={18} />생일 주간</span>}
+              {birthdayWeek && (
+                <span className={s.cake}>
+                  <Icon name="cake" size={18} />
+                  생일 주간
+                </span>
+              )}
             </dd>
           </div>
-          <div><dt>연속 출석</dt><dd className={s.num}>{streak}주</dd></div>
+          <div>
+            <dt>연속 출석</dt>
+            <dd className={s.num}>{streak}주</dd>
+          </div>
         </dl>
       </Card>
 
-      <Card title="이번 학기 출석">
+      <Card title="이번 학기 출석" tone="gold">
         {att.data === undefined ? (
-          att.error ? <LoadError error={att.error} onRetry={att.reload} /> : <Loading />
+          att.error ? (
+            <LoadError error={att.error} onRetry={att.reload} />
+          ) : (
+            <Loading />
+          )
         ) : (
           <>
             <p className={s.count}>이번 학기에 {presentCount}번 왔어요</p>
@@ -98,9 +131,9 @@ export function StudentDetail({ token, teacher, thisSunday }: StudentDetailProps
         )}
       </Card>
 
-      <Card title="학생 링크">
+      <Card title="학생 링크" tone="sage">
         <ShareLink token={token} name={student.name} />
       </Card>
-    </>
+    </div>
   );
 }

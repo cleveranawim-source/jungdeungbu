@@ -138,3 +138,15 @@ test('updateStudent로 반 이동', async () => {
     code: 'permission-denied',
   })
 })
+
+test('새 친구 표시는 켰을 때만 저장되고, 링크를 다시 만들어도 따라간다', async () => {
+  const admin = asUser(env(), ADMIN)
+  const t1 = await createStudent(admin, { name: '새봄', classId: 'classA', birthday: null, newcomer: true })
+  expect((await getDoc(doc(admin, `students/${t1}`))).data()?.newcomer).toBe(true)
+  const t2 = await createStudent(admin, { name: '다온', classId: 'classA', birthday: null })
+  expect((await getDoc(doc(admin, `students/${t2}`))).data()).not.toHaveProperty('newcomer')
+  const t3 = await reissueToken(admin, t1)
+  expect((await getDoc(doc(admin, `students/${t3}`))).data()?.newcomer).toBe(true)
+  const t4 = await reissueToken(admin, t2)
+  expect((await getDoc(doc(admin, `students/${t4}`))).data()).not.toHaveProperty('newcomer')
+})

@@ -145,3 +145,56 @@ describe('콘텐츠 쓰기', () => {
     await assertFails(setDoc(doc(admin, 'sermons/20261115'), sermon('20261115')))
   })
 })
+
+describe('주보·안내 허용 칸', () => {
+  test('주보 문서에는 정해진 칸만 — 이름·번호 칸은 거절', async () => {
+    const admin = asUser(env(), ADMIN)
+    const full = {
+      ...bulletin(),
+      issue: '2026-41호',
+      leader: '정한결 선생님',
+      opening: { text: 't', ref: '요 4:24' },
+      nextServers: [],
+      attendance: null,
+    }
+    await assertSucceeds(setDoc(doc(admin, `bulletins/${DATE}`), full))
+    await assertFails(setDoc(doc(admin, `bulletins/${DATE}`), { ...full, newFriends: ['x'] }))
+    await assertFails(setDoc(doc(admin, `bulletins/${DATE}`), { ...full, contacts: [] }))
+    await assertFails(setDoc(doc(admin, `bulletins/${DATE}`), { ...full, offerings: [] }))
+  })
+
+  test('있는 주보에 merge·updateDoc 으로 이름 칸을 더해도 거절', async () => {
+    const admin = asUser(env(), ADMIN)
+    await assertSucceeds(setDoc(doc(admin, `bulletins/${DATE}`), bulletin()))
+    await assertFails(updateDoc(doc(admin, `bulletins/${DATE}`), { newFriends: ['새봄'] }))
+    await assertFails(setDoc(doc(admin, `bulletins/${DATE}`), { newFriends: ['새봄'] }, { merge: true }))
+  })
+
+  test('출석 칸은 null 또는 정해진 키만 든 맵(반 ID 같은 여분 칸은 거절)', async () => {
+    const admin = asUser(env(), ADMIN)
+    const attendance = {
+      sunday: '2026-11-08',
+      classes: [{ name: '1-1', present: 5, total: 8 }],
+      students: { present: 5, total: 8 },
+      teachers: null,
+    }
+    await assertSucceeds(setDoc(doc(admin, `bulletins/${DATE}`), { ...bulletin(), attendance: null }))
+    await assertSucceeds(setDoc(doc(admin, `bulletins/${DATE}`), { ...bulletin(), attendance }))
+    await assertFails(setDoc(doc(admin, `bulletins/${DATE}`), { ...bulletin(), attendance: { ...attendance, classIds: ['classA'] } }))
+    await assertFails(setDoc(doc(admin, `bulletins/${DATE}`), { ...bulletin(), attendance: 'x' }))
+    await assertFails(updateDoc(doc(admin, `bulletins/${DATE}`), { 'attendance.classIds': ['classA'] }))
+  })
+
+  test('settings/info 에는 공개 칸만', async () => {
+    const admin = asUser(env(), ADMIN)
+    const info = {
+      motto: { title: '', subtitle: '', verse: '', ref: '' },
+      etiquette: [],
+      place: { name: '', address: '', mapUrl: '' },
+      churchPhone: '',
+    }
+    await assertSucceeds(setDoc(doc(admin, 'settings/info'), info))
+    await assertFails(setDoc(doc(admin, 'settings/info'), { ...info, contacts: [] }))
+    await assertFails(setDoc(doc(admin, 'settings/info'), { ...info, servants: [] }))
+  })
+})

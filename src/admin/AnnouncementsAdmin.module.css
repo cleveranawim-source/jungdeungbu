@@ -1,9 +1,26 @@
-.stack { display: flex; flex-direction: column; gap: var(--space-4); }
-.muted { color: var(--muted); font-size: var(--text-sm); }
-.form { display: flex; flex-direction: column; gap: var(--space-4); }
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.muted {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
 
-.title { display: inline-flex; align-items: center; gap: var(--space-1); }
-.title > svg { color: var(--accent-text); }
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.title > svg {
+  color: var(--accent-text);
+}
 
 /* 시작·끝 주일: 위아래로(한 줄에 둘은 휴대폰 폭에 안 들어간다), 옅은 면으로 한 묶음 */
 .dates {
@@ -25,9 +42,17 @@
   font-weight: var(--weight-bold);
   line-height: 1.4;
 }
-.now { color: var(--ok); background: var(--ok-soft); }
-.soon { color: var(--accent-text); }
-.past { color: var(--muted); border-style: dashed; }
+.now {
+  color: var(--ok);
+  background: var(--ok-soft);
+}
+.soon {
+  color: var(--accent-text);
+}
+.past {
+  color: var(--muted);
+  border-style: dashed;
+}
 
 .danger {
   display: flex;
@@ -35,4 +60,13 @@
   gap: var(--space-2);
   padding-top: var(--space-4);
   border-top: 1px dashed var(--line);
+}
+
+@media (min-width: 900px) {
+  .stack {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(340px, 1fr);
+    gap: var(--space-6);
+    align-items: start;
+  }
 }

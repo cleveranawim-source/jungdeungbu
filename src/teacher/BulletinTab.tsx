@@ -1,21 +1,26 @@
 import { useCallback } from 'react';
+import { BULLETIN_BRAND } from '../app/brand';
 import { teacherHref } from '../app/router';
 import { useLoader } from '../app/useLoader';
+import { useMemberData } from '../app/useMemberData';
 import { activeAnnouncements, getBulletin, getSermon, listBulletins } from '../data/content';
+import { getChurchInfo } from '../data/info';
+import { hasInfoContent } from '../lib/bulletin';
 import { formatMonthDay, isDateId } from '../lib/dates';
 import { db } from '../lib/firebase';
 import { BulletinView } from '../ui/BulletinView';
 import { LinkButton } from '../ui/Button';
-import { Card } from '../ui/Card';
+import { Disclosure } from '../ui/Disclosure';
 import { EmptyState } from '../ui/EmptyState';
 import { Icon } from '../ui/icons';
+import { InfoCard } from '../ui/InfoCard';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
 import type { TeacherTabProps } from './types';
 import s from './BulletinTab.module.css';
 
 /**
- * 교사 주보: 학생 주보 탭과 같은 한 장 + 지난 주보 목록(`#/t/bulletin/{날짜}`).
+ * 교사 주보: 학생 주보 탭과 같은 한 장 + 중등부 안내 + 지난 주보 목록(`#/t/bulletin/{날짜}`).
  * 학생과 달리 아직 올리지 않은(임시저장) 주보도 "임시저장" 표시와 함께 보여 준다. 고치기는 관리 탭에서.
  */
 export function BulletinTab({ thisSunday, sub }: TeacherTabProps) {
@@ -30,6 +35,13 @@ export function BulletinTab({ thisSunday, sub }: TeacherTabProps) {
   }, [date]));
   // 지난 주보 목록은 따로: 실패해도 이번 주보는 보인다
   const past = useLoader(useCallback(() => listBulletins(db), []));
+  // 중등부 안내도 따로: 실패하면 안내 카드만 빠진다
+  const church = useLoader(useCallback(() => getChurchInfo(db), []));
+  // 새 친구·생일·섬기는 분·연락처는 잠긴 문서: 선생님은 늘 읽는다
+  const members = useMemberData(date, true);
+
+  const information = church.data && hasInfoContent(church.data, members.info)
+    ? <InfoCard info={church.data} members={members.info} /> : undefined;
 
   let main;
   if (one.data === undefined) {
@@ -43,7 +55,7 @@ export function BulletinTab({ thisSunday, sub }: TeacherTabProps) {
             학생에게는 아직 보이지 않아요
           </p>
         )}
-        <BulletinView bulletin={one.data.bulletin} sermon={one.data.sermon} announcements={one.data.announcements} />
+        <BulletinView coverLabel={BULLETIN_BRAND.label} coverDescription={BULLETIN_BRAND.description} bulletin={one.data.bulletin} sermon={one.data.sermon} announcements={one.data.announcements} members={members.bulletin} information={information} />
       </>
     );
   } else {
@@ -71,8 +83,9 @@ export function BulletinTab({ thisSunday, sub }: TeacherTabProps) {
         </div>
       )}
       {main}
+      {(one.error || (one.data && !one.data.bulletin)) && information}
       {past.data === undefined ? (past.error ? <LoadError error={past.error} onRetry={past.reload} /> : null) : pastList.length > 0 && (
-        <Card title="지난 주보">
+        <Disclosure title="지난 주보" level={2}>
           <ul className={s.list}>
             {pastList.map((b) => (
               <li key={b.date}>
@@ -86,7 +99,7 @@ export function BulletinTab({ thisSunday, sub }: TeacherTabProps) {
               </li>
             ))}
           </ul>
-        </Card>
+        </Disclosure>
       )}
     </>
   );

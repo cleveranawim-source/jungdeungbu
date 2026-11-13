@@ -12,11 +12,13 @@ export interface EmptyStateProps {
   action?: ReactNode;
 }
 
-/** 빈 목록·준비 중·안내. 점선 테두리 + 아이콘 동그라미. */
+/** 빈 목록·준비 중·안내. 차분한 면 + 상태 아이콘 + 다음 행동. */
 export function EmptyState({ icon = 'sprout', title, children, action }: EmptyStateProps) {
   return (
     <div className={s.empty}>
-      <span className={s.mark}><Icon name={icon} /></span>
+      <span className={s.mark}>
+        <Icon name={icon} />
+      </span>
       <div className={s.text}>
         <h2 className={s.title}>{title}</h2>
         {children && <p className={s.body}>{children}</p>}

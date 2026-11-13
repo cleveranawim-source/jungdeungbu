@@ -1,10 +1,25 @@
-.stack { display: flex; flex-direction: column; gap: var(--space-4); }
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
 
-.summary { color: var(--muted); font-size: var(--text-sm); }
-.summary strong { color: var(--ink); font-size: var(--text-md); font-variant-numeric: tabular-nums; }
+.summary {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.summary strong {
+  color: var(--ink);
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+}
 
 /* 한 줄 = 이름(왼쪽) + 값(오른쪽), 그 아래 막대. 숫자(%)가 늘 같이 있으므로 색만으로 알리지 않는다 */
-.rows { list-style: none; margin: 0; padding: 0; }
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 .row {
   display: flex;
   flex-wrap: wrap;
@@ -13,11 +28,28 @@
   gap: var(--space-1) var(--space-3);
   padding: var(--space-3) 0;
 }
-.row + .row { border-top: 1px solid var(--line); }
-.name { font-weight: var(--weight-bold); color: var(--ink); }
-.cls { margin-left: var(--space-1); color: var(--muted); font-size: var(--text-sm); font-weight: var(--weight-regular); }
-.value { color: var(--muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
-.value strong { color: var(--ink); font-size: var(--text-md); }
+.row + .row {
+  border-top: 1px solid var(--line);
+}
+.name {
+  font-weight: var(--weight-bold);
+  color: var(--ink);
+}
+.cls {
+  margin-left: var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+}
+.value {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+.value strong {
+  color: var(--ink);
+  font-size: var(--text-md);
+}
 
 .track {
   flex-basis: 100%;
@@ -34,12 +66,71 @@
 }
 
 /* 표: 열 머리는 눈에 보이게, 비율 칸은 숫자 아래 막대 */
-.table { width: 100%; border-collapse: collapse; }
-.table th, .table td { padding: var(--space-3) var(--space-1); text-align: left; vertical-align: top; }
-.table thead th { color: var(--muted); font-size: var(--text-sm); font-weight: var(--weight-regular); padding-top: 0; }
-.table tbody tr + tr { border-top: 1px solid var(--line); }
-.table tbody th { color: var(--ink); font-weight: var(--weight-bold); white-space: nowrap; }
-.num { color: var(--muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.rate { width: 40%; font-variant-numeric: tabular-nums; }
-.rate strong { display: block; margin-bottom: var(--space-1); }
-.rate .track { display: block; }
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th,
+.table td {
+  padding: var(--space-3) var(--space-1);
+  text-align: left;
+  vertical-align: top;
+}
+.table thead th {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  padding-top: 0;
+  padding-bottom: var(--space-4);
+}
+.table tbody tr + tr {
+  border-top: 1px solid var(--line);
+}
+.table tbody th {
+  color: var(--ink);
+  font-weight: var(--weight-bold);
+  white-space: nowrap;
+}
+.num {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.rate {
+  width: 40%;
+  font-variant-numeric: tabular-nums;
+}
+.rate strong {
+  display: block;
+  margin-bottom: var(--space-1);
+}
+.rate .track {
+  display: block;
+}
+.table tbody tr:nth-child(even) {
+  background: var(--accent-soft);
+}
+@media (min-width: 900px) {
+  .stack {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6);
+    align-items: start;
+  }
+  .range,
+  .stack > section:has(button[aria-expanded]) {
+    grid-column: 1 / -1;
+  }
+  .rows {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-7);
+  }
+}
+
+@media (min-width: 900px) {
+  .range > div { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-5); align-items:start; }
+  .range > div > * { margin-top:0; }
+  .range .summary { grid-column:1 / -1; }
+}

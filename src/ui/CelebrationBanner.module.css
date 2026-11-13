@@ -4,8 +4,10 @@
   gap: var(--space-2);
   padding: var(--space-4) var(--space-5);
   border-radius: 12px;
-  background: var(--accent-soft);
+  background: var(--sage-bg);
+  color: var(--sage-ink);
 }
-.line { font-size: var(--text-md); font-weight: var(--weight-bold); line-height: var(--leading-tight); }
-.line + .line { padding-top: var(--space-2); border-top: 1px solid var(--line); }
-.num { color: var(--accent-text); font-weight: inherit; }
+.line { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-md); font-weight: var(--weight-medium); line-height: var(--leading-tight); }
+.line > svg { flex-shrink: 0; }
+.line + .line { padding-top: var(--space-2); border-top: 1px solid currentColor; }
+.num { color: var(--sage-ink); font-weight: var(--weight-bold); }

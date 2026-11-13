@@ -17,13 +17,25 @@ import { useEditorDraft } from './useEditorDraft';
 import ed from './editor.module.css';
 import s from './SermonEditor.module.css';
 
-interface Question { k: string; text: string }
-interface Form { title: string; scripture: string; summary: string; body: string; questions: Question[] }
+interface Question {
+  k: string;
+  text: string;
+}
+interface Form {
+  title: string;
+  scripture: string;
+  summary: string;
+  body: string;
+  questions: Question[];
+}
 type Doc = Omit<Sermon, 'date'>;
 
 const EMPTY: Doc = { title: '', scripture: '', summary: '', body: '', questions: [] };
 const fromDoc = (d: Doc): Form => ({
-  title: d.title, scripture: d.scripture, summary: d.summary, body: d.body,
+  title: d.title,
+  scripture: d.scripture,
+  summary: d.summary,
+  body: d.body,
   questions: (d.questions.length ? d.questions : ['']).map((text) => ({ k: newKey(), text })),
 });
 /** 저장할 모양(앞뒤 빈칸 정리, 빈 질문 빼기). 본문·요약은 줄바꿈을 살리고 끝 빈칸만 뺀다 */
@@ -37,7 +49,8 @@ const toDoc = (f: Form): Doc => ({
 
 /** sessionStorage 복구본이 이 폼 모양인지(깨졌으면 버린다) */
 const isForm = (x: unknown): x is Form =>
-  hasStrings(x, ['title', 'scripture', 'summary', 'body']) && isRows((x as Form).questions, ['text']);
+  hasStrings(x, ['title', 'scripture', 'summary', 'body']) &&
+  isRows((x as Form).questions, ['text']);
 
 /** 관리 → 설교 작성. 주일을 고르고 제목·본문·한 줄 요약·말씀 내용(설교 요약판, 전문 아님)·적용 질문을 써서 저장. 학생 "말씀" 탭에 보인다. */
 export function SermonEditor({ thisSunday }: { thisSunday: string }) {
@@ -50,7 +63,9 @@ export function SermonEditor({ thisSunday }: { thisSunday: string }) {
   const latest = shiftDateId(thisSunday, 28);
   const titleRef = useRef<HTMLInputElement>(null);
 
-  const one = useLoader(useCallback(async () => ({ date, sermon: await getSermon(db, date) }), [date]));
+  const one = useLoader(
+    useCallback(async () => ({ date, sermon: await getSermon(db, date) }), [date]),
+  );
   const loaded = one.data?.date === date ? one.data : undefined;
   const { open } = draft;
   useEffect(() => {
@@ -89,42 +104,102 @@ export function SermonEditor({ thisSunday }: { thisSunday: string }) {
   const pending = draft.pending;
   return (
     <div className={s.stack}>
-      <EditorHead label="설교 날짜" date={date} thisSunday={thisSunday} latest={latest} disabled={busy}
-        onRequestDate={(d) => { setTitleError(null); draft.requestDate(d); }}
+      <EditorHead
+        label="설교 날짜"
+        date={date}
+        thisSunday={thisSunday}
+        latest={latest}
+        disabled={busy}
+        onRequestDate={(d) => {
+          setTitleError(null);
+          draft.requestDate(d);
+        }}
         confirmDate={pending?.kind === 'date' ? { onStay: draft.stay, onLeave: draft.leave } : null}
-        recovered={draft.recovered} onRevert={draft.revert}
-        status={exists
-          ? <><StateBadge tone="ok">저장됨</StateBadge><span>학생 말씀 탭에 보여요</span></>
-          : <><StateBadge tone="new">새 설교</StateBadge><span>저장하면 학생 말씀 탭에 보여요</span></>} />
+        recovered={draft.recovered}
+        onRevert={draft.revert}
+        status={
+          exists ? (
+            <>
+              <StateBadge tone="ok">저장됨</StateBadge>
+              <span>학생 말씀 탭에 보여요</span>
+            </>
+          ) : (
+            <>
+              <StateBadge tone="new">새 설교</StateBadge>
+              <span>저장하면 학생 말씀 탭에 보여요</span>
+            </>
+          )
+        }
+      />
 
-      <Card title="설교">
-        <div className={s.fields}>
-          <Field ref={titleRef} label="설교 제목" autoComplete="off" maxLength={60} value={form.title} error={titleError}
-            onChange={(e) => { setTitleError(null); update({ title: e.target.value }); }} />
-          <Field label="성경 본문" autoComplete="off" value={form.scripture} placeholder="예: 마가복음 4:35-41"
-            onChange={(e) => update({ scripture: e.target.value })} />
-          <TextArea label="한 줄 요약" rows={3} maxLength={300} showCount value={form.summary}
-            hint="홈 카드와 목록에 보여요"
-            onChange={(e) => update({ summary: e.target.value })} />
-          <TextArea label="말씀 내용" rows={14} className={s.body} value={form.body}
-            hint="학생이 다시 읽을 설교 요약판이에요. 전문은 올리지 않아요"
-            onChange={(e) => update({ body: e.target.value })} />
-        </div>
-      </Card>
+      <div className={s.columns}>
+        <Card title="설교" tone="work">
+          <div className={s.fields}>
+            <Field
+              ref={titleRef}
+              label="설교 제목"
+              autoComplete="off"
+              maxLength={60}
+              value={form.title}
+              error={titleError}
+              onChange={(e) => {
+                setTitleError(null);
+                update({ title: e.target.value });
+              }}
+            />
+            <Field
+              label="성경 본문"
+              autoComplete="off"
+              value={form.scripture}
+              placeholder="예: 마가복음 4:35-41"
+              onChange={(e) => update({ scripture: e.target.value })}
+            />
+            <TextArea
+              label="한 줄 요약"
+              rows={3}
+              maxLength={300}
+              showCount
+              value={form.summary}
+              hint="홈 카드와 목록에 보여요"
+              onChange={(e) => update({ summary: e.target.value })}
+            />
+            <TextArea
+              label="말씀 내용"
+              rows={14}
+              className={s.body}
+              value={form.body}
+              hint="학생이 다시 읽을 설교 요약판이에요. 전문은 올리지 않아요"
+              onChange={(e) => update({ body: e.target.value })}
+            />
+          </div>
+        </Card>
 
-      <Card title="적용 질문">
-        <QuestionEditor questions={form.questions} onChange={(questions) => update({ questions })} />
-      </Card>
-
-      <EditorBar dirty={draft.dirty}
-        leave={pending?.kind === 'nav' ? { onStay: draft.stay, onLeave: draft.leave } : null}>
-        <Button busy={busy} onClick={save}>저장</Button>
+        <Card title="적용 질문" tone="work">
+          <QuestionEditor
+            questions={form.questions}
+            onChange={(questions) => update({ questions })}
+          />
+        </Card>
+      </div>
+      <EditorBar
+        dirty={draft.dirty}
+        leave={pending?.kind === 'nav' ? { onStay: draft.stay, onLeave: draft.leave } : null}
+      >
+        <Button busy={busy} onClick={save}>
+          저장
+        </Button>
       </EditorBar>
     </div>
   );
 }
 
-function QuestionEditor({ questions, onChange }: { questions: Question[]; onChange(q: Question[]): void }) {
+function QuestionEditor({
+  questions,
+  onChange,
+}: {
+  questions: Question[];
+  onChange(q: Question[]): void;
+}) {
   const listRef = useRef<HTMLOListElement>(null);
   const focus = useRef<string | null>(null);
   useLayoutEffect(() => {
@@ -150,18 +225,40 @@ function QuestionEditor({ questions, onChange }: { questions: Question[]; onChan
       <ol className={ed.lines} ref={listRef}>
         {questions.map((q, i) => (
           <li key={q.k} className={`${ed.line} ${s.question}`}>
-            <label className={ed.num} htmlFor={`q-${q.k}`}><span className="sr-only">적용 질문 </span>{i + 1}</label>
-            <textarea id={`q-${q.k}`} data-q={q.k} className={ed.input} rows={2} value={q.text}
+            <label className={ed.num} htmlFor={`q-${q.k}`}>
+              <span className="sr-only">적용 질문 </span>
+              {i + 1}
+            </label>
+            <textarea
+              id={`q-${q.k}`}
+              data-q={q.k}
+              className={ed.input}
+              rows={2}
+              value={q.text}
               placeholder={i === 0 ? '예: 요즘 내가 무서워하는 것은?' : undefined}
-              onChange={(e) => onChange(questions.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)))} />
-            <button type="button" className={ed.icon} aria-label={`${i + 1}번째 질문 지우기`}
-              disabled={questions.length === 1 && !q.text} onClick={() => remove(i)}>
+              onChange={(e) =>
+                onChange(questions.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)))
+              }
+            />
+            <button
+              type="button"
+              className={ed.icon}
+              aria-label={`${i + 1}번째 질문 지우기`}
+              disabled={questions.length === 1 && !q.text}
+              onClick={() => remove(i)}
+            >
               <Icon name="trash" size={20} />
             </button>
           </li>
         ))}
       </ol>
-      <Button variant="ghost" size="sm" className={ed.add} icon={<Icon name="plus" size={18} />} onClick={add}>
+      <Button
+        variant="ghost"
+        size="sm"
+        className={ed.add}
+        icon={<Icon name="plus" size={18} />}
+        onClick={add}
+      >
         질문 추가
       </Button>
     </>

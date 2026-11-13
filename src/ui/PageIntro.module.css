@@ -1,0 +1,32 @@
+.intro {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+.intro h2 {
+  font-size: var(--text-lg);
+  text-wrap: balance;
+}
+.intro p {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  max-width: 42em;
+}
+.mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+.sage {
+  background: var(--sage-bg);
+  color: var(--sage-ink);
+}
+.gold {
+  background: var(--gold-panel);
+  color: var(--gold-panel-ink);
+}

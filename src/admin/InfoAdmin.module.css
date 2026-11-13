@@ -1,0 +1,12 @@
+.stack { display: flex; flex-direction: column; gap: var(--space-4); }
+.fields { display: flex; flex-direction: column; gap: var(--space-4); }
+.hint { color: var(--muted); font-size: var(--text-sm); }
+/* 줄 목록 아래 안내는 줄 추가 버튼과 떨어뜨려 읽히게 */
+.fields > .hint { margin-top: calc(var(--space-2) * -1); }
+
+.intro { padding:var(--space-5); border-radius:var(--radius-lg); background:var(--cover-bg); color:var(--cover-ink); display:flex; flex-direction:column; gap:var(--space-2); }
+.intro h2 { font-family:var(--font-display); font-size:var(--text-xl); }
+.intro p { font-size:var(--text-sm); }
+.kicker { color:var(--cover-muted); }
+.previewTitle { font-family:var(--font-display); font-size:var(--text-lg); margin-bottom:var(--space-2); }
+.stack input, .stack textarea { scroll-margin-block:100px 240px; }

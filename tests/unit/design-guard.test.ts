@@ -44,3 +44,52 @@ test('제목 안의 숫자 세기는 프리텐다드(누를 때 폭이 흔들리
   expect(rule('src/teacher/AttendanceTab.module.css', '.count')).toContain('var(--font-body)');
   expect(rule('src/teacher/TeacherPrayerTab.module.css', '.count')).toContain('var(--font-body)');
 });
+
+test('순서표·출석 숫자는 프리텐다드, 중등부 안내 표어는 고운바탕', () => {
+  expect(rule('src/ui/BulletinView.module.css', '.counts')).toContain('var(--font-body)');
+  expect(rule('src/ui/InfoCard.module.css', '.motto')).toContain('var(--font-display)');
+});
+
+
+test('동행 그림은 반응형 WebP이며 작은 그림은 150KB 미만이다', () => {
+  const dir = 'src/assets/walking-together';
+  for (const size of [480, 800, 1280]) expect(statSync(`${dir}/${size}.webp`).size).toBeLessThan(150 * 1024);
+  expect(readFileSync(`${dir}/prompt.txt`, 'utf8').trim().length).toBeGreaterThan(50);
+  const cover = readFileSync('src/ui/IllustratedCover.tsx', 'utf8');
+  expect(cover).toContain('srcSet=');
+  expect(cover).toContain('alt=""');
+});
+
+test('표지·소식·축하의 글자와 면은 지정한 색 쌍으로 쓴다', () => {
+  expect(rule('src/ui/NewsSection.module.css', '.heading')).toContain('var(--gold-panel-ink)');
+  expect(rule('src/ui/NewsSection.module.css', '.heading')).toContain('var(--gold-panel)');
+  expect(rule('src/ui/BulletinView.module.css', '.community')).toContain('var(--sage-ink)');
+  expect(rule('src/ui/IllustratedCover.module.css', '.cover')).toContain('var(--cover-ink)');
+});
+
+test('모든 모듈 CSS가 선언된 토큰만 참조한다', () => {
+  const declared = new Set([...readFileSync('src/ui/theme.css', 'utf8').matchAll(/(--[\w-]+)\s*:/g)].map(m => m[1]));
+  // EditorBar가 측정해 선언하는 --toast-lift 같은 런타임 CSS 변수도 확인해요.
+  for (const path of src.filter(p => /\.tsx?$/.test(p))) {
+    for (const match of readFileSync(path, 'utf8').matchAll(/\.style\.setProperty\(['"](--[\w-]+)['"]/g)) declared.add(match[1]);
+  }
+  const paths = src.filter(p => p.endsWith('.module.css'));
+  for (const path of paths) {
+    const used = [...readFileSync(path, 'utf8').matchAll(/var\((--[\w-]+)/g)].map(m => m[1]);
+    expect(used.filter(token => !declared.has(token)), path).toEqual([]);
+  }
+});
+
+
+test('새 구역 머리와 안내는 배경에 맞는 글자색을 쓴다', () => {
+  const card = readFileSync('src/ui/Card.module.css', 'utf8');
+  const intro = readFileSync('src/ui/PageIntro.module.css', 'utf8');
+  for (const css of [card,intro]) {
+    expect(css).toMatch(/background:\s*var\(--sage-bg\);\s*color:\s*var\(--sage-ink\)/);
+    expect(css).toMatch(/background:\s*var\(--gold-panel\);\s*color:\s*var\(--gold-panel-ink\)/);
+  }
+});
+test('화면에는 자물쇠 아이콘을 쓰지 않는다', () => {
+  expect(hits(src.filter(p => p.endsWith('.tsx')), /name=["']lock["']/)).toEqual([]);
+  expect(readFileSync('src/ui/icons.tsx', 'utf8')).not.toMatch(/\block\s*:/);
+});

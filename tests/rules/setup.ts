@@ -42,7 +42,7 @@ export const STUDENT_B = {
 export async function makeEnv(): Promise<RulesTestEnvironment> {
   return initializeTestEnvironment({
     projectId: 'demo-jungdeungbu',
-    firestore: { rules: readFileSync('firestore.rules', 'utf8'), host: '127.0.0.1', port: 8080 },
+    firestore: { rules: readFileSync('firestore.rules', 'utf8'), host: '127.0.0.1', port: Number(process.env.JDB_FIRESTORE_PORT || 8080) },
   })
 }
 

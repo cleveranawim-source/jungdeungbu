@@ -1,21 +1,26 @@
 import { useCallback } from 'react';
+import { BULLETIN_BRAND } from '../app/brand';
 import { studentHref } from '../app/router';
 import { useLoader } from '../app/useLoader';
+import { useMemberData } from '../app/useMemberData';
 import { activeAnnouncements, getBulletin, getSermon, listBulletins } from '../data/content';
+import { getChurchInfo } from '../data/info';
+import { hasInfoContent } from '../lib/bulletin';
 import { formatMonthDay, isDateId } from '../lib/dates';
 import { db } from '../lib/firebase';
 import { BulletinView } from '../ui/BulletinView';
 import { LinkButton } from '../ui/Button';
-import { Card } from '../ui/Card';
+import { Disclosure } from '../ui/Disclosure';
 import { EmptyState } from '../ui/EmptyState';
 import { Icon } from '../ui/icons';
+import { InfoCard } from '../ui/InfoCard';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
 import type { StudentTabProps } from './types';
 import s from './BulletinTab.module.css';
 
-/** 주보: 이번 주(또는 주소의 날짜) 주보 한 장 + 지난 주보 날짜 목록. */
-export function BulletinTab({ token, sundayId, sub }: StudentTabProps) {
+/** 주보: 이번 주(또는 주소의 날짜) 주보 한 장 + 중등부 안내 + 지난 주보 날짜 목록. */
+export function BulletinTab({ token, sundayId, sub, sessionState }: StudentTabProps) {
   const date = sub && isDateId(sub) ? sub : sundayId;
   const isThisWeek = date === sundayId;
 
@@ -27,16 +32,24 @@ export function BulletinTab({ token, sundayId, sub }: StudentTabProps) {
   }, [date]));
   // 지난 주보 목록은 따로: 실패해도 이번 주보는 보인다
   const past = useLoader(useCallback(() => listBulletins(db), []));
+  // 중등부 안내도 따로: 실패하면 안내 카드만 빠진다
+  const church = useLoader(useCallback(() => getChurchInfo(db), []));
+  // 새 친구·생일·섬기는 분·연락처는 잠긴 문서: 학생 세션이 준비된 뒤에만 읽는다
+  const members = useMemberData(date, sessionState === 'ready' || sessionState === 'teacher');
+
+  const information = church.data && hasInfoContent(church.data, members.info)
+    ? <InfoCard info={church.data} members={members.info} /> : undefined;
 
   let main;
   if (one.data === undefined) {
     main = one.error ? <LoadError error={one.error} onRetry={one.reload} audience="student" /> : <Loading />;
   } else if (one.data.bulletin) {
     main = (
-      <BulletinView
+      <BulletinView coverLabel={BULLETIN_BRAND.label} coverDescription={BULLETIN_BRAND.description}
         bulletin={one.data.bulletin}
         sermon={one.data.sermon}
         announcements={one.data.announcements}
+        members={members.bulletin} information={information}
         sermonHref={one.data.sermon ? studentHref(token, 'sermon', date) : undefined}
       />
     );
@@ -65,8 +78,9 @@ export function BulletinTab({ token, sundayId, sub }: StudentTabProps) {
         </div>
       )}
       {main}
+      {(one.error || (one.data && !one.data.bulletin)) && information}
       {past.data === undefined ? (past.error ? <LoadError error={past.error} onRetry={past.reload} audience="student" /> : null) : pastList.length > 0 && (
-        <Card title="지난 주보">
+        <Disclosure title="지난 주보" level={2}>
           <ul className={s.list}>
             {pastList.map((b) => (
               <li key={b.date}>
@@ -80,7 +94,7 @@ export function BulletinTab({ token, sundayId, sub }: StudentTabProps) {
               </li>
             ))}
           </ul>
-        </Card>
+        </Disclosure>
       )}
     </>
   );

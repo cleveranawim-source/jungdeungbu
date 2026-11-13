@@ -13,11 +13,14 @@ export { bindStudentSession, getStudentSession } from './prayers';
  */
 export async function studentUidFor(auth: Auth, db: Firestore, token: string): Promise<string> {
   const cur = auth.currentUser;
+  if (cur && !cur.isAnonymous) throw new Error('학생 세션을 만드는 동안 계정이 바뀌었어요');
   if (cur?.isAnonymous) {
     const session = await getStudentSession(db, cur.uid);
+    if (auth.currentUser?.uid !== cur.uid) throw new Error('학생 세션을 만드는 동안 계정이 바뀌었어요');
     if (session === null || session.token === token) return cur.uid;
     await signOut(auth);
   }
+  if (auth.currentUser && !auth.currentUser.isAnonymous) throw new Error('학생 세션을 만드는 동안 계정이 바뀌었어요');
   const cred = await signInAnonymously(auth);
   return cred.user.uid;
 }

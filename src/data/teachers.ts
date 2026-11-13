@@ -10,6 +10,7 @@ import {
   deleteField,
   doc,
   getDoc,
+  runTransaction,
   getDocs,
   setDoc,
   updateDoc,
@@ -36,42 +37,67 @@ export async function signInAsEmulatorUser(auth: Auth, email: string, name: stri
   );
 }
 
+/** 공유 연결이 새 계정으로 바뀌기를 기다리는 횟수·간격(합쳐 최대 약 3초) */
+const STALE_STREAM_TRIES = 20;
+const STALE_STREAM_GAP_MS = 150;
+
 /**
  * 로그인한 사용자의 교사 문서. 없으면 invites/{소문자 이메일}을 복사해 만든다.
  * 초대가 없으면(또는 읽을 권한이 없으면) null.
  */
 export async function ensureTeacher(db: Firestore, user: { uid: string; email: string }): Promise<Teacher | null> {
   const ref = doc(db, 'teachers', user.uid);
-  const snap = await getDoc(ref);
-  if (snap.exists()) return snap.data() as Teacher;
-
-  const email = inviteId(user.email);
-  let invite: Invite;
+  // persistentMultipleTabManager 에서는 이 탭의 getDoc·getDocs 가 primary 탭의 Listen 연결로 간다.
+  // 다른 탭(학생 링크)이 primary 이면 그 탭의 Auth 가 새 계정을 알아챌 때까지(IndexedDB 폴링, 최대 약 0.8초,
+  // 백그라운드 탭이면 더 길게) 그 연결은 옛 익명 토큰을 실어 보낸다. 그래서 본인 문서조차 permission-denied 가 난다.
+  let staleStream = false;
   try {
-    const inv = await getDoc(doc(db, 'invites', email));
-    if (!inv.exists()) return null;
-    invite = inv.data() as Invite;
+    // 기존 교사는 평소 경로(서버, 오프라인이면 캐시)로 읽는다.
+    const snap = await getDoc(ref);
+    if (snap.exists()) return snap.data() as Teacher;
   } catch (e) {
-    if (isPermissionDenied(e)) return null;
-    throw e;
+    if (!isPermissionDenied(e)) throw e;
+    staleStream = true;
   }
-  const teacher: Teacher = { email, name: invite.name, role: invite.role, classIds: invite.classIds };
-  if (invite.title) teacher.title = invite.title; // 규칙: 초대의 호칭과 같아야 만든다
-  await setDoc(ref, teacher);
-  return teacher;
-}
-
-/**
- * uid 가 등록된 교사인지(teachers/{uid} 가 있는지). 규칙은 본인 문서 get 을 허락하고,
- * 막히면(permission-denied) 교사가 아니라고 본다. 연결 오류 등 다른 오류는 그대로 던진다.
- */
-export async function isRegisteredTeacher(db: Firestore, uid: string): Promise<boolean> {
-  try {
-    return (await getDoc(doc(db, 'teachers', uid))).exists();
-  } catch (e) {
-    if (isPermissionDenied(e)) return false;
-    throw e;
+  // transaction 은 공유 연결이 아니라 이 탭의 현재 자격으로 직접 RPC 를 보내고, 동시 등록도 원자적으로 만든다.
+  // 오프라인이면 transaction 이 실패하고 그 오류를 그대로 던진다. 기존 교사의 오프라인 진입은 위 getDoc 이
+  // 캐시로 이미 돌려주므로, 여기서 캐시로 되돌아가지 않는다(권한 실패를 숨기거나 오프라인에서 새로 등록하지 않게).
+  const result = await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(ref);
+    if (snap.exists()) return snap.data() as Teacher;
+    const email = inviteId(user.email);
+    let invite: Invite;
+    try {
+      const inv = await transaction.get(doc(db, 'invites', email));
+      if (!inv.exists()) return null;
+      invite = inv.data() as Invite;
+    } catch (e) {
+      if (isPermissionDenied(e)) return null;
+      throw e;
+    }
+    const teacher: Teacher = { email, name: invite.name, role: invite.role, classIds: invite.classIds };
+    if (invite.title) teacher.title = invite.title;
+    transaction.set(ref, teacher);
+    return teacher;
+  });
+  if (result && staleStream) {
+    // 교사 확인은 끝났지만 첫 화면(출석의 listClasses 등)은 다시 공유 연결로 읽는다. 그 연결이 아직 익명이면
+    // "권한이 없어요"가 뜨고 화면은 다시 불러오지 않는다. 그래서 같은 본인 문서 읽기가 통과할 때까지 기다린다.
+    // 막무가내 재시도가 아니다: 바로 위 직접 RPC 가 이 사용자가 교사임을 이미 확인했으므로, 본인 문서가 막히는
+    // 이유는 공유 연결에 옛 자격이 남아 있다는 것뿐이다. 그 밖의 오류(오프라인 등)면 곧바로 그만두고,
+    // 시간 안에 바뀌지 않아도 교사 확인 결과는 그대로 돌려준다(화면의 "다시 불러오기"가 남는다).
+    // 이 기다림은 권한을 넓히지 않는다 — 무엇을 읽을 수 있는지는 여전히 firestore.rules 가 정한다.
+    for (let i = 0; i < STALE_STREAM_TRIES; i++) {
+      try {
+        await getDoc(ref);
+        break;
+      } catch (e) {
+        if (!isPermissionDenied(e)) break;
+      }
+      await new Promise((r) => setTimeout(r, STALE_STREAM_GAP_MS));
+    }
   }
+  return result;
 }
 
 export async function listTeachers(db: Firestore): Promise<WithId<Teacher>[]> {

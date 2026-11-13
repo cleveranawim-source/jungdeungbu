@@ -43,10 +43,16 @@ function contrast(a: string, b: string): number {
 const BODY: [fg: string, bg: string][] = [
   ['--ink', '--bg'], ['--ink', '--card'], ['--muted', '--bg'], ['--muted', '--card'],
   ['--accent-ink', '--accent'], ['--accent-ink', '--accent-press'], ['--accent-text', '--bg'],
-  ['--accent-text', '--card'], ['--accent-text', '--accent-soft'], ['--ink', '--accent-soft'],
+  ['--accent-text', '--card'], ['--accent-text', '--accent-soft'], ['--ink', '--accent-soft'], ['--muted', '--accent-soft'],
   ['--notice-ink', '--notice-bg'], ['--danger', '--card'], ['--ok', '--card'],
+  ['--danger', '--danger-soft'], ['--ink', '--danger-soft'], ['--ok', '--ok-soft'],
+  ['--ink', '--card-raised'], ['--muted', '--card-raised'],
+  ['--muted', '--gold-panel'], ['--muted', '--sage-bg'], ['--danger-ink', '--danger'],
+  ['--cover-ink', '--cover-bg'], ['--cover-muted', '--cover-bg'],
+  ['--cover-button-ink', '--cover-button'], ['--cover-button-ink', '--cover-button-hover'],
+  ['--illustration-ink', '--illustration-bg'], ['--sage-ink', '--sage-bg'], ['--gold-panel-ink', '--gold-panel'],
 ];
-const UI: [fg: string, bg: string][] = [['--line-strong', '--card'], ['--gold', '--card']];
+const UI: [fg: string, bg: string][] = [['--accent', '--card'], ['--gold-panel-ink', '--card'], ['--line-strong', '--card'], ['--gold', '--card'], ['--cover-line', '--cover-bg'], ['--cover-focus', '--cover-bg'], ['--focus', '--card'], ['--focus', '--bg']];
 
 function failures(mode: 'light' | 'dark', pairs: [string, string][], min: number): string[] {
   const t = readTokens(css, mode);

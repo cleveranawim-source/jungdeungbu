@@ -8,7 +8,6 @@ import { useTodaySunday } from '../app/useTodaySunday';
 import { getStudent } from '../data/students';
 import { db } from '../lib/firebase';
 import { clearLastStudentToken, setLastStudentToken } from '../lib/lastStudentToken';
-import { Icon } from '../ui/icons';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
 import { Screen } from '../ui/Screen';
@@ -28,16 +27,20 @@ export interface StudentAppProps {
 }
 
 const TABS: readonly TabItem<StudentTab>[] = [
-  { key: 'home', label: '홈', icon: <Icon name="home" /> },
-  { key: 'bulletin', label: '주보', icon: <Icon name="bulletin" /> },
-  { key: 'sermon', label: '말씀', icon: <Icon name="sermon" /> },
-  { key: 'prayer', label: '기도', icon: <Icon name="prayer" /> },
-  { key: 'me', label: '나', icon: <Icon name="me" /> },
+  { key: 'home', label: '홈', icon: 'home' },
+  { key: 'bulletin', label: '주보', icon: 'bulletin' },
+  { key: 'sermon', label: '말씀', icon: 'sermon' },
+  { key: 'prayer', label: '기도', icon: 'prayer' },
+  { key: 'me', label: '나', icon: 'me' },
 ];
 
 export function StudentApp({ token, tab, sub }: StudentAppProps) {
   // App 이 key={token} 으로 다시 만들므로 토큰이 바뀌면 새로 불러온다
-  const { data: student, error, reload } = useLoader(useCallback(() => getStudent(db, token), [token]));
+  const {
+    data: student,
+    error,
+    reload,
+  } = useLoader(useCallback(() => getStudent(db, token), [token]));
   const session = useStudentSession(token, student?.active === true);
   // "이번 주" = 가장 가까운 주일. 날이 바뀌거나 화면이 다시 보일 때만 다시 계산
   const sundayId = useTodaySunday();
@@ -49,20 +52,36 @@ export function StudentApp({ token, tab, sub }: StudentAppProps) {
   const studentDevice = session.state !== 'pending' && session.state !== 'teacher';
   useEffect(() => {
     if (known === true && studentDevice) setLastStudentToken(token);
+    else if (session.state === 'teacher') clearLastStudentToken();
     else if (known === false) clearLastStudentToken(undefined, token);
-  }, [known, studentDevice, token]);
+  }, [known, studentDevice, token, session.state]);
 
   if (student === undefined) {
-    if (error) return <Screen><LoadError error={error} onRetry={reload} audience="student" /></Screen>;
-    return <Screen><Loading /></Screen>;
+    if (error)
+      return (
+        <Screen title="중등부">
+          <LoadError error={error} onRetry={reload} audience="student" />
+        </Screen>
+      );
+    return (
+      <Screen title="중등부">
+        <Loading />
+      </Screen>
+    );
   }
   // 없는 토큰·비활성(재발급된 옛 링크) 모두 같은 안내
   if (student === null || !student.active) return <InvalidLink />;
 
   const current = TABS.find((t) => t.key === tab) ?? TABS[0];
   const props: StudentTabProps = {
-    student, token, classId: student.classId, sundayId, sub,
-    myUid: session.uid, sessionState: session.state, retrySession: session.retry,
+    student,
+    token,
+    classId: student.classId,
+    sundayId,
+    sub,
+    myUid: session.uid,
+    sessionState: session.state,
+    retrySession: session.retry,
   };
   const body: Record<StudentTab, ReactNode> = {
     home: <HomeTab {...props} />,
@@ -73,9 +92,25 @@ export function StudentApp({ token, tab, sub }: StudentAppProps) {
   };
   return (
     <Screen
-      title={current.label}
-      sub={student.name}
-      tabBar={<TabBar items={TABS} current={current.key} onChange={(k) => { location.hash = studentHref(token, k); }} label="학생 메뉴" />}
+      title={current.key === 'home' ? `${student.name}, 반가워요` : current.label}
+      sub={
+        current.key === 'home'
+          ? '함께 예배하는 주일이에요.'
+          : current.key === 'bulletin'
+            ? undefined
+            : student.name
+      }
+      layout="reading"
+      tabBar={
+        <TabBar
+          items={TABS}
+          current={current.key}
+          onChange={(k) => {
+            location.hash = studentHref(token, k);
+          }}
+          label="학생 메뉴"
+        />
+      }
     >
       {body[current.key]}
     </Screen>

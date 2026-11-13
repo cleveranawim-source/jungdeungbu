@@ -46,9 +46,18 @@ export function useAuthRole(): AuthRole {
 
   useEffect(() => {
     let seq = 0; // 늦게 끝난 이전 사용자의 확인 결과가 덮어쓰지 않게
+    let hadUser = false; // 이 탭이 Google 계정을 보고 있었는지
     const unsub = onAuthStateChanged(auth, (u: User | null) => {
       if (leaving.current) return;
       const my = ++seq;
+      const google = !!u && !u.isAnonymous;
+      if (hadUser && !google) {
+        // 이 탭이 시작하지 않은 로그아웃(다른 탭의 로그아웃). 그 탭이 캐시를 지우면 SDK 가 이 탭의 Firestore 도
+        // 끝내므로, 이대로 다시 로그인하면 교사 확인이 끝나지 않는다. 새로 불러와 새 Firestore 로 로그인 화면을 연다.
+        location.reload();
+        return;
+      }
+      hadUser = google;
       if (!u || u.isAnonymous) { setState(SIGNED_OUT); return; }
       const user: AuthUser = { uid: u.uid, email: u.email ?? '', name: u.displayName ?? '' };
       if (!user.email) { setState({ status: 'notInvited', user, teacher: null, error: null }); return; }

@@ -34,7 +34,10 @@ const VISIBILITY_HINT: Record<Visibility, string> = {
 function useLasting(flag: boolean, ms: number): boolean {
   const [lasting, setLasting] = useState(false);
   useEffect(() => {
-    if (!flag) { setLasting(false); return; }
+    if (!flag) {
+      setLasting(false);
+      return;
+    }
     const t = setTimeout(() => setLasting(true), ms);
     return () => clearTimeout(t);
   }, [flag, ms]);
@@ -42,7 +45,13 @@ function useLasting(flag: boolean, ms: number): boolean {
 }
 
 /** 기도: 올리기 폼(500자, 우리 반 / 선생님만) + 우리 반 기도 제목 목록(내 글은 삭제). */
-export function PrayerTab({ student, classId, myUid, sessionState, retrySession }: StudentTabProps) {
+export function PrayerTab({
+  student,
+  classId,
+  myUid,
+  sessionState,
+  retrySession,
+}: StudentTabProps) {
   const { show } = useToast();
   const list = useLoader(useCallback(() => listClassPrayers(db, classId), [classId]));
   const [text, setText] = useState('');
@@ -54,7 +63,11 @@ export function PrayerTab({ student, classId, myUid, sessionState, retrySession 
   // 연결을 기다리는 중이면 이유를 알려 준다(첫 로딩의 짧은 pending 에는 띄우지 않는다)
   const waitingSession = useLasting(sessionState === 'pending', 1500);
   const waitingUpload = useLasting(busy, 2000);
-  const waitingText = waitingUpload ? '연결되면 올라가요' : waitingSession ? '연결되면 올릴 수 있어요' : '';
+  const waitingText = waitingUpload
+    ? '연결되면 올라가요'
+    : waitingSession
+      ? '연결되면 올릴 수 있어요'
+      : '';
 
   // 올리기를 눌렀다가 "잠시 뒤 다시 시도해 주세요"를 본 학생에게, 다시 연결되면 알려 준다.
   // 적어 둔 글은 그대로 남아 있고, 저절로 올리지는 않는다(한 번 더 눌러 올린다).
@@ -69,7 +82,10 @@ export function PrayerTab({ student, classId, myUid, sessionState, retrySession 
   async function submit(e: FormEvent) {
     e.preventDefault();
     const body = text.trim();
-    if (!body) { setFieldError('기도 제목을 적어 주세요'); return; }
+    if (!body) {
+      setFieldError('기도 제목을 적어 주세요');
+      return;
+    }
     if (sessionState !== 'ready' || !myUid) {
       show('잠시 뒤 다시 시도해 주세요', 'error');
       retryAsked.current = true;
@@ -100,9 +116,10 @@ export function PrayerTab({ student, classId, myUid, sessionState, retrySession 
   }
 
   return (
-    <>
-      <Card title="기도 제목 올리기">
+    <div className={s.layout}>
+      <Card title="작은 마음도 함께 나눠요">
         <form className={s.form} onSubmit={submit} noValidate>
+          <p className={s.hint}>기도 제목을 적고, 함께 볼 사람을 골라요.</p>
           <fieldset className={s.fields} disabled={teacherDevice || busy}>
             <TextArea
               label="기도 제목"
@@ -113,7 +130,10 @@ export function PrayerTab({ student, classId, myUid, sessionState, retrySession 
               rows={4}
               error={fieldError}
               hint={`${MAX}자까지 쓸 수 있어요`}
-              onChange={(e) => { setText(e.target.value); if (fieldError) setFieldError(null); }}
+              onChange={(e) => {
+                setText(e.target.value);
+                if (fieldError) setFieldError(null);
+              }}
             />
             <ChoiceChips<Visibility>
               legend="누가 볼까요"
@@ -129,16 +149,25 @@ export function PrayerTab({ student, classId, myUid, sessionState, retrySession 
               <Icon name="info" size={18} />
               선생님 계정으로 로그인된 기기예요
             </p>
-          ) : waitingText && (
-            <p className={s.note} aria-hidden="true">
-              <Icon name="offline" size={18} />
-              {waitingText}
-            </p>
+          ) : (
+            waitingText && (
+              <p className={s.note} aria-hidden="true">
+                <Icon name="offline" size={18} />
+                {waitingText}
+              </p>
+            )
           )}
           {/* 늘 있는 알림 영역이라야 화면 읽기가 바뀐 문구를 읽어 준다 */}
-          <span className="sr-only" role="status">{teacherDevice ? '' : waitingText}</span>
-          <Button type="submit" block busy={busy} disabled={teacherDevice || sessionState === 'pending'}
-            icon={<Icon name="prayer" size={20} />}>
+          <span className="sr-only" role="status">
+            {teacherDevice ? '' : waitingText}
+          </span>
+          <Button
+            type="submit"
+            block
+            busy={busy}
+            disabled={teacherDevice || sessionState === 'pending'}
+            icon={<Icon name="prayer" size={20} />}
+          >
             올리기
           </Button>
         </form>
@@ -146,7 +175,11 @@ export function PrayerTab({ student, classId, myUid, sessionState, retrySession 
 
       <Card title="우리 반 기도 제목">
         {list.data === undefined ? (
-          list.error ? <LoadError error={list.error} onRetry={list.reload} audience="student" /> : <Loading />
+          list.error ? (
+            <LoadError error={list.error} onRetry={list.reload} audience="student" />
+          ) : (
+            <Loading />
+          )
         ) : list.data.length === 0 ? (
           <EmptyState icon="prayer" title="아직 올라온 기도 제목이 없어요">
             위에서 기도 제목을 올리면 우리 반이 함께 볼 수 있어요.
@@ -181,6 +214,6 @@ export function PrayerTab({ student, classId, myUid, sessionState, retrySession 
           </ul>
         )}
       </Card>
-    </>
+    </div>
   );
 }

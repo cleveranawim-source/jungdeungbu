@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLeaveGuard, type LeaveBlocker } from '../app/leaveGuard';
+import { DRAFT_STORE_PREFIX } from '../lib/deviceData';
 import { afterSave, openDraft, type DraftState } from './draftState';
 
 // 편집 화면(주보·설교) 공통: 날짜마다 폼 하나. 저장된 값(base)과 다르면 dirty.
 // dirty 인 동안 폼을 sessionStorage 에 그대로 적어 두고(앱이 꺼져도 이 탭에서 다시 열면 복구),
 // 날짜를 바꾸거나 앱 안 메뉴로 나가려 하면 pending 으로 붙잡아 화면이 그 자리에서 묻게 한다.
 
-const STORE = 'jdb:draft:';
+// 선생님이 로그아웃하면 lib/deviceData 가 이 앞부분의 키를 모두 지운다
+const STORE = DRAFT_STORE_PREFIX;
 
 /** 모양은 아직 모른다(부르는 쪽이 isValid 로 따진다) */
 function readStored(key: string): unknown {
@@ -17,8 +19,8 @@ function readStored(key: string): unknown {
     return null; // 개인 정보 보호 모드·막힌 저장소·깨진 값
   }
 }
-function writeStored(key: string, v: unknown): void {
-  try { sessionStorage.setItem(STORE + key, JSON.stringify(v)); } catch { /* 저장소가 막혀도 편집은 계속 */ }
+function writeStored(key: string, v: unknown, savedAt = Date.now()): void {
+  try { sessionStorage.setItem(STORE + key, JSON.stringify({ draftVersion: 1, savedAt, value: v })); } catch { /* 저장소가 막혀도 편집은 계속 */ }
 }
 function clearStored(key: string): void {
   try { sessionStorage.removeItem(STORE + key); } catch { /* 위와 같음 */ }
@@ -34,8 +36,9 @@ export interface EditorDraft<T> {
   dirty: boolean;
   /** 열 때 sessionStorage 에서 저장 안 된 내용을 되살렸는지 */
   recovered: boolean;
+  serverNewer: boolean;
   /** 불러온 저장값으로 폼을 연다(복구본이 있으면 그걸로). 같은 날짜로 이미 열려 있으면 아무것도 안 한다 */
-  open(base: T): void;
+  open(base: T, serverSavedAt?: number): void;
   /**
    * 저장 성공: sent(저장을 누른 순간의 폼으로 만든 값)가 새 저장값. 그 사이 더 고친 내용은 그대로 남아
    * 계속 "저장 안 한 내용"(복구본도 남음). 열려 있던 날짜 이동 확인은 닫는다.
@@ -43,6 +46,10 @@ export interface EditorDraft<T> {
   saved(sent: T): void;
   /** 복구본 버리고 저장된 값으로 되돌리기 */
   revert(): void;
+  /** 서버 초안을 버린 뒤 게시본으로 완전히 돌아갈 때만 사용해요. */
+  replace(base: T): void;
+  /** 광고 관리에 다녀오기 전 이 기기의 복구본을 즉시 남겨요. */
+  keepLocal(): void;
   /** 날짜 바꾸기(저장 안 한 내용이 있으면 pending 으로 붙잡는다) */
   requestDate(date: string): void;
   pending: Pending | null;
@@ -76,15 +83,15 @@ export function useEditorDraft<T>(
   useEffect(() => {
     if (!state || state.key !== key) return;
     if (same(state.value, state.base)) clearStored(key);
-    else writeStored(key, state.value);
+    else writeStored(key, state.value, state.localSavedAt);
   }, [state, key, same]);
 
-  const open = useCallback((base: T) => {
-    setState((prev) => (prev && prev.key === key ? prev : openDraft(prev, key, base, readStored(key), same, isValid)));
+  const open = useCallback((base: T, serverSavedAt = 0) => {
+    setState((prev) => (prev && prev.key === key ? prev : openDraft(prev, key, base, readStored(key), same, isValid, serverSavedAt)));
   }, [key, same, isValid]);
 
   const set = useCallback((update: (prev: T) => T) => {
-    setState((prev) => (prev && prev.key === key ? { ...prev, value: update(prev.value) } : prev));
+    setState((prev) => (prev && prev.key === key ? { ...prev, value: update(prev.value), localSavedAt: Date.now() } : prev));
   }, [key]);
 
   const saved = useCallback((sent: T) => {
@@ -97,6 +104,15 @@ export function useEditorDraft<T>(
     clearStored(key);
     setState((prev) => (prev && prev.key === key ? { ...prev, value: prev.base, recovered: false } : prev));
   }, [key]);
+
+  const replace = useCallback((base: T) => {
+    clearStored(key);
+    setState({ key, base, value: base, recovered: false });
+    setPending(null);
+  }, [key]);
+  const keepLocal = useCallback(() => {
+    if (state?.key === key && !same(state.value, state.base)) writeStored(key, state.value, state.localSavedAt);
+  }, [state, key, same]);
 
   const requestDate = useCallback((d: string) => {
     if (d === date) return;
@@ -129,9 +145,12 @@ export function useEditorDraft<T>(
     set,
     dirty,
     recovered: ready && state.recovered,
+    serverNewer: ready && Boolean(state.serverNewer),
     open,
     saved,
     revert,
+    replace,
+    keepLocal,
     requestDate,
     pending,
     stay,

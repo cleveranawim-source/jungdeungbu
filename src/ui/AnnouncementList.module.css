@@ -5,3 +5,6 @@
 .item + .item { border-top: 1px solid var(--line); }
 .title { font-size: var(--text-md); }
 .body { margin-top: var(--space-1); color: var(--muted); font-size: var(--text-sm); white-space: pre-line; }
+
+.content { min-width: 0; }
+.date { display: block; margin-top: var(--space-2); color: var(--muted); font-size: var(--text-xs); }

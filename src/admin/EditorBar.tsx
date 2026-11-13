@@ -10,10 +10,11 @@ import s from './EditorBar.module.css';
  * 저장 안 한 내용이 있으면 왼쪽 점과 문구로 알리고(색만으로 알리지 않는다),
  * 앱 안 메뉴로 나가려 하면 이 자리가 "저장하지 않은 내용이 있어요" 확인으로 바뀐다.
  */
-export function EditorBar({ dirty, note, leave, children }: {
+export function EditorBar({ dirty, note, validation, leave, children }: {
   dirty: boolean;
-  /** 저장 줄 위 짧은 안내(예: "임시저장하면 학생 화면에서 내려가요") */
+  /** 저장 줄 위 짧은 안내(예: "초안 저장은 학생이 보는 주보를 바꾸지 않아요") */
   note?: ReactNode;
+  validation?: ReactNode;
   /** 있으면 버튼 대신 이동 확인 */
   leave?: { onStay(): void; onLeave(): void } | null;
   /** 저장 버튼들 */
@@ -45,6 +46,7 @@ export function EditorBar({ dirty, note, leave, children }: {
             )}
             {note && <span className={s.note}>{note}</span>}
           </p>
+          {validation}
           <div className={s.buttons}>{children}</div>
         </>
       )}
@@ -84,7 +86,7 @@ export function LeaveConfirm({ onStay, onLeave, detail = '이동하면 지금 �
 /**
  * 편집 화면 맨 위 카드: 주일 고르기 + 저장 상태 한 줄 + (복구했으면) 복구 안내 + (날짜를 옮기려 하면) 그 자리 확인.
  */
-export function EditorHead({ label, date, thisSunday, latest, onRequestDate, disabled, confirmDate, recovered, onRevert, status }: {
+export function EditorHead({ label, date, thisSunday, latest, onRequestDate, disabled, confirmDate, recovered, serverNewer, onRevert, status }: {
   /** 날짜 묶음 이름("주보 날짜") */
   label: string;
   date: string;
@@ -96,6 +98,7 @@ export function EditorHead({ label, date, thisSunday, latest, onRequestDate, dis
   /** 날짜를 옮기려다 붙잡혔으면 확인 */
   confirmDate?: { onStay(): void; onLeave(): void } | null;
   recovered: boolean;
+  serverNewer?: boolean;
   onRevert(): void;
   /** 상태 배지와 "○○님이 n분 전 저장" */
   status: ReactNode;
@@ -113,7 +116,7 @@ export function EditorHead({ label, date, thisSunday, latest, onRequestDate, dis
       {recovered && (
         <div className={s.recovered} role="status">
           <Icon name="refresh" size={18} />
-          <span className={s.recoveredText}>저장 안 된 내용을 복구했어요</span>
+          <span className={s.recoveredText}>저장 안 된 내용을 복구했어요{serverNewer && <strong>서버에 더 최근에 저장한 내용이 있어요. 되돌리면 그 내용을 가져와요.</strong>}</span>
           <Button variant="ghost" size="sm" icon={<Icon name="undo" size={18} />} onClick={onRevert}>되돌리기</Button>
         </div>
       )}
@@ -121,7 +124,11 @@ export function EditorHead({ label, date, thisSunday, latest, onRequestDate, dis
   );
 }
 
-/** 상태 배지: 게시됨(초록) · 임시저장(베이지) · 새로(점선). 글자로 알린다. */
+/** 상태 배지: 게시 중(초록) · 초안(베이지) · 새 주보(점선). 글자로 알린다. */
 export function StateBadge({ tone, children }: { tone: 'ok' | 'draft' | 'new'; children: ReactNode }) {
   return <span className={[s.badge, s[tone]].join(' ')}>{children}</span>;
+}
+
+export function EditorErrorLink({ onClick, children }: { onClick(): void; children: ReactNode }) {
+  return <div role="status"><button className={s.errorJump} type="button" onClick={onClick}>{children}</button></div>;
 }

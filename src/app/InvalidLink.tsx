@@ -1,3 +1,5 @@
+import { Icon } from '../ui/icons';
+import { LinkButton } from '../ui/Button';
 import s from './InvalidLink.module.css';
 
 /**
@@ -7,9 +9,16 @@ import s from './InvalidLink.module.css';
 export function InvalidLink() {
   return (
     <main className={s.page}>
+      <span className={s.mark}>
+        <Icon name="unlink" size={36} />
+      </span>
       <h1 className={s.title}>선생님께 링크를 다시 받아주세요</h1>
-      <span className={s.rule} aria-hidden="true" />
-      <p className={s.body}>이 링크로는 들어올 수 없어요. 반 선생님께 말하면 새 링크를 바로 보내 주실 거예요.</p>
+      <p className={s.body}>
+        이 링크로는 들어올 수 없어요. 반 선생님께 말하면 새 링크를 바로 보내 주실 거예요.
+      </p>
+      <LinkButton href="#/" variant="secondary">
+        첫 화면으로
+      </LinkButton>
     </main>
   );
 }

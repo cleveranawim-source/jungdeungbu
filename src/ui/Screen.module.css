@@ -18,3 +18,11 @@
 .actions { display: flex; gap: var(--space-2); flex-shrink: 0; margin-top: -6px; }
 
 .main { display: flex; flex-direction: column; gap: var(--space-4); }
+
+@media (min-width: 900px) {
+  .reading { max-width: var(--reading-layout-max); padding-inline: var(--space-7); }
+}
+
+@media (min-width: 900px) { .reading:has([data-reading-columns="single"]) { max-width: var(--content-max); } }
+
+@media (min-width: 900px) { .admin { max-width: var(--admin-layout-max); padding-inline: var(--space-7); } }

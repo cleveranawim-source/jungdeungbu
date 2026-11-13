@@ -41,7 +41,7 @@ test('학생이 이번 주 주보·설교·광고를 본다', async ({ page }) =
       order: [
         { type: '묵도', title: '', detail: '' },
         { type: '기도', title: '대표기도', detail: '박은혜 선생님' },
-        { type: '설교', title: SERMON_TITLE, detail: '' },
+        { type: '설교', title: '', detail: '' },
       ],
       hymns: [HYMN],
       scripture: '마가복음 4:35-41',
@@ -74,16 +74,27 @@ test('학생이 이번 주 주보·설교·광고를 본다', async ({ page }) =
   await expect(page.getByRole('heading', { name: SERMON_TITLE })).toBeVisible();
   await expect(page.getByText(ANNOUNCEMENT)).toBeVisible();
 
-  // 주보: 예배 순서 항목과 찬양
+  // 주보: 세 칸 순서표(순서 | 내용 | 맡은 사람)와 찬양
   await page.getByRole('tab', { name: '주보' }).click();
   await expect(page.getByRole('tab', { name: '주보' })).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByText('박은혜 선생님')).toBeVisible();
-  await expect(page.getByText(HYMN)).toBeVisible();
-  // 설교 제목은 말씀 화면으로 가는 링크
-  await expect(page.getByRole('link', { name: SERMON_TITLE })).toBeVisible();
+  const rows = page.getByRole('table', { name: '예배 순서' }).locator('tbody').getByRole('row');
+  await expect(rows).toHaveCount(3);
+  await expect(rows.nth(1)).toContainText('기도');
+  await expect(rows.nth(1)).toContainText('대표기도');
+  await expect(rows.nth(1)).toContainText('박은혜 선생님');
+  await expect(page.getByRole('region', { name: '찬양' }).getByText(HYMN)).toBeVisible();
+  // 빈 설교 줄은 설교 제목으로 채워지고, 그 제목이 말씀 화면으로 가는 링크
+  await expect(rows.nth(2).getByRole('link', { name: SERMON_TITLE })).toBeVisible();
+  // 순서표에 성경봉독 줄이 없으니 본문은 말씀 구역에 남는다(설교는 순서표에 나왔으므로 빠진다)
+  const word = page.getByRole('region', { name: '말씀' });
+  await expect(word).toContainText('마가복음 4:35-41');
+  await expect(word).not.toContainText(SERMON_TITLE);
 
   // 말씀: 목록 → 상세(요약·적용 질문)
   await page.getByRole('tab', { name: '말씀' }).click();
+  await expect(page.getByRole('link', { name: new RegExp(SERMON_TITLE) })).toHaveAccessibleName(
+    new RegExp(`${SUNDAY.getMonth() + 1}월 ${SUNDAY.getDate()}\\s*일`),
+  );
   await page.getByRole('link', { name: new RegExp(SERMON_TITLE) }).click();
   await expect(page.getByText(SUMMARY)).toBeVisible();
   await expect(page.getByText('요즘 내가 무서워하는 것은 무엇인가요?')).toBeVisible();
@@ -121,13 +132,14 @@ test('관리자가 주보를 게시하면 학생 홈에 보인다', async ({ pag
   // 주보: 템플릿 순서로 시작, 설교 제목은 설교에서 가져오기 → 게시
   await page.getByRole('link', { name: '관리 메뉴' }).click();
   await page.getByRole('link', { name: /^주보 작성/ }).click();
-  await expect(page.getByLabel('1번 순서 이름')).toHaveValue('묵도');
+  await expect(page.getByLabel('1번 순서 이름', { exact: true })).toHaveValue('경배와 찬양');
   await page.getByRole('button', { name: '설교 제목 가져오기' }).click();
   await expect(page.getByLabel('설교 제목')).toHaveValue(WALK);
+  await page.getByRole('button', { name: /찬양 목록 고치기/ }).click();
   await page.getByLabel('찬양 1').fill(HYMN);
   await page.getByRole('button', { name: '게시', exact: true }).click();
   await expectToast(page, '게시했어요');
-  await expect(page.getByText('관리자님이 방금 저장')).toBeVisible();
+  await expect(page.getByText('방금 게시')).toBeVisible();
 
   const { page: student } = await openStudent(browser, `#/s/${TOKEN}`);
   await expect(student.getByRole('heading', { name: WALK })).toBeVisible();
@@ -142,8 +154,8 @@ test('임시저장 주보는 학생에게 안 보인다', async ({ page, browser
   await loginAsEmu(page, ADMIN, '관리자');
   await openAdmin(page, '주보 작성');
   await page.getByLabel('설교 제목').fill('아직 비밀인 제목');
-  await page.getByRole('button', { name: '임시저장', exact: true }).click();
-  await expectToast(page, '임시저장했어요');
+  await page.getByRole('button', { name: '초안 저장', exact: true }).click();
+  await expectToast(page, '초안을 저장했어요');
 
   // 규칙이 임시저장 주보 읽기를 막고(getBulletin → null), 학생 화면은 "없음" 안내
   const { page: student } = await openStudent(browser, `#/s/${TOKEN}`);
@@ -153,10 +165,13 @@ test('임시저장 주보는 학생에게 안 보인다', async ({ page, browser
   await expect(student.getByText('이번 주 주보가 아직 없어요')).toBeVisible();
   await expectAnonymousStudent(student);
 
-  // 교사 주보 탭에서는 "임시저장" 표시와 함께 보인다
+  // 새 계약: 관리자 작성 화면에서 초안을 다시 열고, 읽기 탭에는 아직 나오지 않는다.
+  await page.reload();
+  await expect(page.getByText('초안', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('설교 제목')).toHaveValue('아직 비밀인 제목');
   await page.getByRole('tab', { name: '주보' }).click();
-  await expect(page.getByText('학생에게는 아직 보이지 않아요')).toBeVisible();
-  await expect(page.getByText('아직 비밀인 제목')).toBeVisible();
+  await expect(page.getByText('이번 주 주보가 아직 없어요')).toBeVisible();
+  await expect(page.getByText('아직 비밀인 제목')).toHaveCount(0);
 });
 
 test('광고 종료일이 지나면 주보 광고란에 없다', async ({ page, browser }) => {
@@ -216,8 +231,8 @@ test('주보 편집: 저장 안 한 내용은 날짜·메뉴 이동 전에 묻�
   await expect(title).toHaveValue('쓰다 만 제목');
 
   // 저장하면 복구본은 지워진다
-  await page.getByRole('button', { name: '임시저장', exact: true }).click();
-  await expectToast(page, '임시저장했어요');
+  await page.getByRole('button', { name: '초안 저장', exact: true }).click();
+  await expectToast(page, '초안을 저장했어요');
   await page.reload();
   await expect(title).toHaveValue('쓰다 만 제목');
   await expect(page.getByText('저장 안 된 내용을 복구했어요')).toHaveCount(0);
@@ -244,10 +259,10 @@ test('주보 편집: 저장이 늦게 끝나도 그 사이 고친 내용은 남�
 
   // 오프라인: 저장은 서버에 닿을 때까지 끝나지 않는다. 그동안 더 고친다
   await context.setOffline(true);
-  await page.getByRole('button', { name: '임시저장', exact: true }).click();
+  await page.getByRole('button', { name: '초안 저장', exact: true }).click();
   await title.fill('보낸 뒤 더 고친 제목');
   await context.setOffline(false);
-  await expect(page.getByRole('status').filter({ hasText: '임시저장했어요' })).toHaveCount(1, { timeout: 20000 });
+  await expect(page.getByRole('status').filter({ hasText: '초안을 저장했어요' })).toHaveCount(1, { timeout: 20000 });
 
   // 더 고친 내용은 남고 여전히 "저장 안 한 내용", 날짜 이동 확인은 닫혔다
   await expect(title).toHaveValue('보낸 뒤 더 고친 제목');
@@ -266,6 +281,6 @@ test('주보 편집: 모양이 깨진 복구본은 버리고 저장된 내용으
     sessionStorage.setItem(`jdb:draft:bulletin:${d}`, JSON.stringify({ order: null, sermonTitle: 3 }));
   }, THIS_SUNDAY);
   await openAdmin(page, '주보 작성');
-  await expect(page.getByLabel('1번 순서 이름')).toHaveValue('묵도');
+  await expect(page.getByLabel('1번 순서 이름', { exact: true })).toHaveValue('경배와 찬양');
   await expect(page.getByText('저장 안 된 내용을 복구했어요')).toHaveCount(0);
 });
