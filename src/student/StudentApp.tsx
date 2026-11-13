@@ -8,7 +8,6 @@ import { useTodaySunday } from '../app/useTodaySunday';
 import { getStudent } from '../data/students';
 import { db } from '../lib/firebase';
 import { clearLastStudentToken, setLastStudentToken } from '../lib/lastStudentToken';
-import { Icon } from '../ui/icons';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
 import { Screen } from '../ui/Screen';
@@ -28,11 +27,11 @@ export interface StudentAppProps {
 }
 
 const TABS: readonly TabItem<StudentTab>[] = [
-  { key: 'home', label: '홈', icon: <Icon name="home" /> },
-  { key: 'bulletin', label: '주보', icon: <Icon name="bulletin" /> },
-  { key: 'sermon', label: '말씀', icon: <Icon name="sermon" /> },
-  { key: 'prayer', label: '기도', icon: <Icon name="prayer" /> },
-  { key: 'me', label: '나', icon: <Icon name="me" /> },
+  { key: 'home', label: '홈', icon: 'home' },
+  { key: 'bulletin', label: '주보', icon: 'bulletin' },
+  { key: 'sermon', label: '말씀', icon: 'sermon' },
+  { key: 'prayer', label: '기도', icon: 'prayer' },
+  { key: 'me', label: '나', icon: 'me' },
 ];
 
 export function StudentApp({ token, tab, sub }: StudentAppProps) {

@@ -36,12 +36,12 @@ export interface TeacherAppProps {
 export type TeacherTab = 'attendance' | 'class' | 'prayer' | 'bulletin' | 'admin';
 
 const TABS: readonly TabItem<TeacherTab>[] = [
-  { key: 'attendance', label: '출석', icon: <Icon name="attendance" /> },
-  { key: 'class', label: '우리 반', icon: <Icon name="class" /> },
-  { key: 'prayer', label: '기도', icon: <Icon name="prayer" /> },
-  { key: 'bulletin', label: '주보', icon: <Icon name="bulletin" /> },
+  { key: 'attendance', label: '출석', icon: 'attendance' },
+  { key: 'class', label: '우리 반', icon: 'class' },
+  { key: 'prayer', label: '기도', icon: 'prayer' },
+  { key: 'bulletin', label: '주보', icon: 'bulletin' },
 ];
-const ADMIN_TAB: TabItem<TeacherTab> = { key: 'admin', label: '관리', icon: <Icon name="admin" /> };
+const ADMIN_TAB: TabItem<TeacherTab> = { key: 'admin', label: '관리', icon: 'admin' };
 
 export function TeacherApp({ tab, sub }: TeacherAppProps) {
   const role = useAuthRole();

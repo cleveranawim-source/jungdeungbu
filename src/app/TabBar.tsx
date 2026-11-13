@@ -1,12 +1,13 @@
-import { useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { useRef, type KeyboardEvent } from 'react';
+import { TabIcon, type TabIconName } from '../ui/TabIcon';
 import s from './TabBar.module.css';
 
 export interface TabItem<K extends string = string> {
   key: K;
   /** 한두 글자 짧은 이름(홈·주보·말씀·기도·나) */
   label: string;
-  /** <Icon name=… /> */
-  icon: ReactNode;
+  /** 선택 상태에 따라 선/채움형으로 보여 줄 아이콘 */
+  icon: TabIconName;
 }
 
 export interface TabBarProps<K extends string = string> {
@@ -51,7 +52,7 @@ export function TabBar<K extends string>({ items, current, onChange, label = '�
               onClick={() => { if (!selected) onChange(it.key); }}
               onKeyDown={(e) => onKeyDown(e, i)}
             >
-              <span className={s.icon} aria-hidden="true">{it.icon}</span>
+              <span className={s.icon} aria-hidden="true"><TabIcon name={it.icon} selected={selected} /></span>
               {it.label}
             </button>
           );

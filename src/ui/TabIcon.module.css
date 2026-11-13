@@ -1,0 +1,6 @@
+.icon { display: grid; }
+.icon > svg { grid-area: 1 / 1; transition: opacity var(--dur-fast) var(--ease-out); }
+.icon > svg:first-child { opacity: 1; }
+.icon > svg:last-child { opacity: 0; }
+.icon[data-selected='true'] > svg:first-child { opacity: 0; }
+.icon[data-selected='true'] > svg:last-child { opacity: 1; }
