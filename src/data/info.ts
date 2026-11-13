@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, type Firestore } from 'firebase/firestore';
+import { doc, getDoc, writeBatch, type Firestore } from 'firebase/firestore';
 import { EMPTY_CHURCH_INFO, type ChurchInfo, type MemberInfo } from '../types';
 import { isPermissionDenied } from './errors';
 
@@ -19,11 +19,6 @@ export async function getChurchInfo(db: Firestore): Promise<ChurchInfo> {
   };
 }
 
-/** 관리자. */
-export async function saveChurchInfo(db: Firestore, info: ChurchInfo): Promise<void> {
-  await setDoc(doc(db, CHURCH_PATH), info);
-}
-
 /** 섬기는 분·연락처. 없거나 볼 권한이 없으면(로그인 없음) null. */
 export async function getMemberInfo(db: Firestore): Promise<MemberInfo | null> {
   try {
@@ -35,7 +30,12 @@ export async function getMemberInfo(db: Firestore): Promise<MemberInfo | null> {
   }
 }
 
-/** 관리자. */
-export async function saveMemberInfo(db: Firestore, info: MemberInfo): Promise<void> {
-  await setDoc(doc(db, MEMBER_PATH), info);
+/**
+ * 관리자. 공개 안내와 이름·번호를 한 배치로 쓴다 — 한쪽만 저장되는 일이 없게(하나라도 거절되면 둘 다 안 쓰인다).
+ */
+export async function saveInfo(db: Firestore, church: ChurchInfo, members: MemberInfo): Promise<void> {
+  const batch = writeBatch(db);
+  batch.set(doc(db, CHURCH_PATH), church);
+  batch.set(doc(db, MEMBER_PATH), members);
+  await batch.commit();
 }

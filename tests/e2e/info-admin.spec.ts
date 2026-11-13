@@ -111,3 +111,23 @@ test('지도 링크가 https 주소가 아니면 저장하지 않는다', async 
   const { page: student } = await openStudent(browser, `#/s/${TOKEN}/bulletin`);
   await expect(student.getByRole('link', { name: '지도 열기' })).toHaveAttribute('href', 'https://example.com/map');
 });
+
+test('저장 안 한 채 관리 메뉴로 나가려 하면 묻는다: 계속 쓰기는 그대로, 이동하면 버린다', async ({ page }) => {
+  await openInfoAdmin(page);
+  const motto = page.getByLabel('표어', { exact: true });
+  await motto.fill('새봄의 길');
+
+  await page.getByRole('link', { name: '관리 메뉴' }).click();
+  const prompt = page.getByRole('group', { name: '저장하지 않은 내용' });
+  await expect(prompt).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: '중등부 안내' })).toBeVisible(); // 아직 그 자리
+  await page.getByRole('button', { name: '계속 쓰기' }).click();
+  await expect(prompt).toHaveCount(0);
+  await expect(motto).toHaveValue('새봄의 길');
+
+  await page.getByRole('link', { name: '관리 메뉴' }).click();
+  await page.getByRole('button', { name: '저장하지 않고 이동' }).click();
+  await expect(page.getByRole('navigation', { name: '관리 메뉴' })).toBeVisible();
+  await page.getByRole('link', { name: /^중등부 안내/ }).click();
+  await expect(page.getByLabel('표어', { exact: true })).toHaveValue(''); // 저장하지 않았다
+});

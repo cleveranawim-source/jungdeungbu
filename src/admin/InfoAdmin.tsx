@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { describeError, useToast } from '../app/Toast';
 import { useLoader } from '../app/useLoader';
-import { getChurchInfo, getMemberInfo, saveChurchInfo, saveMemberInfo } from '../data/info';
+import { useLeaveGuard } from '../app/leaveGuard';
+import { getChurchInfo, getMemberInfo, saveInfo } from '../data/info';
 import { parseLines, safeHttpUrl } from '../lib/bulletin';
 import { db } from '../lib/firebase';
 import type { ChurchInfo, MemberInfo } from '../types';
@@ -67,7 +68,8 @@ const snapshot = (f: Form): string => {
 
 /**
  * 관리 → 중등부 안내. 표어·섬기는 분들·예배 에티켓·오시는 길·연락처를 한 번에 저장한다.
- * 공개 안내(settings/info)와 이름·번호(memberInfo/main)는 따로 저장한다.
+ * 공개 안내(settings/info)와 이름·번호(memberInfo/main)는 다른 문서지만 한 번에(한 배치로) 저장한다.
+ * 저장 안 한 내용이 있으면 앱 안 메뉴로 나가려 할 때 그 자리에서 묻는다.
  */
 export function InfoAdmin() {
   const { show } = useToast();
@@ -82,6 +84,8 @@ export function InfoAdmin() {
   const [checked, setChecked] = useState(false);
   const [focusBad, setFocusBad] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+  // 저장 안 한 내용이 있을 때 붙잡아 둔 이동(묻는 중이면 그 이동, 아니면 null)
+  const [pending, setPending] = useState<{ go(): void } | null>(null);
 
   const data = loaded.data;
   useEffect(() => {
@@ -95,13 +99,15 @@ export function InfoAdmin() {
     if (focusBad) rootRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
   }, [focusBad]);
 
+  const dirty = form !== null && snapshot(form) !== base;
+  useLeaveGuard(useMemo(() => (dirty ? (go: () => void) => setPending({ go }) : null), [dirty]));
+
   if (!form) {
     if (loaded.error && !loaded.loading) return <LoadError error={loaded.error} onRetry={loaded.reload} />;
     return <Loading />;
   }
 
   const update = (patch: Partial<Form>) => setForm((f) => (f ? { ...f, ...patch } : f));
-  const dirty = snapshot(form) !== base;
   const mapError = checked && readForm(form).mapInvalid ? MAP_ERROR : null;
 
   async function save() {
@@ -114,11 +120,12 @@ export function InfoAdmin() {
     }
     setBusy(true);
     try {
-      await Promise.all([saveChurchInfo(db, read.church), saveMemberInfo(db, read.members)]);
+      await saveInfo(db, read.church, read.members);
       const saved = fromSaved(read.church, read.members);
       setForm(saved);
       setBase(snapshot(saved));
       setChecked(false);
+      setPending(null);
       show('저장했어요');
     } catch (e) {
       show(describeError(e), 'error');
@@ -172,7 +179,11 @@ export function InfoAdmin() {
         </div>
       </Card>
 
-      <EditorBar dirty={dirty}>
+      <EditorBar dirty={dirty}
+        leave={pending ? {
+          onStay: () => setPending(null),
+          onLeave: () => { const { go } = pending; setPending(null); go(); },
+        } : null}>
         <Button busy={busy} disabled={!dirty} onClick={save}>저장</Button>
       </EditorBar>
     </div>
