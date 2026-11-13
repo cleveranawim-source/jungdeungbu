@@ -86,6 +86,9 @@ export async function getBulletin(db: Firestore, dateId: string): Promise<Bullet
 }
 
 /**
+ * 시험·시드 전용(src 에는 부르는 곳이 없다). **주보 편집 화면에서 쓰지 말 것**: published:false 로 부르면
+ * 이미 게시된 주보가 내려간다. 편집 화면의 초안 저장·게시는 src/data/bulletinDrafts.ts 를 쓴다.
+ *
  * 관리자. 임시저장(published:false)과 게시 모두 이 함수.
  * 이름·생일이 든 members 는 잠긴 하위 문서(bulletins/{date}/members/main)라 주보와 한 배치로 쓴다 — 하나만 쓰이는 일이 없게.
  */

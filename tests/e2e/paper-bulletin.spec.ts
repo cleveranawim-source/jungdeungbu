@@ -8,7 +8,8 @@ import { clear, seed, seedAdmin } from './seed';
 
 const ADMIN = 'admin@example.com';
 const TOKEN = 'testStudentToken_00004'; // 22자
-const CLASS_ID = 'classA';
+// 화면 HTML 에 반 ID 가 섞이면 바로 찾을 수 있게 흔하지 않은 ID 를 쓴다
+const CLASS_ID = 'classPaperBulletinA7';
 
 // 앱과 같은 규칙으로 "이번 주" 주일을 잡는다
 const SUNDAY = nearestSunday(new Date());
@@ -233,4 +234,20 @@ test('360px 다크 모드에서도 세 열을 읽고 키보드로 지난 주보�
   await last.click();
   await expect(page.getByRole('link', { name: '이번 주 주보', exact: true })).toBeVisible();
   await expect(page.getByRole('table', { name: '예배 순서' })).toContainText('함께 걷는 한 주');
+});
+
+test('학생 홈·주보·기도·나 화면의 HTML 에 반 ID 가 없다', async ({ browser }) => {
+  await seedFull();
+  const { page } = await openStudent(browser, `#/s/${TOKEN}`);
+  // 세션이 준비되어 잠긴 구역(새 친구·생일·섬기는 분들)까지 그려진 상태에서 본다
+  await page.getByRole('tab', { name: '기도' }).click();
+  await expect(page.getByRole('button', { name: '올리기', exact: true })).toBeEnabled();
+  for (const tab of ['홈', '주보', '기도', '나']) {
+    await page.getByRole('tab', { name: tab }).click();
+    await expect(page.getByRole('tab', { name: tab })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByText('불러오는 중이에요')).toHaveCount(0);
+    if (tab === '주보') await expect(page.getByRole('heading', { name: '예배 순서', exact: true })).toBeVisible();
+    const html = await page.content();
+    expect(html, `${tab} 화면에 반 ID`).not.toContain(CLASS_ID);
+  }
 });

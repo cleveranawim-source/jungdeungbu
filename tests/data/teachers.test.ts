@@ -3,7 +3,6 @@ import { expect, test } from 'vitest'
 import {
   deleteInvite,
   ensureTeacher,
-  isRegisteredTeacher,
   listInvites,
   listTeachers,
   removeTeacher,
@@ -79,13 +78,6 @@ test('removeTeacher는 teachers와 invites를 함께 지운다', async () => {
   expect((await getDoc(doc(admin, 'invites/a@example.com'))).exists()).toBe(false)
   // 초대가 없으니 다시 로그인해도 교사가 되지 못한다
   expect(await ensureTeacher(asUser(env(), TEACHER_A), TEACHER_A)).toBeNull()
-})
-
-test('isRegisteredTeacher: 교사는 true, 초대 없는 Google 계정은 false', async () => {
-  expect(await isRegisteredTeacher(asUser(env(), TEACHER_A), TEACHER_A.uid)).toBe(true)
-  expect(await isRegisteredTeacher(asUser(env(), OUTSIDER), OUTSIDER.uid)).toBe(false)
-  // 남의 교사 문서는 막힌다(permission-denied) → 교사가 아니라고 본다
-  expect(await isRegisteredTeacher(asUser(env(), OUTSIDER), TEACHER_A.uid)).toBe(false)
 })
 
 test('ensureTeacher: 초대의 호칭도 함께 옮긴다', async () => {

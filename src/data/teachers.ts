@@ -10,7 +10,6 @@ import {
   deleteField,
   doc,
   getDoc,
-  getDocFromCache,
   runTransaction,
   getDocs,
   setDoc,
@@ -61,36 +60,26 @@ export async function ensureTeacher(db: Firestore, user: { uid: string; email: s
     staleStream = true;
   }
   // transaction 은 공유 연결이 아니라 이 탭의 현재 자격으로 직접 RPC 를 보내고, 동시 등록도 원자적으로 만든다.
-  let result: Teacher | null;
-  try {
-    result = await runTransaction(db, async (transaction) => {
-      const snap = await transaction.get(ref);
-      if (snap.exists()) return snap.data() as Teacher;
-      const email = inviteId(user.email);
-      let invite: Invite;
-      try {
-        const inv = await transaction.get(doc(db, 'invites', email));
-        if (!inv.exists()) return null;
-        invite = inv.data() as Invite;
-      } catch (e) {
-        if (isPermissionDenied(e)) return null;
-        throw e;
-      }
-      const teacher: Teacher = { email, name: invite.name, role: invite.role, classIds: invite.classIds };
-      if (invite.title) teacher.title = invite.title;
-      transaction.set(ref, teacher);
-      return teacher;
-    });
-  } catch (e) {
-    // Preserve the existing offline entry for a previously loaded teacher. Never
-    // use the cache to hide a permission failure or register a new teacher offline.
-    const code = (e as { code?: string }).code;
-    if (code === 'unavailable' || code === 'deadline-exceeded') {
-      const cached = await getDocFromCache(ref).catch(() => null);
-      if (cached?.exists()) return cached.data() as Teacher;
+  // 오프라인이면 transaction 이 실패하고 그 오류를 그대로 던진다. 기존 교사의 오프라인 진입은 위 getDoc 이
+  // 캐시로 이미 돌려주므로, 여기서 캐시로 되돌아가지 않는다(권한 실패를 숨기거나 오프라인에서 새로 등록하지 않게).
+  const result = await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(ref);
+    if (snap.exists()) return snap.data() as Teacher;
+    const email = inviteId(user.email);
+    let invite: Invite;
+    try {
+      const inv = await transaction.get(doc(db, 'invites', email));
+      if (!inv.exists()) return null;
+      invite = inv.data() as Invite;
+    } catch (e) {
+      if (isPermissionDenied(e)) return null;
+      throw e;
     }
-    throw e;
-  }
+    const teacher: Teacher = { email, name: invite.name, role: invite.role, classIds: invite.classIds };
+    if (invite.title) teacher.title = invite.title;
+    transaction.set(ref, teacher);
+    return teacher;
+  });
   if (result && staleStream) {
     // 교사 확인은 끝났지만 첫 화면(출석의 listClasses 등)은 다시 공유 연결로 읽는다. 그 연결이 아직 익명이면
     // "권한이 없어요"가 뜨고 화면은 다시 불러오지 않는다. 그래서 같은 본인 문서 읽기가 통과할 때까지 기다린다.
@@ -109,19 +98,6 @@ export async function ensureTeacher(db: Firestore, user: { uid: string; email: s
     }
   }
   return result;
-}
-
-/**
- * uid 가 등록된 교사인지(teachers/{uid} 가 있는지). 규칙은 본인 문서 get 을 허락하고,
- * 막히면(permission-denied) 교사가 아니라고 본다. 연결 오류 등 다른 오류는 그대로 던진다.
- */
-export async function isRegisteredTeacher(db: Firestore, uid: string): Promise<boolean> {
-  try {
-    return (await getDoc(doc(db, 'teachers', uid))).exists();
-  } catch (e) {
-    if (isPermissionDenied(e)) return false;
-    throw e;
-  }
 }
 
 export async function listTeachers(db: Firestore): Promise<WithId<Teacher>[]> {
