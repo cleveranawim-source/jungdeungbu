@@ -14,4 +14,7 @@
   .foot { padding: var(--space-6) var(--space-7); }
 }
 
-@media (max-width: 399px) { .title { font-size: var(--text-cover-small); } }
+@media (max-width: 399px) {
+  .title { font-size: var(--text-cover-small); }
+  .copy { width: 56%; } /* 360px에서도 동행하는 자가 한 줄에 들어가며 남색 영역 안에 머물러요. */
+}
