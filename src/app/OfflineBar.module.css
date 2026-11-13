@@ -1,4 +1,8 @@
-.sticky { position: sticky; top: 0; z-index: var(--z-bar); }
+.sticky {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-bar);
+}
 .bar {
   display: flex;
   align-items: center;
@@ -11,4 +15,16 @@
   font-weight: var(--weight-medium);
   animation: drop var(--dur-base) var(--ease-out) both;
 }
-@keyframes drop { from { transform: translateY(-100%); } }
+@keyframes drop {
+  from {
+    transform: translateY(-100%);
+  }
+}
+
+.bar {
+  line-height: 1.45;
+  min-height: var(--touch-min);
+}
+.bar > svg {
+  flex-shrink: 0;
+}

@@ -1,13 +1,44 @@
-.back { margin: calc(var(--space-2) * -1) 0 0 calc(var(--space-3) * -1); }
+.back {
+  margin: calc(var(--space-2) * -1) 0 0 calc(var(--space-3) * -1);
+}
 
-.me { padding: var(--space-6) var(--space-5); }
-.name { font-size: var(--text-xl); }
-.facts { margin: 0; display: flex; flex-direction: column; }
-.facts > div { display: flex; gap: var(--space-4); align-items: baseline; padding: var(--space-2) 0; }
-.facts > div + div { border-top: 1px solid var(--line); }
-.facts dt { flex-shrink: 0; width: 4.5em; color: var(--muted); font-size: var(--text-sm); }
-.facts dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); font-weight: var(--weight-medium); }
-.num { font-variant-numeric: tabular-nums; }
+.me {
+  padding: var(--space-6) var(--space-5);
+}
+.name {
+  font-size: var(--text-xl);
+}
+.facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.facts > div {
+  display: flex;
+  gap: var(--space-4);
+  align-items: baseline;
+  padding: var(--space-2) 0;
+}
+.facts > div + div {
+  border-top: 1px solid var(--line);
+}
+.facts dt {
+  flex-shrink: 0;
+  width: 4.5em;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.facts dd {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--weight-medium);
+}
+.num {
+  font-variant-numeric: tabular-nums;
+}
 .cake {
   display: inline-flex;
   align-items: center;
@@ -16,4 +47,43 @@
   font-size: var(--text-sm);
   font-weight: var(--weight-bold);
 }
-.count { color: var(--muted); font-size: var(--text-sm); }
+.count {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.layout {
+  display: grid;
+  gap: var(--space-5);
+  align-items: start;
+}
+.me {
+  background: var(--cover-bg);
+  color: var(--cover-ink);
+  border: 0;
+  padding: var(--space-6);
+}
+.me .facts dt,
+.me .count {
+  color: var(--cover-muted);
+}
+.me .facts dd,
+.me .num,
+.me .cake {
+  color: var(--cover-ink);
+}
+.me .name {
+  font-size: var(--text-2xl);
+}
+@media (min-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  }
+  .back {
+    grid-column: 1 / -1;
+  }
+  .layout > section:nth-of-type(2) {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+  }
+}

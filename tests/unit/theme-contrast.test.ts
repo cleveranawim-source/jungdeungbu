@@ -51,7 +51,7 @@ const BODY: [fg: string, bg: string][] = [
   ['--cover-button-ink', '--cover-button'], ['--cover-button-ink', '--cover-button-hover'],
   ['--illustration-ink', '--illustration-bg'], ['--sage-ink', '--sage-bg'], ['--gold-panel-ink', '--gold-panel'],
 ];
-const UI: [fg: string, bg: string][] = [['--line-strong', '--card'], ['--gold', '--card'], ['--cover-line', '--cover-bg'], ['--cover-focus', '--cover-bg'], ['--focus', '--card'], ['--focus', '--bg']];
+const UI: [fg: string, bg: string][] = [['--gold-panel-ink', '--card'], ['--line-strong', '--card'], ['--gold', '--card'], ['--cover-line', '--cover-bg'], ['--cover-focus', '--cover-bg'], ['--focus', '--card'], ['--focus', '--bg']];
 
 function failures(mode: 'light' | 'dark', pairs: [string, string][], min: number): string[] {
   const t = readTokens(css, mode);

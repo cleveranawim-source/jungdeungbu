@@ -2,7 +2,10 @@ import { useId, type ReactNode } from 'react';
 import { Icon } from './icons';
 import s from './ChoiceChips.module.css';
 
-export interface Choice<V extends string = string> { value: V; label: ReactNode }
+export interface Choice<V extends string = string> {
+  value: V;
+  label: ReactNode;
+}
 
 interface Base<V extends string> {
   /** 묶음 이름(fieldset legend). 늘 보인다. */
@@ -13,10 +16,11 @@ interface Base<V extends string> {
   disabled?: boolean;
 }
 
-export type ChoiceChipsProps<V extends string = string> = Base<V> & (
-  | { multiple: true; value: readonly V[]; onChange(value: V[]): void }
-  | { multiple?: false; value: V; onChange(value: V): void }
-);
+export type ChoiceChipsProps<V extends string = string> = Base<V> &
+  (
+    | { multiple: true; value: readonly V[]; onChange(value: V[]): void }
+    | { multiple?: false; value: V; onChange(value: V): void }
+  );
 
 /**
  * 알약 모양 고르기. multiple 이면 체크박스(담당 반), 아니면 라디오(역할·반 보기).
@@ -40,18 +44,20 @@ export function ChoiceChips<V extends string>(props: ChoiceChipsProps<V>) {
     <fieldset className={s.group} disabled={disabled}>
       <legend className={s.legend}>{legend}</legend>
       <div className={s.chips}>
-        {options.map((o) => (
+        {options.map((o, index) => (
           <label key={o.value} className={s.chip}>
             <input
               className={s.input}
               type={props.multiple ? 'checkbox' : 'radio'}
               name={name}
-              value={o.value}
+              value={index}
               checked={isOn(o.value)}
               onChange={() => toggle(o.value)}
             />
             <span className={s.face}>
-              <span className={s.tick} aria-hidden="true"><Icon name="check" size={16} /></span>
+              <span className={s.tick} aria-hidden="true">
+                <Icon name="check" size={16} />
+              </span>
               {o.label}
             </span>
           </label>

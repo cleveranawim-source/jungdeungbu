@@ -1,7 +1,33 @@
-.stack { display: flex; flex-direction: column; gap: var(--space-4); }
-.fields { display: flex; flex-direction: column; gap: var(--space-4); }
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
 /* 말씀 내용은 길게: 휴대폰에서도 한 화면의 반 넘게 보이도록 */
-.body { min-height: 45vh; }
+.body {
+  min-height: 45vh;
+}
 /* 질문은 두 줄 칸이라 번호·지우기를 위쪽에 맞춘다 */
-.question { align-items: flex-start; }
-.question > label { margin-top: 10px; }
+.question {
+  align-items: flex-start;
+}
+.question > label {
+  margin-top: 10px;
+}
+
+.columns {
+  display: grid;
+  gap: var(--space-5);
+  align-items: start;
+}
+@media (min-width: 900px) {
+  .columns {
+    grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
+    gap: var(--space-6);
+  }
+}

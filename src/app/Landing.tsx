@@ -6,6 +6,8 @@ import { Button, LinkButton } from '../ui/Button';
 import { Icon } from '../ui/icons';
 import { EmuLogin } from './EmuLogin';
 import { studentHref, teacherHref } from './router';
+import small from '../assets/walking-together/480.webp';
+import medium from '../assets/walking-together/800.webp';
 import s from './Landing.module.css';
 
 async function emuSignIn(email: string, name: string) {
@@ -24,29 +26,53 @@ export function Landing() {
     <main className={s.page}>
       <div className={s.hero}>
         <h1 className={s.title}>
-          <span className={s.church}>명지대학교교회</span>{' '}
-          <span className={s.group}>중등부</span>
+          <span className={s.church}>명지대학교교회</span> <span className={s.group}>중등부</span>
         </h1>
-        <span className={s.rule} aria-hidden="true" />
+        <img
+          className={s.art}
+          src={medium}
+          srcSet={`${small} 480w, ${medium} 800w`}
+          sizes="(min-width:900px) 600px, 100vw"
+          alt=""
+          width={1536}
+          height={1024}
+        />
         <p className={s.lead}>주보와 말씀, 우리 반 기도 제목을 여기서 함께 봐요.</p>
       </div>
       <div className={s.actions}>
         {last ? (
           <div className={s.resume}>
-            <LinkButton href={studentHref(last)} size="lg" block icon={<Icon name="home" />}>내 화면 열기</LinkButton>
-            <Button variant="ghost" size="sm"
-              onClick={() => { clearLastStudentToken(); setLast(null); }}>
+            <LinkButton href={studentHref(last)} size="lg" block icon={<Icon name="home" />}>
+              내 화면 열기
+            </LinkButton>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                clearLastStudentToken();
+                setLast(null);
+              }}
+            >
               다른 링크로 들어왔어요
             </Button>
           </div>
         ) : (
           <p className={s.student}>
-            <span className={s.studentMark}><Icon name="link" /></span>
+            <span className={s.studentMark}>
+              <Icon name="link" />
+            </span>
             학생은 선생님이 보내준 링크로 들어와요
           </p>
         )}
-        <LinkButton href={teacherHref()} size="lg" block variant={last ? 'secondary' : 'primary'}
-          icon={<Icon name="login" />}>선생님 로그인</LinkButton>
+        <LinkButton
+          href={teacherHref()}
+          size="lg"
+          block
+          variant={last ? 'secondary' : 'primary'}
+          icon={<Icon name="login" />}
+        >
+          선생님 로그인
+        </LinkButton>
         <EmuLogin onSignIn={emuSignIn} />
       </div>
     </main>

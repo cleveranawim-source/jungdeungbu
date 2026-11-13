@@ -56,7 +56,7 @@ test('관리자가 반·학생을 만들고 학생 링크가 열린다', async (
 
 test('초대 없는 계정은 안내 화면', async ({ page }) => {
   await loginAsEmu(page, 'nobody@example.com', '아무개', { expectTabBar: false });
-  await expect(page.getByText('등록되지 않은 계정입니다')).toBeVisible();
+  await expect(page.getByText('아직 초대되지 않은 계정이에요')).toBeVisible();
   await expect(page.getByText('nobody@example.com')).toBeVisible();
   await expect(page.getByRole('tablist')).toHaveCount(0);
   await page.getByRole('button', { name: '로그아웃' }).click();
@@ -170,7 +170,7 @@ test('새 친구로 등록한 학생은 처음 출석한 주의 주보에 올라
   await page.goto('#/t/admin/roster');
 
   const add = page.getByRole('form', { name: '학생 추가' });
-  const check = add.getByRole('checkbox', { name: '새 친구' });
+  const check = add.getByRole('checkbox', { name: '새 친구로 맞이해요' });
   await expect(check).not.toBeChecked();
   await add.getByLabel('학생 이름').fill('새봄');
   await check.check();
@@ -207,7 +207,7 @@ test('새 친구 표시는 나중에 끄고 켤 수 있다', async ({ page }) =>
   await expect(row).toContainText('새 친구');
   await row.click();
   const form = page.getByRole('form', { name: '새봄 정보 고치기' });
-  const check = form.getByRole('checkbox', { name: '새 친구' });
+  const check = form.getByRole('checkbox', { name: '새 친구로 맞이해요' });
   await expect(check).toBeChecked();
   await expect(form.getByRole('button', { name: '저장' })).toBeDisabled();
   await check.uncheck();
@@ -218,10 +218,10 @@ test('새 친구 표시는 나중에 끄고 켤 수 있다', async ({ page }) =>
   await page.reload();
   await expect(page.getByRole('button', { name: /^새봄/ })).not.toContainText('새 친구');
   await page.getByRole('button', { name: /^새봄/ }).click();
-  await expect(page.getByRole('form', { name: '새봄 정보 고치기' }).getByRole('checkbox', { name: '새 친구' })).not.toBeChecked();
+  await expect(page.getByRole('form', { name: '새봄 정보 고치기' }).getByRole('checkbox', { name: '새 친구로 맞이해요' })).not.toBeChecked();
 
   // 다시 켜면 meta 에 돌아온다
-  await page.getByRole('form', { name: '새봄 정보 고치기' }).getByRole('checkbox', { name: '새 친구' }).check();
+  await page.getByRole('form', { name: '새봄 정보 고치기' }).getByRole('checkbox', { name: '새 친구로 맞이해요' }).check();
   await page.getByRole('form', { name: '새봄 정보 고치기' }).getByRole('button', { name: '저장' }).click();
   await expectToast(page, '저장했어요');
   await expect(page.getByRole('button', { name: /^새봄/ })).toContainText('새 친구');

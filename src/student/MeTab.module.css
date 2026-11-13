@@ -1,11 +1,86 @@
-.me { padding: var(--space-6) var(--space-5); }
-.name { font-size: var(--text-xl); }
-.facts { margin: 0; display: flex; flex-direction: column; }
-.facts > div { display: flex; gap: var(--space-4); align-items: baseline; padding: var(--space-2) 0; }
-.facts > div + div { border-top: 1px solid var(--line); }
-.facts dt { flex-shrink: 0; width: 3em; color: var(--muted); font-size: var(--text-sm); }
-.facts dd { margin: 0; font-weight: var(--weight-medium); }
+.me {
+  padding: var(--space-6) var(--space-5);
+}
+.name {
+  font-size: var(--text-xl);
+}
+.facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.facts > div {
+  display: flex;
+  gap: var(--space-4);
+  align-items: baseline;
+  padding: var(--space-2) 0;
+}
+.facts > div + div {
+  border-top: 1px solid var(--line);
+}
+.facts dt {
+  flex-shrink: 0;
+  width: 3em;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.facts dd {
+  margin: 0;
+  font-weight: var(--weight-medium);
+}
 
-.streak { font-size: var(--text-md); }
-.streak strong { color: var(--accent-text); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
-.count { color: var(--muted); font-size: var(--text-sm); }
+.streak {
+  font-size: var(--text-md);
+}
+.streak strong {
+  color: var(--accent-text);
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+}
+.count {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.layout {
+  display: grid;
+  gap: var(--space-5);
+  align-items: start;
+}
+.me {
+  position: relative;
+  overflow: hidden;
+  background: var(--cover-bg);
+  color: var(--cover-ink);
+  border: 0;
+  padding: var(--space-7) var(--space-6);
+}
+.name {
+  font-size: var(--text-2xl);
+  margin-bottom: var(--space-6);
+}
+.facts dt {
+  color: var(--cover-muted);
+}
+.facts > div + div {
+  border-color: var(--cover-line);
+}
+.facts {
+  position: relative;
+}
+.streak {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+.streak strong {
+  font-size: var(--text-xl);
+}
+@media (min-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+    gap: var(--space-6);
+  }
+}

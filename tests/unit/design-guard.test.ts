@@ -75,3 +75,16 @@ test('관리 작성 화면도 선언된 토큰만 참조한다', () => {
     expect(used.filter(token => !declared.has(token)), path).toEqual([]);
   }
 });
+
+
+test('새 구역 머리와 안내는 배경에 맞는 글자색을 쓴다', () => {
+  const card = readFileSync('src/ui/Card.module.css', 'utf8');
+  const intro = readFileSync('src/ui/PageIntro.module.css', 'utf8');
+  for (const css of [card,intro]) {
+    expect(css).toMatch(/background:\s*var\(--sage-bg\);\s*color:\s*var\(--sage-ink\)/);
+    expect(css).toMatch(/background:\s*var\(--gold-panel\);\s*color:\s*var\(--gold-panel-ink\)/);
+  }
+});
+test('화면에는 자물쇠 아이콘을 쓰지 않는다', () => {
+  expect(hits(src.filter(p => p.endsWith('.tsx')), /name=["']lock["']/)).toEqual([]);
+});

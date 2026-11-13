@@ -1,12 +1,57 @@
-.stack { display: flex; flex-direction: column; gap: var(--space-4); }
-.muted { color: var(--muted); font-size: var(--text-sm); }
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.muted {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
 
-.form { display: flex; flex-direction: column; gap: var(--space-4); }
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
 /* 카드 안 목록 다음의 새 항목 폼·하위 묶음은 구분선으로 나눈다 */
-.form:not(:first-child), .sub { padding-top: var(--space-5); border-top: 1px solid var(--line); }
-.sub { display: flex; flex-direction: column; gap: var(--space-2); }
+.form:not(:first-child),
+.sub {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--line);
+}
+.sub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
 /* 줄을 펼친 안쪽 폼은 구분선 없이 */
-li .form { padding-top: 0; border-top: 0; }
+li .form {
+  padding-top: 0;
+  border-top: 0;
+}
 
-.pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: start; }
-.actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: flex-start; justify-content: space-between; }
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  align-items: start;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+@media (min-width: 900px) {
+  .stack {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-6);
+    align-items: start;
+  }
+  .stack > section:first-child {
+    grid-row: span 2;
+  }
+}

@@ -14,4 +14,18 @@
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading {
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+}
+.dot {
+  border-color: var(--gold-panel-ink);
+  border-right-color: transparent;
+}

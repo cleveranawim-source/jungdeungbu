@@ -5,8 +5,44 @@
   box-shadow: var(--shadow-card);
   padding: var(--space-5);
 }
-.accent { background: var(--accent-soft); border-color: transparent; box-shadow: none; }
-.quiet { background: transparent; border-style: dashed; border-color: var(--line-strong); box-shadow: none; }
+.accent {
+  background: var(--accent-soft);
+  border-color: transparent;
+  box-shadow: none;
+}
+.quiet {
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--line-strong);
+  box-shadow: none;
+}
 
-.title { margin-bottom: var(--space-3); }
-.body > * + * { margin-top: var(--space-3); }
+.title {
+  margin-bottom: var(--space-3);
+}
+.body > * + * {
+  margin-top: var(--space-3);
+}
+
+.gold,
+.sage {
+  padding: 0;
+  overflow: clip;
+}
+.gold > .title,
+.sage > .title {
+  padding: var(--space-5);
+  margin: 0;
+}
+.gold > .title {
+  background: var(--gold-panel);
+  color: var(--gold-panel-ink);
+}
+.sage > .title {
+  background: var(--sage-bg);
+  color: var(--sage-ink);
+}
+.gold > .body,
+.sage > .body {
+  padding: var(--space-5);
+}

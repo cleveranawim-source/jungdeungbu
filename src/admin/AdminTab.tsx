@@ -34,45 +34,83 @@ export function AdminTab({ sub, myUid, thisSunday, onProfileChanged }: AdminTabP
   return (
     <div className={section.key === 'bulletin' || section.key === 'info' ? s.wide : s.standard}>
       <div className={s.back}>
-        <LinkButton href={teacherHref('admin')} variant="ghost" size="sm" icon={<Icon name="back" size={20} />}
-          onClick={guardedClick}>
+        <LinkButton
+          href={teacherHref('admin')}
+          variant="ghost"
+          size="sm"
+          icon={<Icon name="back" size={20} />}
+          onClick={guardedClick}
+        >
           관리 메뉴
         </LinkButton>
       </div>
-      {section.key === 'bulletin' && <BulletinEditor myUid={myUid} thisSunday={thisSunday} initialDate={bulletinDate} onDateChange={setBulletinDate} />}
+      {section.key === 'bulletin' && (
+        <BulletinEditor
+          myUid={myUid}
+          thisSunday={thisSunday}
+          initialDate={bulletinDate}
+          onDateChange={setBulletinDate}
+        />
+      )}
       {section.key === 'sermon' && <SermonEditor thisSunday={thisSunday} />}
       {section.key === 'announcements' && <AnnouncementsAdmin thisSunday={thisSunday} />}
       {section.key === 'info' && <InfoAdmin />}
       {section.key === 'roster' && <RosterAdmin />}
       {section.key === 'attendance' && <StatsAdmin thisSunday={thisSunday} />}
-      {section.key === 'classes' && <ClassesTeachersAdmin myUid={myUid} onProfileChanged={onProfileChanged} />}
+      {section.key === 'classes' && (
+        <ClassesTeachersAdmin myUid={myUid} onProfileChanged={onProfileChanged} />
+      )}
       {!section.ready && (
-        <EmptyState icon={section.icon} title="준비 중이에요">{section.label} 화면은 곧 채워질 거예요.</EmptyState>
+        <EmptyState icon={section.icon} title="준비 중이에요">
+          {section.label} 화면은 곧 채워질 거예요.
+        </EmptyState>
       )}
     </div>
   );
 }
 
+const MENU_GROUPS = [
+  {
+    title: '이번 주 준비',
+    description: '예배의 순서와 말씀, 나눌 소식을 준비해요.',
+    keys: ['bulletin', 'sermon', 'announcements'],
+  },
+  {
+    title: '학생과 반',
+    description: '학생을 맞이하고, 함께한 시간을 살펴요.',
+    keys: ['roster', 'classes', 'attendance'],
+  },
+  { title: '상시 안내', description: '모든 주보에 함께 실리는 안내를 가꿔요.', keys: ['info'] },
+];
 function AdminMenu() {
   return (
     <nav aria-label="관리 메뉴" className={s.menu}>
-      <ul className={s.list}>
-        {ADMIN_SECTIONS.map((x) => (
-          <li key={x.key}>
-            <a className={s.item} href={teacherHref('admin', x.key)}>
-              <span className={s.mark}><Icon name={x.icon} /></span>
-              <span className={s.text}>
-                <span className={s.label}>
-                  {x.label}
-                  {!x.ready && <span className={s.soon}>준비 중</span>}
-                </span>
-                <span className={s.desc}>{x.desc}</span>
-              </span>
-              <span className={s.chev} aria-hidden="true"><Icon name="chevronRight" size={20} /></span>
-            </a>
-          </li>
-        ))}
-      </ul>
+      {MENU_GROUPS.map((group, i) => (
+        <section key={group.title} className={`${s.group} ${i === 0 ? s.week : ''}`}>
+          <header className={s.groupHead}>
+            <h2>{group.title}</h2>
+            <p>{group.description}</p>
+          </header>
+          <ul className={s.list}>
+            {group.keys
+              .map((key) => ADMIN_SECTIONS.find((x) => x.key === key)!)
+              .map((x) => (
+                <li key={x.key}>
+                  <a className={s.item} href={teacherHref('admin', x.key)}>
+                    <span className={s.mark}>
+                      <Icon name={x.icon} />
+                    </span>
+                    <span className={s.text}>
+                      <span className={s.label}>{x.label}</span>
+                      <span className={s.desc}>{x.desc}</span>
+                    </span>
+                    <Icon name="chevronRight" size={20} />
+                  </a>
+                </li>
+              ))}
+          </ul>
+        </section>
+      ))}
     </nav>
   );
 }

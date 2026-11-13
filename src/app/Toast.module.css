@@ -30,8 +30,14 @@
   line-height: 1.45;
   animation: enter var(--dur-base) var(--ease-out) both;
 }
-.error { background: var(--danger); color: var(--danger-ink); }
-.msg { flex: 1; min-width: 0; }
+.error {
+  background: var(--danger);
+  color: var(--danger-ink);
+}
+.msg {
+  flex: 1;
+  min-width: 0;
+}
 .close {
   display: grid;
   place-items: center;
@@ -44,6 +50,21 @@
   color: inherit;
   opacity: 0.8;
 }
-.close:focus-visible { outline-color: currentColor; outline-offset: -3px; }
+.close:focus-visible {
+  outline-color: currentColor;
+  outline-offset: -3px;
+}
 
-@keyframes enter { from { opacity: 0; transform: translateY(12px); } }
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.toast {
+  border-radius: var(--radius-lg);
+}
+.close:hover {
+  opacity: 1;
+}

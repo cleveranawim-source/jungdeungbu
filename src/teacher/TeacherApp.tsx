@@ -18,6 +18,7 @@ import { Field } from '../ui/Field';
 import { Icon } from '../ui/icons';
 import { Loading } from '../ui/Loading';
 import { Screen } from '../ui/Screen';
+import { IllustratedCover } from '../ui/IllustratedCover';
 import { AttendanceTab } from './AttendanceTab';
 import { BulletinTab } from './BulletinTab';
 import { ClassTab } from './ClassTab';
@@ -46,7 +47,11 @@ export function TeacherApp({ tab, sub }: TeacherAppProps) {
   const role = useAuthRole();
 
   if (role.status === 'loading') {
-    return <Screen title="선생님"><Loading>로그인을 확인하는 중이에요</Loading></Screen>;
+    return (
+      <Screen title="선생님">
+        <Loading>로그인을 확인하는 중이에요</Loading>
+      </Screen>
+    );
   }
   if (role.error) return <AuthError message={role.error} onSignOut={role.signOut} />;
   if (role.status === 'signedOut') return <SignIn onGoogle={role.signIn} onEmu={role.signInEmu} />;
@@ -55,7 +60,14 @@ export function TeacherApp({ tab, sub }: TeacherAppProps) {
   }
   return (
     <LeaveGuardProvider>
-      <Ready user={role.user} teacher={role.teacher} tab={tab} sub={sub} onSignOut={role.signOut} onProfileChanged={role.refreshTeacher} />
+      <Ready
+        user={role.user}
+        teacher={role.teacher}
+        tab={tab}
+        sub={sub}
+        onSignOut={role.signOut}
+        onProfileChanged={role.refreshTeacher}
+      />
     </LeaveGuardProvider>
   );
 }
@@ -68,22 +80,37 @@ const UNSYNCED = '아직 저장되지 않은 출석이 있어요. 연결된 뒤 
  * 로그아웃 버튼. 서버에 닿지 않은 출석이 있으면 로그아웃하지 않고 onUnsynced(없으면 오류 토스트).
  * 로그아웃되면 화면을 새로 불러오므로 busy 는 그대로 둔다.
  */
-function SignOutButton({ onSignOut, onUnsynced, variant = 'secondary' }: {
-  onSignOut: SignOut; onUnsynced?(): void; variant?: 'secondary' | 'ghost';
+function SignOutButton({
+  onSignOut,
+  onUnsynced,
+  variant = 'secondary',
+}: {
+  onSignOut: SignOut;
+  onUnsynced?(): void;
+  variant?: 'secondary' | 'ghost';
 }) {
   const { show } = useToast();
   const [busy, setBusy] = useState(false);
   return (
-    <Button variant={variant} size="sm" busy={busy} icon={<Icon name="logout" size={18} />}
+    <Button
+      variant={variant}
+      size="sm"
+      busy={busy}
+      icon={<Icon name="logout" size={18} />}
       onClick={async () => {
         setBusy(true);
         try {
           if ((await onSignOut()) === 'unsynced') {
             setBusy(false);
-            if (onUnsynced) onUnsynced(); else show(UNSYNCED, 'error');
+            if (onUnsynced) onUnsynced();
+            else show(UNSYNCED, 'error');
           }
-        } catch (e) { show(describeError(e), 'error'); setBusy(false); }
-      }}>
+        } catch (e) {
+          show(describeError(e), 'error');
+          setBusy(false);
+        }
+      }}
+    >
       로그아웃
     </Button>
   );
@@ -112,18 +139,37 @@ function UnsyncedNotice({ onSignOut }: { onSignOut: SignOut }) {
         <span>{UNSYNCED}</span>
       </p>
       <div className={s.row}>
-        <Button variant="secondary" size="sm" busy={busy} icon={<Icon name="refresh" size={18} />} onClick={retry}>
+        <Button
+          variant="secondary"
+          size="sm"
+          busy={busy}
+          icon={<Icon name="refresh" size={18} />}
+          onClick={retry}
+        >
           다시 시도
         </Button>
-        <ConfirmAction label="저장 안 하고 로그아웃" icon="logout" confirmLabel="지우고 로그아웃하기" disabled={busy}
+        <ConfirmAction
+          label="저장 안 하고 로그아웃"
+          icon="logout"
+          confirmLabel="지우고 로그아웃하기"
+          disabled={busy}
           message="저장되지 않은 출석은 이 기기에서 지워지고 되돌릴 수 없어요."
-          onConfirm={async () => { await onSignOut(true); }} />
+          onConfirm={async () => {
+            await onSignOut(true);
+          }}
+        />
       </div>
     </div>
   );
 }
 
-function SignIn({ onGoogle, onEmu }: { onGoogle(): Promise<void>; onEmu(email: string, name: string): Promise<void> }) {
+function SignIn({
+  onGoogle,
+  onEmu,
+}: {
+  onGoogle(): Promise<void>;
+  onEmu(email: string, name: string): Promise<void>;
+}) {
   const { show } = useToast();
   const [busy, setBusy] = useState(false);
   async function google() {
@@ -131,9 +177,11 @@ function SignIn({ onGoogle, onEmu }: { onGoogle(): Promise<void>; onEmu(email: s
     try {
       await onGoogle();
     } catch (e) {
-      const code = typeof e === 'object' && e && 'code' in e ? String((e as { code: unknown }).code) : '';
+      const code =
+        typeof e === 'object' && e && 'code' in e ? String((e as { code: unknown }).code) : '';
       // 사용자가 로그인 창을 닫은 것은 오류가 아니다
-      if (!code.endsWith('popup-closed-by-user') && !code.endsWith('cancelled-popup-request')) show(describeError(e), 'error');
+      if (!code.endsWith('popup-closed-by-user') && !code.endsWith('cancelled-popup-request'))
+        show(describeError(e), 'error');
     } finally {
       setBusy(false);
     }
@@ -141,16 +189,37 @@ function SignIn({ onGoogle, onEmu }: { onGoogle(): Promise<void>; onEmu(email: s
   // 카카오톡 등 앱 안 브라우저에서는 Google 이 로그인을 막는다 → 버튼 대신 바깥 브라우저로 여는 법
   const [inApp] = useState(() => inAppBrowser(navigator.userAgent));
   return (
-    <Screen title="선생님 로그인" sub="초대받은 Google 계정으로 들어와요">
-      {inApp ? (
-        <InAppNotice kakao={inApp === 'kakao'} />
-      ) : (
-        <div className={s.signIn}>
-          <Button size="lg" block busy={busy} icon={<Icon name="login" />} onClick={google}>Google로 로그인</Button>
-          <p className={s.note}>학생은 로그인하지 않아요. 선생님이 보내 준 링크로 바로 들어와요.</p>
+    <Screen title="선생님 로그인" sub="초대받은 Google 계정으로 들어와요" layout="reading">
+      <div className={s.loginLayout}>
+        <IllustratedCover
+          title={
+            <>
+              함께
+              <br />
+              돌보는
+              <br />
+              중등부
+            </>
+          }
+        >
+          <p>아이들의 예배와 한 주를 함께 준비해요.</p>
+        </IllustratedCover>
+        <div className={s.loginActions}>
+          {inApp ? (
+            <InAppNotice kakao={inApp === 'kakao'} />
+          ) : (
+            <div className={s.signIn}>
+              <Button size="lg" block busy={busy} icon={<Icon name="login" />} onClick={google}>
+                Google로 로그인
+              </Button>
+              <p className={s.note}>
+                학생은 로그인하지 않아요. 선생님이 보내 준 링크로 바로 들어와요.
+              </p>
+            </div>
+          )}
+          <EmuLogin onSignIn={onEmu} />
         </div>
-      )}
-      <EmuLogin onSignIn={onEmu} />
+      </div>
     </Screen>
   );
 }
@@ -178,16 +247,30 @@ function InAppNotice({ kakao }: { kakao: boolean }) {
       <p className={s.inApp} role="note">
         <Icon name="info" size={20} />
         <span>
-          {kakao ? '카카오톡' : '이 앱'} 안 브라우저에서는 Google 로그인이 안 돼요.
-          오른쪽 위 메뉴에서 'Safari/Chrome으로 열기'를 눌러 주세요
+          {kakao ? '카카오톡' : '이 앱'} 안 브라우저에서는 Google 로그인이 안 돼요. 오른쪽 위
+          메뉴에서 'Safari/Chrome으로 열기'를 눌러 주세요
         </span>
       </p>
       {external && (
-        <LinkButton href={external} size="lg" block icon={<Icon name="link" />}>Chrome으로 열기</LinkButton>
+        <LinkButton href={external} size="lg" block icon={<Icon name="link" />}>
+          Chrome으로 열기
+        </LinkButton>
       )}
-      <Field ref={inputRef} label="이 화면 주소" readOnly value={url}
-        onFocus={(e) => e.currentTarget.select()} hint="길게 눌러 직접 복사할 수도 있어요" />
-      <Button variant={external ? 'secondary' : 'primary'} size="lg" block icon={<Icon name="copy" size={20} />} onClick={copy}>
+      <Field
+        ref={inputRef}
+        label="이 화면 주소"
+        readOnly
+        value={url}
+        onFocus={(e) => e.currentTarget.select()}
+        hint="길게 눌러 직접 복사할 수도 있어요"
+      />
+      <Button
+        variant={external ? 'secondary' : 'primary'}
+        size="lg"
+        block
+        icon={<Icon name="copy" size={20} />}
+        onClick={copy}
+      >
         주소 복사
       </Button>
     </div>
@@ -197,7 +280,11 @@ function InAppNotice({ kakao }: { kakao: boolean }) {
 function NotInvited({ email, onSignOut }: { email: string; onSignOut: SignOut }) {
   return (
     <Screen title="선생님 로그인">
-      <EmptyState icon="mail" title="등록되지 않은 계정입니다" action={<SignOutButton onSignOut={onSignOut} />}>
+      <EmptyState
+        icon="mail"
+        title="아직 초대되지 않은 계정이에요"
+        action={<SignOutButton onSignOut={onSignOut} />}
+      >
         관리자에게 이메일을 알려주세요.
         {email && <span className={s.email}>{email}</span>}
       </EmptyState>
@@ -213,7 +300,12 @@ function AuthError({ message, onSignOut }: { message: string; onSignOut: SignOut
         title="로그인을 확인하지 못했어요"
         action={
           <div className={s.row}>
-            <Button variant="secondary" size="sm" icon={<Icon name="refresh" size={18} />} onClick={() => location.reload()}>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Icon name="refresh" size={18} />}
+              onClick={() => location.reload()}
+            >
               다시 시도
             </Button>
             <SignOutButton onSignOut={onSignOut} variant="ghost" />
@@ -226,8 +318,20 @@ function AuthError({ message, onSignOut }: { message: string; onSignOut: SignOut
   );
 }
 
-function Ready({ user, teacher, tab, sub, onSignOut, onProfileChanged }: {
-  user: AuthUser; teacher: Teacher; tab: string; sub?: string; onSignOut: SignOut; onProfileChanged(): Promise<void>;
+function Ready({
+  user,
+  teacher,
+  tab,
+  sub,
+  onSignOut,
+  onProfileChanged,
+}: {
+  user: AuthUser;
+  teacher: Teacher;
+  tab: string;
+  sub?: string;
+  onSignOut: SignOut;
+  onProfileChanged(): Promise<void>;
 }) {
   const [unsynced, setUnsynced] = useState(false);
   const isAdmin = teacher.role === 'admin';
@@ -240,7 +344,15 @@ function Ready({ user, teacher, tab, sub, onSignOut, onProfileChanged }: {
   const navigate = useGuardedNavigate();
 
   let body;
-  if (current.key === 'admin') body = <AdminTab sub={sub} myUid={user.uid} thisSunday={thisSunday} onProfileChanged={onProfileChanged} />;
+  if (current.key === 'admin')
+    body = (
+      <AdminTab
+        sub={sub}
+        myUid={user.uid}
+        thisSunday={thisSunday}
+        onProfileChanged={onProfileChanged}
+      />
+    );
   else if (current.key === 'attendance') body = <AttendanceTab {...props} />;
   else if (current.key === 'class') body = <ClassTab {...props} />;
   else if (current.key === 'bulletin') body = <BulletinTab {...props} />;
@@ -248,13 +360,17 @@ function Ready({ user, teacher, tab, sub, onSignOut, onProfileChanged }: {
 
   return (
     <Screen
-      layout={current.key === 'admin' ? 'admin' : current.key === 'bulletin' ? 'reading' : 'default'}
+      layout={current.key === 'admin' ? 'admin' : 'reading'}
       title={section?.label ?? current.label}
       sub={withTitle(teacher.name, teacher.title)}
       actions={<SignOutButton onSignOut={onSignOut} onUnsynced={() => setUnsynced(true)} />}
       tabBar={
-        <TabBar items={items} current={current.key} label="교사 메뉴"
-          onChange={(k) => navigate(teacherHref(k))} />
+        <TabBar
+          items={items}
+          current={current.key}
+          label="교사 메뉴"
+          onChange={(k) => navigate(teacherHref(k))}
+        />
       }
     >
       {unsynced && <UnsyncedNotice onSignOut={onSignOut} />}

@@ -37,7 +37,8 @@ function sortAds(ads: Ad[], thisSunday: string): Ad[] {
     const sa = statusOf(a, thisSunday);
     const sb = statusOf(b, thisSunday);
     if (sa !== sb) return rank[sa] - rank[sb];
-    if (sa === 'now') return Number(b.pinned) - Number(a.pinned) || b.startDate.localeCompare(a.startDate);
+    if (sa === 'now')
+      return Number(b.pinned) - Number(a.pinned) || b.startDate.localeCompare(a.startDate);
     if (sa === 'soon') return a.startDate.localeCompare(b.startDate);
     return b.endDate.localeCompare(a.endDate);
   });
@@ -64,39 +65,58 @@ export function AnnouncementsAdmin({ thisSunday }: { thisSunday: string }) {
 
   return (
     <div className={s.stack} aria-busy={loading || undefined}>
-      <Card title="광고">
+      <Card title="광고" tone="sage">
         {ads.length === 0 ? (
           <p className={s.muted}>아직 광고가 없어요. 아래에서 첫 광고를 추가해 주세요.</p>
         ) : (
           <>
             <p className={s.muted}>
-              {live > 0 ? `이번 주일 학생 화면에 ${live}개가 보여요.` : '이번 주일에 보이는 광고는 없어요.'}
+              {live > 0
+                ? `이번 주일 학생 화면에 ${live}개가 보여요.`
+                : '이번 주일에 보이는 광고는 없어요.'}
             </p>
             <List label="광고 목록">
               {ads.map((a) => {
                 const st = statusOf(a, thisSunday);
                 return (
-                  <ListRow key={a.id}
-                    title={<span className={s.title}>{a.title}{a.pinned && <Icon name="pin" size={16} label="고정" />}</span>}
+                  <ListRow
+                    key={a.id}
+                    title={
+                      <span className={s.title}>
+                        {a.title}
+                        {a.pinned && <Icon name="pin" size={16} label="고정" />}
+                      </span>
+                    }
                     meta={period(a)}
                     aside={<span className={[s.status, s[st]].join(' ')}>{STATUS_LABEL[st]}</span>}
-                    open={open === a.id} onToggle={() => setOpen((o) => (o === a.id ? null : a.id))}>
-                    <AdForm initial={a} thisSunday={thisSunday} label={`${a.title} 고치기`} submitLabel="저장"
+                    open={open === a.id}
+                    onToggle={() => setOpen((o) => (o === a.id ? null : a.id))}
+                  >
+                    <AdForm
+                      initial={a}
+                      thisSunday={thisSunday}
+                      label={`${a.title} 고치기`}
+                      submitLabel="저장"
                       onSubmit={async (next) => {
                         await saveAnnouncement(db, a.id, next);
                         show('광고를 저장했어요');
                         setOpen(null);
                         await reload();
-                      }} />
+                      }}
+                    />
                     <div className={s.danger}>
-                      <ConfirmAction label="삭제" icon="trash" confirmLabel="삭제하기"
+                      <ConfirmAction
+                        label="삭제"
+                        icon="trash"
+                        confirmLabel="삭제하기"
                         message="학생 화면에서 바로 사라지고 되돌릴 수 없어요."
                         onConfirm={async () => {
                           await deleteAnnouncement(db, a.id);
                           show('광고를 삭제했어요');
                           setOpen(null);
                           await reload();
-                        }} />
+                        }}
+                      />
                     </div>
                   </ListRow>
                 );
@@ -106,19 +126,33 @@ export function AnnouncementsAdmin({ thisSunday }: { thisSunday: string }) {
         )}
       </Card>
 
-      <Card title="새 광고">
-        <AdForm thisSunday={thisSunday} label="새 광고" submitLabel="광고 추가" primary resetAfter
+      <Card title="새 광고" tone="gold">
+        <AdForm
+          thisSunday={thisSunday}
+          label="새 광고"
+          submitLabel="광고 추가"
+          primary
+          resetAfter
           onSubmit={async (next) => {
             await saveAnnouncement(db, null, next);
             show('광고를 추가했어요');
             await reload();
-          }} />
+          }}
+        />
       </Card>
     </div>
   );
 }
 
-function AdForm({ initial, thisSunday, label, submitLabel, primary = false, resetAfter = false, onSubmit }: {
+function AdForm({
+  initial,
+  thisSunday,
+  label,
+  submitLabel,
+  primary = false,
+  resetAfter = false,
+  onSubmit,
+}: {
   initial?: AdInput;
   thisSunday: string;
   /** 폼 이름(화면 읽기) */
@@ -131,10 +165,24 @@ function AdForm({ initial, thisSunday, label, submitLabel, primary = false, rese
   onSubmit(a: AdInput): Promise<void>;
 }) {
   const { show } = useToast();
-  const blank: AdInput = { title: '', body: '', startDate: thisSunday, endDate: thisSunday, pinned: false };
-  const [v, setV] = useState<AdInput>(() => initial
-    ? { title: initial.title, body: initial.body, startDate: initial.startDate, endDate: initial.endDate, pinned: initial.pinned }
-    : blank);
+  const blank: AdInput = {
+    title: '',
+    body: '',
+    startDate: thisSunday,
+    endDate: thisSunday,
+    pinned: false,
+  };
+  const [v, setV] = useState<AdInput>(() =>
+    initial
+      ? {
+          title: initial.title,
+          body: initial.body,
+          startDate: initial.startDate,
+          endDate: initial.endDate,
+          pinned: initial.pinned,
+        }
+      : blank,
+  );
   const [titleError, setTitleError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
@@ -150,7 +198,10 @@ function AdForm({ initial, thisSunday, label, submitLabel, primary = false, rese
     setBusy(true);
     try {
       await onSubmit(next);
-      if (resetAfter) { setV(blank); titleRef.current?.focus(); }
+      if (resetAfter) {
+        setV(blank);
+        titleRef.current?.focus();
+      }
     } catch (err) {
       show(describeError(err), 'error');
     } finally {
@@ -160,22 +211,62 @@ function AdForm({ initial, thisSunday, label, submitLabel, primary = false, rese
 
   return (
     <form className={s.form} onSubmit={submit} noValidate aria-label={label}>
-      <Field ref={titleRef} label="제목" autoComplete="off" maxLength={60} value={v.title} error={titleError}
-        onChange={(e) => { setTitleError(null); setV({ ...v, title: e.target.value }); }} />
-      <TextArea label="내용" rows={3} maxLength={300} showCount value={v.body} hint="비워 둬도 돼요"
-        onChange={(e) => setV({ ...v, body: e.target.value })} />
+      <Field
+        ref={titleRef}
+        label="제목"
+        autoComplete="off"
+        maxLength={60}
+        value={v.title}
+        error={titleError}
+        onChange={(e) => {
+          setTitleError(null);
+          setV({ ...v, title: e.target.value });
+        }}
+      />
+      <TextArea
+        label="내용"
+        rows={3}
+        maxLength={300}
+        showCount
+        value={v.body}
+        hint="비워 둬도 돼요"
+        onChange={(e) => setV({ ...v, body: e.target.value })}
+      />
       <div className={s.dates}>
-        <SundayStepper label="시작" showLabel compact value={v.startDate} thisSunday={thisSunday}
-          onChange={(d) => setV({ ...v, startDate: d, endDate: d > v.endDate ? d : v.endDate })} />
-        <SundayStepper label="끝" showLabel compact value={v.endDate} thisSunday={thisSunday} earliest={v.startDate}
-          onChange={(d) => setV({ ...v, endDate: d })} />
+        <SundayStepper
+          label="시작"
+          showLabel
+          compact
+          value={v.startDate}
+          thisSunday={thisSunday}
+          onChange={(d) => setV({ ...v, startDate: d, endDate: d > v.endDate ? d : v.endDate })}
+        />
+        <SundayStepper
+          label="끝"
+          showLabel
+          compact
+          value={v.endDate}
+          thisSunday={thisSunday}
+          earliest={v.startDate}
+          onChange={(d) => setV({ ...v, endDate: d })}
+        />
         <p className={s.muted}>시작부터 끝 주일까지 학생 홈과 주보에 보여요.</p>
       </div>
-      <ChoiceChips legend="고정" multiple options={[{ value: 'pin', label: '맨 위에 고정' }]}
-        value={v.pinned ? ['pin'] : []} onChange={(xs) => setV({ ...v, pinned: xs.includes('pin') })}
-        hint="고정한 광고는 다른 광고보다 먼저 보여요" />
-      <Button type="submit" variant={primary ? 'primary' : 'secondary'} block busy={busy}
-        icon={primary ? <Icon name="plus" size={20} /> : undefined}>
+      <ChoiceChips
+        legend="고정"
+        multiple
+        options={[{ value: 'pin', label: '맨 위에 고정' }]}
+        value={v.pinned ? ['pin'] : []}
+        onChange={(xs) => setV({ ...v, pinned: xs.includes('pin') })}
+        hint="고정한 광고는 다른 광고보다 먼저 보여요"
+      />
+      <Button
+        type="submit"
+        variant={primary ? 'primary' : 'secondary'}
+        block
+        busy={busy}
+        icon={primary ? <Icon name="plus" size={20} /> : undefined}
+      >
         {submitLabel}
       </Button>
     </form>

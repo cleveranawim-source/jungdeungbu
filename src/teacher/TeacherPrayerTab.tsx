@@ -2,7 +2,12 @@ import { useCallback, type ReactNode } from 'react';
 import { teacherHref } from '../app/router';
 import { useToast } from '../app/Toast';
 import { useLoader, type Loaded } from '../app/useLoader';
-import { deleteClassPrayer, deleteTeacherPrayer, listClassPrayers, listTeacherPrayers } from '../data/prayers';
+import {
+  deleteClassPrayer,
+  deleteTeacherPrayer,
+  listClassPrayers,
+  listTeacherPrayers,
+} from '../data/prayers';
 import { formatMonthDay, toDateId } from '../lib/dates';
 import { db } from '../lib/firebase';
 import type { Prayer, WithId } from '../types';
@@ -27,12 +32,23 @@ export function TeacherPrayerTab({ teacher }: TeacherTabProps) {
   const [current, choose] = useClassChoice(classes.data);
 
   if (classes.data === undefined) {
-    return classes.error ? <LoadError error={classes.error} onRetry={classes.reload} /> : <Loading />;
+    return classes.error ? (
+      <LoadError error={classes.error} onRetry={classes.reload} />
+    ) : (
+      <Loading />
+    );
   }
   if (current === null) {
     return teacher.role === 'admin' ? (
-      <EmptyState icon="class" title="아직 반이 없어요"
-        action={<LinkButton href={teacherHref('admin', 'classes')} variant="secondary" size="sm">반 만들기</LinkButton>}>
+      <EmptyState
+        icon="class"
+        title="아직 반이 없어요"
+        action={
+          <LinkButton href={teacherHref('admin', 'classes')} variant="secondary" size="sm">
+            반 만들기
+          </LinkButton>
+        }
+      >
         반·교사에서 반을 먼저 만들어 주세요.
       </EmptyState>
     ) : (
@@ -56,7 +72,7 @@ function ClassPrayers({ classId, className }: { classId: string; className: stri
   const privates = useLoader(useCallback(() => listTeacherPrayers(db, [classId]), [classId]));
 
   return (
-    <>
+    <div className={s.columns}>
       <PrayerSection
         title="우리 반에 나눈 기도"
         hint={`${className} 친구들과 선생님이 함께 보는 기도예요.`}
@@ -72,7 +88,13 @@ function ClassPrayers({ classId, className }: { classId: string; className: stri
       <PrayerSection
         private
         title="선생님께만"
-        hint={<>학생이 선생님께만 보낸 기도예요.<br />소중히 다뤄 주세요.</>}
+        hint={
+          <>
+            학생이 선생님께만 보낸 기도예요.
+            <br />
+            소중히 다뤄 주세요.
+          </>
+        }
         empty="선생님께만 보낸 기도가 아직 없어요"
         loaded={privates}
         confirmMessage="이 기도 제목을 지울까요? 지운 글은 되돌릴 수 없어요."
@@ -82,7 +104,7 @@ function ClassPrayers({ classId, className }: { classId: string; className: stri
           await privates.reload();
         }}
       />
-    </>
+    </div>
   );
 }
 
@@ -90,7 +112,7 @@ interface PrayerSectionProps {
   title: string;
   hint: ReactNode;
   empty: string;
-  /** 선생님께만: 자물쇠 표시 */
+  /** 선생님께만: 편지 아이콘과 공개 범위 문장 */
   private?: boolean;
   loaded: Loaded<WithId<Prayer>[]>;
   confirmMessage: string;
@@ -98,14 +120,25 @@ interface PrayerSectionProps {
   onDelete(p: WithId<Prayer>): Promise<void>;
 }
 
-function PrayerSection({ title, hint, empty, private: isPrivate = false, loaded, confirmMessage, onDelete }: PrayerSectionProps) {
+function PrayerSection({
+  title,
+  hint,
+  empty,
+  private: isPrivate = false,
+  loaded,
+  confirmMessage,
+  onDelete,
+}: PrayerSectionProps) {
   const list = loaded.data;
   const heading = (
     <span className={s.heading}>
-      {isPrivate && <span className={s.lock}><Icon name="lock" size={18} /></span>}
+      <Icon name={isPrivate ? 'mail' : 'prayer'} size={22} />
       <span>{title}</span>
       {list !== undefined && list.length > 0 && (
-        <span className={s.count}>{list.length}<span className="sr-only">개</span></span>
+        <span className={s.count}>
+          {list.length}
+          <span className="sr-only">개</span>
+        </span>
       )}
     </span>
   );
@@ -147,7 +180,7 @@ function PrayerSection({ title, hint, empty, private: isPrivate = false, loaded,
   }
 
   return (
-    <Card title={heading}>
+    <Card title={heading} tone={isPrivate ? 'gold' : 'sage'}>
       <p className={s.hint}>{hint}</p>
       {body}
     </Card>

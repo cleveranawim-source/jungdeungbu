@@ -1,9 +1,9 @@
-// 디자인 점검용 스크린샷: 주요 화면을 390×844, 밝은·어두운 모드로 찍는다.
-// 종이 주보와 맞춘 새 화면(주보·주보 작성·중등부 안내·학생 명단)은 360px 폭 긴 화면으로도 찍는다(-360).
+// 디자인 점검: 모든 화면 390px 밝음·어두움, 핵심 화면 360px, 읽기·관리 화면 1280px.
+// 고정 탭 바가 내용을 가리지 않게 긴 캡처는 실제 창 높이를 문서 높이로 늘린다.
 // 준비: `npm run emu` 와 `VITE_USE_EMULATOR=1 npm run dev` 를 켠 상태에서
 //   node scripts/shots.mjs <저장할 폴더> [앱 주소, 기본 http://localhost:5173/jungdeungbu/]
 // 에뮬레이터 Firestore 를 비우고 보기 좋은 시드를 넣은 뒤 찍는다(운영 데이터와 무관).
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
 import { doc, setDoc, Timestamp } from 'firebase/firestore';
@@ -130,9 +130,8 @@ async function seedAll() {
   await env.cleanup();
 }
 
-const settle = async (p) => { await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(1200); };
+const settle = async (p) => { await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(900); };
 
-/** 교사(관리자) 화면을 연 컨텍스트. 에뮬레이터 로그인으로 들어간다. */
 async function teacherPage(browser, opts) {
   const context = await browser.newContext(opts);
   const t = await context.newPage();
@@ -143,58 +142,91 @@ async function teacherPage(browser, opts) {
   await t.getByRole('tablist', { name: '교사 메뉴' }).waitFor();
   return { context, t };
 }
-
+const teacherRoutes = [
+ ['teacher-attendance', '#/t/attendance'], ['teacher-class', '#/t/class'],
+ ['teacher-student-detail', `#/t/class/${STUDENT}`], ['teacher-prayer', '#/t/prayer'],
+ ['teacher-bulletin', '#/t/bulletin'], ['admin-menu', '#/t/admin'],
+ ['admin-bulletin-editor', '#/t/admin/bulletin'], ['admin-info', '#/t/admin/info'],
+ ['admin-roster', '#/t/admin/roster'], ['admin-stats', '#/t/admin/attendance'],
+ ['admin-classes-teachers', '#/t/admin/classes'], ['admin-announcements', '#/t/admin/announcements'],
+ ['admin-sermon-editor', '#/t/admin/sermon'],
+];
+const keyTeacher = new Set(['teacher-attendance','teacher-prayer','admin-menu','admin-roster','admin-bulletin-editor','admin-info']);
+const checks = [];
 await seedAll();
 const browser = await chromium.launch();
-for (const scheme of ['light', 'dark']) {
-  const opts = { viewport: { width: 390, height: 844 }, colorScheme: scheme, deviceScaleFactor: 2, baseURL: base };
-  const shot = async (p, name, full = false) => {
-    if (!full) return p.screenshot({ path: `${outDir}/${name}-${scheme}.png` });
-    // 긴 화면: 창을 문서 높이만큼 늘려 찍는다(fullPage 는 고정된 탭 바가 중간에 찍혀 내용을 가린다)
-    const vp = p.viewportSize();
-    const height = await p.evaluate(() => document.documentElement.scrollHeight);
-    await p.setViewportSize({ width: vp.width, height: Math.max(vp.height, height) });
+try {
+ for (const scheme of ['light', 'dark']) {
+  for (const width of [390,360,1280]) {
+   const opts = { viewport:{width,height:844}, colorScheme:scheme, deviceScaleFactor:1, baseURL:base };
+   const shot = async (p, name, full=true) => {
     await settle(p);
-    await p.screenshot({ path: `${outDir}/${name}-${scheme}.png` });
-    await p.setViewportSize(vp);
-  };
-
-  const anon = await browser.newContext(opts);
-  const a = await anon.newPage();
-  await a.goto('#/'); await settle(a); await shot(a, 'landing');
-  await a.goto('#/s/abc'); await settle(a); await shot(a, 'invalid');
-  for (const tab of ['home', 'bulletin', 'sermon', 'prayer', 'me']) {
-    await a.goto(`#/s/${STUDENT}/${tab}`); await settle(a); await shot(a, `student-${tab}`);
+    await p.mouse.move(0,0);
+    const check = await p.evaluate(() => ({
+     width:innerWidth, scrollWidth:document.documentElement.scrollWidth,
+     h1:document.querySelectorAll('h1').length,
+     classIdsInDom: /\bclass[A-G]\b/.test(document.documentElement.outerHTML),
+    }));
+    const file=`${name}-${width}-${scheme}.png`;
+    checks.push({file,...check});
+    const vp=p.viewportSize();
+    if(full) {
+     const height=await p.evaluate(()=>document.documentElement.scrollHeight);
+     await p.setViewportSize({width:vp.width,height:Math.max(vp.height,height)});
+     await p.evaluate(()=>document.fonts.ready);
+    }
+    await p.screenshot({path:`${outDir}/${file}`});
+    if(full) await p.setViewportSize(vp);
+   };
+   const anon=await browser.newContext(opts); const a=await anon.newPage();
+   if(width===390) {
+    await a.goto('#/'); await shot(a,'landing');
+    await a.goto('#/s/abc'); await shot(a,'invalid');
+   }
+   await a.goto('#/t'); await shot(a,'login');
+   for(const tab of ['home','bulletin','sermon','prayer','me']) {
+    await a.goto(`#/s/${STUDENT}/${tab}`); await shot(a,`student-${tab}`);
+   }
+   await a.goto(`#/s/${STUDENT}/sermon/${SUN}`); await shot(a,'student-sermon-detail');
+   if(width===390) {
+    await anon.setOffline(true); await shot(a,'state-offline',false); await anon.setOffline(false);
+    await a.goto(`#/s/${STUDENT}/sermon/2000-01-02`); await shot(a,'state-empty');
+   }
+   await anon.close();
+   const {context:teacher,t}=await teacherPage(browser,opts);
+   for(const [name,hash] of teacherRoutes) {
+    if(width===360 && !keyTeacher.has(name)) continue;
+    await t.goto(hash); await shot(t,name);
+   }
+   if(width===390) {
+    await t.goto('#/t/admin/roster'); await settle(t);
+    await t.getByRole('button',{name:/한빛나/}).click(); await shot(t,'admin-roster-expanded');
+    await t.goto('#/t/admin/classes'); await settle(t);
+    await t.getByRole('button',{name:/이승열 선생님.*나/}).click(); await shot(t,'admin-teacher-profile');
+    await t.goto(`#/t/class/${STUDENT}`); await settle(t);
+    await t.getByRole('button',{name:'링크 공유',exact:true}).click(); await shot(t,'state-toast',false);
+   }
+   await teacher.close();
+   if(width===390) {
+    const denied=await browser.newContext(opts); const d=await denied.newPage();
+    await d.goto('#/t'); await d.getByLabel('이메일').fill('shots-uninvited@example.com'); await d.getByLabel('이름').fill('문로운');
+    await d.getByRole('button',{name:'에뮬레이터 로그인'}).click();
+    await d.getByText('아직 초대되지 않은 계정이에요').waitFor(); await shot(d,'uninvited'); await denied.close();
+    const inApp=await browser.newContext({...opts,userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 KAKAOTALK 10.4.0'});
+    const k=await inApp.newPage(); await k.goto('#/t'); await shot(k,'login-in-app'); await inApp.close();
+    const broken=await browser.newContext(opts); const b=await broken.newPage();
+    let hold=true; const held=[];
+    await b.route('**/google.firestore.v1.Firestore/Listen/**',route=>hold ? held.push(route) : route.abort());
+    await b.goto(`#/s/${STUDENT}`); await shot(b,'state-loading',false);
+    hold=false; await Promise.all(held.map(route=>route.abort()));
+    await b.getByText('불러오지 못했어요').waitFor({timeout:25000}); await shot(b,'state-load-error'); await broken.close();
+   }
   }
-  // 주보 탭 전체(순서표·예배위원·출석·새 친구·생일·중등부 안내)
-  await a.goto(`#/s/${STUDENT}/bulletin`); await settle(a); await shot(a, 'student-bulletin-full', true);
-  await anon.close();
-
-  const { context: teacher, t } = await teacherPage(browser, opts);
-  for (const [name, hash] of [['teacher-attendance', '#/t/attendance'], ['teacher-class', '#/t/class'], ['teacher-prayer', '#/t/prayer'],
-    ['teacher-bulletin', '#/t/bulletin'], ['admin-menu', '#/t/admin'], ['admin-bulletin-editor', '#/t/admin/bulletin'],
-    ['admin-info', '#/t/admin/info'], ['admin-roster', '#/t/admin/roster'], ['admin-stats', '#/t/admin/attendance']]) {
-    await t.goto(hash); await settle(t); await shot(t, name);
-  }
-  await teacher.close();
-
-  // 좁은 휴대폰(360px): 종이 주보와 맞춘 새 화면을 긴 화면 그대로 찍는다
-  const narrow = { ...opts, viewport: { width: 360, height: 780 } };
-  const anon360 = await browser.newContext(narrow);
-  const a3 = await anon360.newPage();
-  await a3.goto(`#/s/${STUDENT}/bulletin`); await settle(a3); await shot(a3, 'student-bulletin-360', true);
-  await anon360.close();
-
-  const { context: teacher360, t: t3 } = await teacherPage(browser, narrow);
-  for (const [name, hash] of [['teacher-bulletin-360', '#/t/bulletin'], ['admin-bulletin-editor-360', '#/t/admin/bulletin'],
-    ['admin-info-360', '#/t/admin/info']]) {
-    await t3.goto(hash); await settle(t3); await shot(t3, name, true);
-  }
-  // 학생 명단: 추가 폼의 새 친구 체크, 펼친 줄(고치기 폼)의 새 친구 체크
-  await t3.goto('#/t/admin/roster'); await settle(t3);
-  await t3.getByRole('button', { name: /한빛나/ }).click(); await settle(t3);
-  await shot(t3, 'admin-roster-360', true);
-  await teacher360.close();
+ }
+} finally {
+ await browser.close();
+ writeFileSync(`${outDir}/layout-checks.json`,JSON.stringify(checks,null,2));
 }
-await browser.close();
-console.log(`찍었어요: ${outDir}`);
+console.log(`찍었어요: ${outDir} (${checks.length}장)`);
+const failures=checks.filter(x=>x.scrollWidth>x.width || x.h1!==1 || x.classIdsInDom);
+if(failures.length) { console.error('확인할 화면:',failures); process.exitCode=1; }

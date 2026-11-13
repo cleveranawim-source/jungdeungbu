@@ -1,10 +1,30 @@
 /* 위: 날짜·반 고르기 카드 / 아래: 출석 인원 + 이름 버튼 그리드(2열) */
-.controls { padding: var(--space-4); }
+.controls {
+  padding: var(--space-4);
+}
 
-.roll { display: flex; flex-direction: column; gap: var(--space-3); }
-.head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); padding: 0 var(--space-1); }
-.count { font-family: var(--font-body); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
-.className { color: var(--muted); font-size: var(--text-sm); font-weight: var(--weight-medium); }
+.roll {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0 var(--space-1);
+}
+.count {
+  font-family: var(--font-body);
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+}
+.className {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
 
 .grid {
   list-style: none;
@@ -38,11 +58,22 @@
     color var(--dur-fast) var(--ease-out),
     transform var(--dur-press) var(--ease-out);
 }
-.student:active { transform: scale(0.97); }
-.student[aria-pressed='true'] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.student:active {
+  transform: scale(0.97);
+}
+.student[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
 @media (hover: hover) {
-  .student[aria-pressed='false']:hover { background: var(--accent-soft); }
-  .student[aria-pressed='true']:hover { background: var(--accent-press); border-color: var(--accent-press); }
+  .student[aria-pressed='false']:hover {
+    background: var(--accent-soft);
+  }
+  .student[aria-pressed='true']:hover {
+    background: var(--accent-press);
+    border-color: var(--accent-press);
+  }
 }
 
 /* 체크 동그라미: 안 찍음 = 빈 동그라미, 찍음 = 버튼 색과 반전된 동그라미 + 체크(색만으로 알리지 않게) */
@@ -57,7 +88,10 @@
   border-radius: 50%;
   color: var(--accent);
 }
-.student[aria-pressed='true'] .tick { background: var(--accent-ink); border-color: var(--accent-ink); }
+.student[aria-pressed='true'] .tick {
+  background: var(--accent-ink);
+  border-color: var(--accent-ink);
+}
 
 /* 저장 중: 동그라미 둘레에 옅게 숨 쉬는 고리. 움직임 줄이기면 base.css 가 끝 상태(보이는 고리)로 멈춘다 */
 .student[aria-busy='true'] .tick::after {
@@ -69,10 +103,24 @@
   opacity: 0.7;
   animation: pending calc(var(--dur-base) * 4) var(--ease-out) infinite alternate;
 }
-.student[aria-busy='true'][aria-pressed='true'] .tick::after { border-color: var(--accent-ink); }
-@keyframes pending { from { opacity: 0.15; transform: scale(0.85); } to { opacity: 0.7; transform: scale(1); } }
+.student[aria-busy='true'][aria-pressed='true'] .tick::after {
+  border-color: var(--accent-ink);
+}
+@keyframes pending {
+  from {
+    opacity: 0.15;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+}
 
-.name { flex: 1; min-width: 0; }
+.name {
+  flex: 1;
+  min-width: 0;
+}
 
 /* 4주 이상 연속·생일 주간: 작고 조용하게 */
 .marks {
@@ -85,4 +133,56 @@
   font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;
 }
-.student[aria-pressed='true'] .marks { color: var(--accent-ink); }
+.student[aria-pressed='true'] .marks {
+  color: var(--accent-ink);
+}
+
+.layout {
+  display: grid;
+  align-items: start;
+  gap: var(--space-6);
+}
+.controls {
+  padding: 0;
+}
+.roll {
+  padding-top: var(--space-2);
+}
+.head {
+  background: var(--sage-bg);
+  color: var(--sage-ink);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+.count {
+  font-family: var(--font-body);
+  font-size: var(--text-xl);
+}
+.className {
+  color: var(--sage-ink);
+}
+.hint {
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.student {
+  min-height: 82px;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.marks {
+  flex-basis: 100%;
+  justify-content: flex-end;
+}
+@media (min-width: 900px) {
+  .layout {
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+  .controls {
+    position: sticky;
+    top: var(--space-6);
+  }
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

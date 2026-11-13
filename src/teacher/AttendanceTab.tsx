@@ -37,12 +37,23 @@ export function AttendanceTab({ uid, teacher, thisSunday }: TeacherTabProps) {
   const latest = thisSunday;
 
   if (classes.data === undefined) {
-    return classes.error ? <LoadError error={classes.error} onRetry={classes.reload} /> : <Loading />;
+    return classes.error ? (
+      <LoadError error={classes.error} onRetry={classes.reload} />
+    ) : (
+      <Loading />
+    );
   }
   if (current === null) {
     return isAdmin ? (
-      <EmptyState icon="class" title="아직 반이 없어요"
-        action={<LinkButton href={teacherHref('admin', 'classes')} variant="secondary" size="sm">반 만들기</LinkButton>}>
+      <EmptyState
+        icon="class"
+        title="아직 반이 없어요"
+        action={
+          <LinkButton href={teacherHref('admin', 'classes')} variant="secondary" size="sm">
+            반 만들기
+          </LinkButton>
+        }
+      >
         반·교사에서 반을 먼저 만들어 주세요.
       </EmptyState>
     ) : (
@@ -54,51 +65,103 @@ export function AttendanceTab({ uid, teacher, thisSunday }: TeacherTabProps) {
   const klass = classes.data.find((c) => c.id === current)!;
 
   return (
-    <>
-      <Card className={s.controls}>
-        <SundayStepper label="출석 날짜" value={dateId} thisSunday={thisSunday} latest={latest} onChange={setDateId} />
+    <div className={s.layout}>
+      <Card className={s.controls} title="함께 예배하는 주일" tone="gold">
+        <SundayStepper
+          label="출석 날짜"
+          value={dateId}
+          thisSunday={thisSunday}
+          latest={latest}
+          onChange={setDateId}
+        />
         <ClassPicker classes={classes.data} value={current} onChange={choose} />
       </Card>
-      <Roll key={current} marks={marks} classId={current} className={classes.data.length < 2 ? klass.name : undefined}
-        dateId={dateId} thisSunday={thisSunday} isAdmin={isAdmin} />
-    </>
+      <Roll
+        key={current}
+        marks={marks}
+        classId={current}
+        className={classes.data.length < 2 ? klass.name : undefined}
+        dateId={dateId}
+        thisSunday={thisSunday}
+        isAdmin={isAdmin}
+      />
+    </div>
   );
 }
 
 /** 한 반의 출석 그리드. 반이 바뀌면 key 로 새로 만든다. */
-function Roll({ marks, classId, className, dateId, thisSunday, isAdmin }: {
-  marks: AttendanceMarks; classId: string; className?: string; dateId: string; thisSunday: string; isAdmin: boolean;
+function Roll({
+  marks,
+  classId,
+  className,
+  dateId,
+  thisSunday,
+  isAdmin,
+}: {
+  marks: AttendanceMarks;
+  classId: string;
+  className?: string;
+  dateId: string;
+  thisSunday: string;
+  isAdmin: boolean;
 }) {
   const students = useLoader(useCallback(() => listStudents(db, classId), [classId]));
   // useLoader 는 다시 불러오는 동안 앞 값을 그대로 두므로, 어느 날짜의 값인지 함께 들고 다닌다
-  const att = useLoader(useCallback(async () => ({ dateId, map: await listAttendanceByDate(db, dateId) }), [dateId]));
+  const att = useLoader(
+    useCallback(async () => ({ dateId, map: await listAttendanceByDate(db, dateId) }), [dateId]),
+  );
 
   if (students.data === undefined) {
-    return students.error ? <LoadError error={students.error} onRetry={students.reload} /> : <Loading />;
+    return students.error ? (
+      <LoadError error={students.error} onRetry={students.reload} />
+    ) : (
+      <Loading />
+    );
   }
   if (students.data.length === 0) {
     return (
-      <EmptyState icon="class" title="이 반에는 아직 학생이 없어요"
-        action={isAdmin && <LinkButton href={teacherHref('admin', 'roster')} variant="secondary" size="sm">학생 명단</LinkButton>}>
-        {isAdmin ? '학생 명단에서 이 반 학생을 추가해 주세요.' : '관리자에게 학생 등록을 부탁해 주세요.'}
+      <EmptyState
+        icon="class"
+        title="이 반에는 아직 학생이 없어요"
+        action={
+          isAdmin && (
+            <LinkButton href={teacherHref('admin', 'roster')} variant="secondary" size="sm">
+              학생 명단
+            </LinkButton>
+          )
+        }
+      >
+        {isAdmin
+          ? '학생 명단에서 이 반 학생을 추가해 주세요.'
+          : '관리자에게 학생 등록을 부탁해 주세요.'}
       </EmptyState>
     );
   }
   const map = att.data?.dateId === dateId ? att.data.map : undefined;
   if (map === undefined) {
-    return att.error && !att.loading ? <LoadError error={att.error} onRetry={att.reload} /> : <Loading />;
+    return att.error && !att.loading ? (
+      <LoadError error={att.error} onRetry={att.reload} />
+    ) : (
+      <Loading />
+    );
   }
 
   // 출석 인원은 반의 활성 학생만 센다(맵에는 재발급된 옛 토큰도 섞여 있다)
-  const rows = students.data.map((st) => ({ st, on: marks.present(dateId, st.id, map.get(st.id) === true) }));
+  const rows = students.data.map((st) => ({
+    st,
+    on: marks.present(dateId, st.id, map.get(st.id) === true),
+  }));
   const n = rows.filter((r) => r.on).length;
 
   return (
     <section className={s.roll} aria-labelledby="roll-count">
       <div className={s.head}>
-        <h2 id="roll-count" className={s.count}>출석 {n} / {rows.length}</h2>
+        <h2 id="roll-count" className={s.count}>
+          출석 {n} / {rows.length}
+        </h2>
         {className && <span className={s.className}>{className}</span>}
       </div>
+      <p className={s.hint}>이름을 누르면 출석해요. 한 번 더 누르면 취소해요.</p>
       <ul className={s.grid}>
         {rows.map(({ st, on }) => {
           const busy = marks.pending(dateId, st.id);
@@ -106,17 +169,33 @@ function Roll({ marks, classId, className, dateId, thisSunday, isAdmin }: {
           const birthday = st.birthday !== null && isBirthdayWeek(st.birthday, dateId);
           return (
             <li key={st.id}>
-              <button type="button" className={s.student} aria-pressed={on} aria-busy={busy || undefined}
+              <button
+                type="button"
+                className={s.student}
+                aria-pressed={on}
+                aria-busy={busy || undefined}
                 onClick={() => {
-                  try { navigator.vibrate?.(10); } catch { /* 진동 없는 기기 */ }
+                  try {
+                    navigator.vibrate?.(10);
+                  } catch {
+                    /* 진동 없는 기기 */
+                  }
                   marks.toggle(dateId, st.id, on);
-                }}>
-                <span className={s.tick} aria-hidden="true">{on && <Icon name="check" size={18} />}</span>
+                }}
+              >
+                <span className={s.tick} aria-hidden="true">
+                  {on && <Icon name="check" size={18} />}
+                </span>
                 <span className={s.name}>{st.name}</span>
                 {(streak >= 4 || birthday) && (
                   <span className={s.marks}>
                     {birthday && <Icon name="cake" size={16} label="생일 주간" />}
-                    {streak >= 4 && <span><span aria-hidden="true">{streak}주</span><span className="sr-only">{streak}주 연속 출석</span></span>}
+                    {streak >= 4 && (
+                      <span>
+                        <span aria-hidden="true">{streak}주</span>
+                        <span className="sr-only">{streak}주 연속 출석</span>
+                      </span>
+                    )}
                   </span>
                 )}
               </button>

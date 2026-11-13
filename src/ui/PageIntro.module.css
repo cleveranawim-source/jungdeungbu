@@ -1,0 +1,28 @@
+.intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+}
+.intro h2 {
+  font-size: var(--text-xl);
+  text-wrap: balance;
+}
+.intro p {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  max-width: 42em;
+}
+.intro > svg {
+  flex-shrink: 0;
+}
+.sage {
+  background: var(--sage-bg);
+  color: var(--sage-ink);
+}
+.gold {
+  background: var(--gold-panel);
+  color: var(--gold-panel-ink);
+}
