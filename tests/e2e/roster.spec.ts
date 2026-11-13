@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { doc, setDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, setDoc } from 'firebase/firestore';
+import { addDays, nearestSunday, toDateId } from '../../src/lib/dates';
 import { closeStudents, expectToast, loginAsEmu, openStudent, readClipboard, studentHash } from './helpers';
 import { clear, seed, seedAdmin } from './seed';
 
@@ -158,4 +159,70 @@ test('학생 이름·생일을 고치면 학생 화면에도 새 이름', async 
   await student.getByRole('tab', { name: '나' }).click();
   await expect(student.getByRole('heading', { name: '김하람' })).toBeVisible();
   await expect(student.getByText('4월 12일')).toBeVisible();
+});
+
+test('새 친구로 등록한 학생은 처음 출석한 주의 주보에 올라간다', async ({ page }) => {
+  const lastSunday = toDateId(addDays(nearestSunday(new Date()), -7));
+  await seed(async (db) => {
+    await setDoc(doc(db, 'classes', 'classA'), { name: '1반', grade: 1, order: 1 });
+  });
+  await loginAsEmu(page, ADMIN, '관리자');
+  await page.goto('#/t/admin/roster');
+
+  const add = page.getByRole('form', { name: '학생 추가' });
+  const check = add.getByRole('checkbox', { name: '새 친구' });
+  await expect(check).not.toBeChecked();
+  await add.getByLabel('학생 이름').fill('새봄');
+  await check.check();
+  await add.getByRole('button', { name: '학생 추가' }).click();
+  await expectToast(page, '새봄 학생을 추가했어요');
+  await expect(page.getByRole('button', { name: /^새봄/ })).toContainText('새 친구');
+  await expect(check).not.toBeChecked(); // 추가 뒤 다시 꺼진다
+
+  await seed(async (db) => {
+    const snap = await getDocs(collection(db, 'students'));
+    const token = snap.docs.find((d) => d.data().name === '새봄')!.id;
+    await setDoc(doc(db, 'students', token, 'attendance', lastSunday), {
+      date: lastSunday, present: true, by: 'seed', at: new Date(),
+    });
+  });
+
+  await page.getByRole('link', { name: '관리 메뉴' }).click();
+  await page.getByRole('link', { name: /^주보 작성/ }).click();
+  await page.getByRole('button', { name: '출석·새 친구·생일 불러오기' }).click();
+  await expectToast(page, '주일 출석을 불러왔어요');
+  await expect(page.getByLabel('새 친구')).toHaveValue('새봄');
+});
+
+test('새 친구 표시는 나중에 끄고 켤 수 있다', async ({ page }) => {
+  await seed(async (db) => {
+    await setDoc(doc(db, 'classes', 'classA'), { name: '1반', grade: 1, order: 1 });
+    await setDoc(doc(db, 'students', 'testStudentToken_00071'), {
+      name: '새봄', classId: 'classA', birthday: null, active: true, streak: 0, lastPresent: null, newcomer: true,
+    });
+  });
+  await loginAsEmu(page, ADMIN, '관리자');
+  await page.goto('#/t/admin/roster');
+  const row = page.getByRole('button', { name: /^새봄/ });
+  await expect(row).toContainText('새 친구');
+  await row.click();
+  const form = page.getByRole('form', { name: '새봄 정보 고치기' });
+  const check = form.getByRole('checkbox', { name: '새 친구' });
+  await expect(check).toBeChecked();
+  await expect(form.getByRole('button', { name: '저장' })).toBeDisabled();
+  await check.uncheck();
+  await form.getByRole('button', { name: '저장' }).click();
+  await expectToast(page, '저장했어요');
+  await expect(page.getByRole('button', { name: /^새봄/ })).not.toContainText('새 친구');
+
+  await page.reload();
+  await expect(page.getByRole('button', { name: /^새봄/ })).not.toContainText('새 친구');
+  await page.getByRole('button', { name: /^새봄/ }).click();
+  await expect(page.getByRole('form', { name: '새봄 정보 고치기' }).getByRole('checkbox', { name: '새 친구' })).not.toBeChecked();
+
+  // 다시 켜면 meta 에 돌아온다
+  await page.getByRole('form', { name: '새봄 정보 고치기' }).getByRole('checkbox', { name: '새 친구' }).check();
+  await page.getByRole('form', { name: '새봄 정보 고치기' }).getByRole('button', { name: '저장' }).click();
+  await expectToast(page, '저장했어요');
+  await expect(page.getByRole('button', { name: /^새봄/ })).toContainText('새 친구');
 });

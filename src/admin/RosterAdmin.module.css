@@ -3,6 +3,21 @@
 .form { display: flex; flex-direction: column; gap: var(--space-4); }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: start; }
 
+/* 새 친구 체크: 글자까지 눌리는 44px 줄 + 아래 힌트 */
+.check { display: flex; flex-direction: column; }
+.checkLabel {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--space-2);
+  min-height: var(--touch-min);
+  padding-right: var(--space-2);
+  color: var(--ink);
+  cursor: pointer;
+}
+.checkLabel input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.checkHint { color: var(--muted); font-size: var(--text-sm); }
+
 .count { margin-left: var(--space-1); color: var(--muted); font-weight: var(--weight-regular); }
 .streak { color: var(--accent-text); font-weight: var(--weight-bold); }
 

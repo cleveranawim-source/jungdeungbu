@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState, type FormEvent } from 'react';
 import { teacherHref } from '../app/router';
 import { describeError, useToast } from '../app/Toast';
 import { useLoader } from '../app/useLoader';
@@ -34,6 +34,22 @@ async function loadAll() {
 function birthdayLabel(b: string): string {
   const [m, d] = b.split('-').map(Number);
   return `${m}월 ${d}일`;
+}
+
+const NEWCOMER_HINT = '처음 출석한 주의 주보에 새 친구로 올라가요';
+
+/** 새 친구 체크칸(추가·고치기 공통): 네이티브 체크 + 글자까지 눌리는 줄 + 힌트 */
+function NewcomerCheck({ checked, onChange }: { checked: boolean; onChange(v: boolean): void }) {
+  const hintId = useId();
+  return (
+    <div className={s.check}>
+      <label className={s.checkLabel}>
+        <input type="checkbox" checked={checked} aria-describedby={hintId} onChange={(e) => onChange(e.target.checked)} />
+        <span>새 친구</span>
+      </label>
+      <span className={s.checkHint} id={hintId}>{NEWCOMER_HINT}</span>
+    </div>
+  );
 }
 
 const rowDomId = (token: string) => `student-${token}`;
@@ -107,7 +123,7 @@ export function RosterAdmin() {
           <List label="학생 목록">
             {shown.map((st) => (
               <StudentRow key={st.id} st={st} classes={classes}
-                meta={[filter === ALL && className(st.classId), st.birthday && `생일 ${birthdayLabel(st.birthday)}`]
+                meta={[filter === ALL && className(st.classId), st.birthday && `생일 ${birthdayLabel(st.birthday)}`, st.newcomer === true && '새 친구']
                   .filter(Boolean).join(', ') || undefined}
                 open={open === st.id}
                 onToggle={() => setOpen((o) => (o === st.id ? null : st.id))}
@@ -142,7 +158,8 @@ function StudentRow({ st, classes, meta, open, onToggle, onReissued, onChanged, 
   const [errors, setErrors] = useState<{ name?: string; birthday?: string }>({});
   const [saving, setSaving] = useState(false);
   const b = normalizeBirthday(birthday.trim());
-  const unchanged = name.trim() === st.name && b === (st.birthday ?? null);
+  const [newcomer, setNewcomer] = useState(st.newcomer === true);
+  const unchanged = name.trim() === st.name && b === (st.birthday ?? null) && newcomer === (st.newcomer === true);
 
   async function save(e: FormEvent) {
     e.preventDefault();
@@ -151,7 +168,7 @@ function StudentRow({ st, classes, meta, open, onToggle, onReissued, onChanged, 
     if (Object.keys(errs).length) return;
     setSaving(true);
     try {
-      await updateStudent(db, st.id, { name: name.trim(), birthday: b ?? null });
+      await updateStudent(db, st.id, { name: name.trim(), birthday: b ?? null, newcomer });
       show('저장했어요');
       await onChanged();
     } catch (err) {
@@ -186,6 +203,7 @@ function StudentRow({ st, classes, meta, open, onToggle, onReissued, onChanged, 
             <Field label="생일" inputMode="numeric" autoComplete="off" maxLength={5} value={birthday}
               onChange={(e) => setBirthday(e.target.value)} placeholder="03-05" hint="비워 둬도 돼요" error={errors.birthday} />
           </div>
+          <NewcomerCheck checked={newcomer} onChange={setNewcomer} />
           <Button type="submit" variant="secondary" block busy={saving} disabled={unchanged}>저장</Button>
         </form>
         <div className={s.move}>
@@ -213,6 +231,7 @@ function NewStudent({ classes, defaultClassId, onAdded }: {
   const [name, setName] = useState('');
   const [classId, setClassId] = useState<string | null>(null); // null = 지금 보는 반
   const [birthday, setBirthday] = useState('');
+  const [newcomer, setNewcomer] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; birthday?: string }>({});
   const [busy, setBusy] = useState(false);
   const cid = classId ?? defaultClassId;
@@ -225,10 +244,11 @@ function NewStudent({ classes, defaultClassId, onAdded }: {
     if (Object.keys(errs).length) return;
     setBusy(true);
     try {
-      const token = await createStudent(db, { name: name.trim(), classId: cid, birthday: b ?? null });
+      const token = await createStudent(db, { name: name.trim(), classId: cid, birthday: b ?? null, newcomer });
       show(`${name.trim()} 학생을 추가했어요`);
       setName('');
       setBirthday('');
+      setNewcomer(false);
       await onAdded(token, cid);
     } catch (err) {
       show(describeError(err), 'error');
@@ -249,6 +269,7 @@ function NewStudent({ classes, defaultClassId, onAdded }: {
           <Field label="생일" inputMode="numeric" autoComplete="off" maxLength={5} value={birthday}
             onChange={(e) => setBirthday(e.target.value)} placeholder="03-05" hint="비워 둬도 돼요" error={errors.birthday} />
         </div>
+        <NewcomerCheck checked={newcomer} onChange={setNewcomer} />
         <Button type="submit" block busy={busy} icon={<Icon name="plus" size={20} />}>학생 추가</Button>
       </form>
     </Card>
