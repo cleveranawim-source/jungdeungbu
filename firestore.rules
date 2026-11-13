@@ -101,6 +101,15 @@ service cloud.firestore {
         && d.keys().hasOnly(['authorUid', 'studentName', 'text', 'createdAt'].concat(extraKeys));
     }
 
+    // 활성 학생 세션: 학생 링크를 연 기기(익명 로그인)이고 그 링크의 학생이 활성이어야 한다.
+    // 세션 문서가 없거나 토큰이 가리키는 학생 문서가 없으면 평가 오류로 거절된다(닫힌 채로 실패).
+    // 조회: 세션 1 + 학생 1.
+    function isMember() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/studentSessions/$(request.auth.uid))
+        && studentOf(sessionOf(request.auth.uid).data.token).data.active == true;
+    }
+
     function changedOnly(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
     }
@@ -183,7 +192,29 @@ service cloud.firestore {
     match /bulletins/{date} {
       allow get: if resource == null || resource.data.published == true || isTeacher();
       allow list: if isTeacher() || resource.data.published == true;
-      allow create, update, delete: if isAdmin() && isDateId(date);
+      // 공개 문서라 허용 칸만 둔다. 이름·전화번호가 든 칸(newFriends·contacts 등)은 잠긴 문서에만 둔다.
+      allow create, update: if isAdmin() && isDateId(date)
+        && request.resource.data.keys().hasOnly(['date', 'order', 'hymns', 'scripture', 'sermonTitle',
+             'published', 'updatedBy', 'updatedAt', 'issue', 'leader', 'opening', 'nextServers', 'attendance']);
+      allow delete: if isAdmin() && isDateId(date);
+
+      // 이름이 들어가는 정보는 여기(잠긴 문서)에만 둔다. 선생님 또는 활성 학생 세션만 get,
+      // 학생은 공개된(published) 주보의 것만. list 없음.
+      match /members/{id} {
+        allow get: if isTeacher()
+          || (isMember() && get(/databases/$(database)/documents/bulletins/$(date)).data.published == true);
+        allow create, update: if isAdmin() && isDateId(date) && id == 'main'
+          && request.resource.data.keys().hasOnly(['newFriends', 'birthdays']);
+        allow delete: if isAdmin() && isDateId(date) && id == 'main';
+      }
+    }
+
+    // 섬기는 사람·연락처(개인 번호): 선생님 또는 활성 학생 세션만 get. list 없음.
+    match /memberInfo/{id} {
+      allow get: if isTeacher() || isMember();
+      allow create, update: if isAdmin() && id == 'main'
+        && request.resource.data.keys().hasOnly(['servants', 'contacts']);
+      allow delete: if isAdmin() && id == 'main';
     }
 
     match /sermons/{date} {
@@ -198,7 +229,11 @@ service cloud.firestore {
 
     match /settings/{id} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      // settings/info 는 공개 문서: 연락처·명단 칸을 넣지 못하게 허용 칸만 둔다. 다른 문서는 그대로.
+      allow create, update: if isAdmin()
+        && (id != 'info'
+            || request.resource.data.keys().hasOnly(['motto', 'etiquette', 'place', 'churchPhone']));
+      allow delete: if isAdmin();
     }
 
     // ---------- 학생 세션 ----------
