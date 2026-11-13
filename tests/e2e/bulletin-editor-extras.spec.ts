@@ -98,9 +98,10 @@ test('불러오기 → 고치기 → 게시하면 학생에게 보인다', async
   const { page: student } = await openStudent(browser, `#/s/${TOKEN_GA}/bulletin`);
   await expect(student.getByText('인도: 정한결 선생님')).toBeVisible();
   await expect(student.getByText('요 4:24')).toBeVisible();
+  await student.locator('summary').filter({ hasText: '다음 주 예배위원' }).click();
   await expect(student.getByText('한가람 학생')).toBeVisible();
-  await expect(student.getByText('학생 2/3')).toBeVisible();
-  await expect(student.getByText('교사 13/15')).toBeVisible();
+  await expect(student.getByText('학생 2 / 3명')).toBeVisible();
+  await expect(student.getByText('교사 13 / 15명')).toBeVisible();
   await expect(student.getByRole('region', { name: '새 친구' }).getByText('새봄')).toBeVisible();
   await expect(student.getByRole('region', { name: '이번 달 생일' }).getByText('새봄')).toBeVisible();
 });
@@ -179,6 +180,6 @@ test('다시 열어도 그대로이고, 출석 지우기로 뺄 수 있다', asy
 
   const { page: student } = await openStudent(browser, `#/s/${TOKEN_GA}/bulletin`);
   await expect(student.getByRole('region', { name: '새 친구' }).getByText('새봄')).toBeVisible();
-  await expect(student.getByText('지난 주 출석')).toHaveCount(0);
+  await expect(student.getByText('지난 주 함께한 인원')).toHaveCount(0);
   await expect(student.getByText('인도: 정한결 선생님')).toBeVisible();
 });

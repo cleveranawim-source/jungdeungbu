@@ -248,6 +248,7 @@ function Ready({ user, teacher, tab, sub, onSignOut, onProfileChanged }: {
 
   return (
     <Screen
+      layout={current.key === 'bulletin' ? 'reading' : 'default'}
       title={section?.label ?? current.label}
       sub={withTitle(teacher.name, teacher.title)}
       actions={<SignOutButton onSignOut={onSignOut} onUnsynced={() => setUnsynced(true)} />}

@@ -1,47 +1,22 @@
-/* 중등부 안내: 구역마다 얇은 선으로 나눈다(주보 한 장과 같은 결) */
-.block + .block { padding-top: var(--space-4); border-top: 1px solid var(--line); }
-
-.heading {
-  margin-bottom: var(--space-2);
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: var(--text-md);
-  font-weight: var(--weight-bold);
-  font-synthesis: none;
-}
-
-/* 표어 */
-.motto {
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: var(--weight-bold);
-  font-synthesis: none;
-  line-height: var(--leading-tight);
-}
-.subtitle { margin-top: var(--space-1); color: var(--muted); font-size: var(--text-sm); }
-.verse { margin-top: var(--space-3); font-size: var(--text-sm); }
-.ref { color: var(--muted); }
-
-/* 역할 — 이름, 이름 — 번호 */
-/* 두 칸 격자: 이름·번호가 한 줄로 맞춰 서고, 긴 이름 목록(교사)은 오른쪽 칸 안에서 줄바꿈 */
-.pairs { margin: 0; display: grid; grid-template-columns: fit-content(50%) minmax(0, 1fr); gap: var(--space-1) var(--space-4); align-items: baseline; }
-.pairs > div { display: contents; }
-.pairs dt { min-width: 4em; color: var(--muted); font-size: var(--text-sm); }
-.pairs dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
-
-.bullets { margin: 0; padding-left: 1.2em; font-size: var(--text-sm); }
-.bullets li + li { margin-top: var(--space-1); }
-
-.placeName { font-weight: var(--weight-semibold); }
-.address { color: var(--muted); font-size: var(--text-sm); }
+.card { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--card); overflow: hidden; }
+.heading { padding: var(--space-5); font-size: var(--text-lg); }
+.mottoPanel { position: relative; overflow: hidden; background: var(--cover-bg); color: var(--cover-ink); padding: var(--space-5); }
+.mottoPanel > p { position: relative; }
+.eyebrow { color: var(--cover-muted); font-size: var(--text-xs); letter-spacing: .08em; }
+.motto { font-family: var(--font-display); font-size: var(--text-xl); font-weight: var(--weight-bold); font-synthesis: none; margin-top: var(--space-3); line-height: var(--leading-tight); }
+.subtitle { margin-top: var(--space-3); font-size: var(--text-sm); color: var(--cover-muted); }
+.verse { margin-top: var(--space-5); font-size: var(--text-sm); }
+.ref { color: var(--cover-muted); }
+.body { padding: var(--space-5); }
+.placeName { margin-top: var(--space-3); font-weight: var(--weight-semibold); }
+.address { margin-top: var(--space-2); font-size: var(--text-sm); color: var(--muted); }
 .map { margin-top: var(--space-3); }
-
-/* 전화번호 링크: 터치 대상 44px, 숫자는 프리텐다드 고정폭 */
-.tel {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--touch-min);
-  font-family: var(--font-body);
-  font-variant-numeric: tabular-nums;
-  border-radius: var(--radius-sm);
-}
+.churchPhone { display: flex; flex-wrap: wrap; gap: 0 var(--space-3); align-items: center; margin-top: var(--space-3); font-size: var(--text-sm); }
+.churchPhone > span { color: var(--muted); }
+.pairs { margin: 0; display: grid; grid-template-columns: minmax(3em, auto) minmax(0, 1fr); gap: var(--space-3); align-items: baseline; font-size: var(--text-sm); }
+.pairs > div { display: contents; }
+.pairs dt { color: var(--muted); }
+.pairs dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.bullets { margin: 0; padding-left: 1.2em; font-size: var(--text-sm); }
+.bullets li + li { margin-top: var(--space-3); }
+.tel { display: inline-flex; align-items: center; min-height: var(--touch-min); font-family: var(--font-body); font-variant-numeric: tabular-nums; border-radius: var(--radius-sm); }

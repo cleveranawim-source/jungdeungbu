@@ -73,8 +73,9 @@ export function StudentApp({ token, tab, sub }: StudentAppProps) {
   };
   return (
     <Screen
-      title={current.label}
-      sub={student.name}
+      title={current.key === 'home' ? `${student.name}, 반가워요` : current.label}
+      sub={current.key === 'home' ? '함께 예배하는 주일이에요.' : current.key === 'bulletin' ? undefined : student.name}
+      layout={current.key === 'home' || current.key === 'bulletin' ? 'reading' : 'default'}
       tabBar={<TabBar items={TABS} current={current.key} onChange={(k) => { location.hash = studentHref(token, k); }} label="학생 메뉴" />}
     >
       {body[current.key]}

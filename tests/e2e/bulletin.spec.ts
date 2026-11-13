@@ -77,7 +77,7 @@ test('학생이 이번 주 주보·설교·광고를 본다', async ({ page }) =
   // 주보: 세 칸 순서표(순서 | 내용 | 맡은 사람)와 찬양
   await page.getByRole('tab', { name: '주보' }).click();
   await expect(page.getByRole('tab', { name: '주보' })).toHaveAttribute('aria-selected', 'true');
-  const rows = page.getByRole('list', { name: '예배 순서' }).getByRole('listitem');
+  const rows = page.getByRole('table', { name: '예배 순서' }).locator('tbody').getByRole('row');
   await expect(rows).toHaveCount(3);
   await expect(rows.nth(1)).toContainText('기도');
   await expect(rows.nth(1)).toContainText('대표기도');

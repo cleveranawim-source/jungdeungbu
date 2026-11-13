@@ -49,3 +49,20 @@ test('순서표·출석 숫자는 프리텐다드, 중등부 안내 표어는 �
   expect(rule('src/ui/BulletinView.module.css', '.counts')).toContain('var(--font-body)');
   expect(rule('src/ui/InfoCard.module.css', '.motto')).toContain('var(--font-display)');
 });
+
+
+test('동행 그림은 반응형 WebP이며 작은 그림은 150KB 미만이다', () => {
+  const dir = 'src/assets/walking-together';
+  for (const size of [480, 800, 1280]) expect(statSync(`${dir}/${size}.webp`).size).toBeLessThan(150 * 1024);
+  expect(readFileSync(`${dir}/prompt.txt`, 'utf8').trim().length).toBeGreaterThan(50);
+  const cover = readFileSync('src/ui/IllustratedCover.tsx', 'utf8');
+  expect(cover).toContain('srcSet=');
+  expect(cover).toContain('alt=""');
+});
+
+test('표지·소식·축하의 글자와 면은 지정한 색 쌍으로 쓴다', () => {
+  expect(rule('src/ui/NewsSection.module.css', '.heading')).toContain('var(--gold-panel-ink)');
+  expect(rule('src/ui/NewsSection.module.css', '.heading')).toContain('var(--gold-panel)');
+  expect(rule('src/ui/BulletinView.module.css', '.community')).toContain('var(--sage-ink)');
+  expect(rule('src/ui/IllustratedCover.module.css', '.cover')).toContain('var(--cover-ink)');
+});

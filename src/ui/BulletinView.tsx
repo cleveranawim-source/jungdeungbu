@@ -1,171 +1,91 @@
 import type { ReactNode } from 'react';
 import type { Announcement, Bulletin, BulletinMembers, Sermon, WithId } from '../types';
 import { displayOrder } from '../lib/bulletin';
-import { formatMonthDay } from '../lib/dates';
-import { AnnouncementList } from './AnnouncementList';
-import { Card } from './Card';
+import { formatBirthday, formatMonthDay } from '../lib/dates';
+import { Disclosure } from './Disclosure';
+import { IllustratedCover } from './IllustratedCover';
+import { NewsSection } from './NewsSection';
+import { SectionJump } from './SectionJump';
 import s from './BulletinView.module.css';
 
 export interface BulletinViewProps {
   bulletin: Bulletin;
   sermon: Sermon | null;
   announcements: WithId<Announcement>[];
-  /** 잠긴 문서(새 친구·생일). 못 읽었거나 아직이면 null → 새 친구·생일 구역을 그리지 않는다 */
   members: BulletinMembers | null;
-  /**
-   * 설교 상세로 가는 주소(브리프 props 에 더한 선택 값). 설교가 있고 이 값이 있으면 설교 제목이 링크가 된다.
-   * 학생은 `studentHref(token, 'sermon', date)`, 링크할 화면이 없는 쪽(교사)은 비워 둔다.
-   */
   sermonHref?: string;
+  information?: ReactNode;
 }
 
-/** "2026-11-08" → "11.8", 생일 "11-20" → "11.20" */
-function dotDate(dateId: string): string {
-  const [m, d] = dateId.split('-').slice(-2).map(Number);
-  return `${m}.${d}`;
-}
-
-/** 순서·출석·생일처럼 같은 모양의 구역 하나(h3 + 내용). */
-function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
-  return (
-    <section className={s.section} aria-labelledby={id}>
-      <h3 className={s.heading} id={id}>{title}</h3>
-      {children}
-    </section>
-  );
-}
-
-/**
- * 주보 한 장(종이 주보와 같은 차례): 머리 → 주일예배(인도·여는 말씀·세 칸 순서표) → 찬양 → 말씀 → 광고
- * → 다음 주 예배위원 → 지난 주 출석 → 새 친구 → 이번 달 생일.
- * 비어 있는 구역은 그리지 않는다. 학생 주보 탭과 교사 주보 탭이 함께 쓴다.
- */
-export function BulletinView({ bulletin, sermon, announcements, members, sermonHref }: BulletinViewProps) {
+export function BulletinView({ bulletin, sermon, announcements, members, sermonHref, information }: BulletinViewProps) {
   const id = (name: string) => `${bulletin.date}-${name}`;
   const sermonTitle = bulletin.sermonTitle || sermon?.title || '';
-  const { rows, showsScripture, showsSermon } = displayOrder(bulletin.order, bulletin.scripture, sermonTitle);
-  const hymns = bulletin.hymns.filter(Boolean);
+  const { rows, showsScripture, showsSermon } = displayOrder(bulletin.order ?? [], bulletin.scripture, sermonTitle);
+  const hymns = (bulletin.hymns ?? []).filter(Boolean);
   const hasStanding = rows.some((r) => r.standing);
   const opening = bulletin.opening;
-  const hasOpening = Boolean(opening.text || opening.ref);
+  const hasOpening = Boolean(opening?.text || opening?.ref);
   const showScripture = !showsScripture && Boolean(bulletin.scripture);
   const showSermon = !showsSermon && Boolean(sermonTitle);
-  const servers = bulletin.nextServers.filter((x) => x.role || x.name);
+  const servers = (bulletin.nextServers ?? []).filter((x) => x.role || x.name);
   const att = bulletin.attendance;
-  // 잠긴 문서는 다듬지 않고 저장된 그대로 오므로 빠진 칸은 빈 목록으로 본다
   const newFriends = (members?.newFriends ?? []).filter(Boolean);
   const birthdays = (members?.birthdays ?? []).filter((b) => b && b.name && typeof b.date === 'string' && b.date);
-
-  const sermonText = (title: string) => (sermon && sermonHref
-    ? <a className={s.sermonLink} href={sermonHref}>{title}</a>
-    : title);
-
+  const hasOrder = rows.length > 0 || bulletin.leader || hasOpening;
+  const hasNews = announcements.length > 0 || servers.length > 0;
+  const sermonText = (title: string) => sermon && sermonHref ? <a className={s.sermonLink} href={sermonHref}>{title}</a> : title;
   return (
-    <Card as="article" className={s.paper}>
-      <header className={s.head}>
-        <h2 className={s.date}>{formatMonthDay(bulletin.date)} 주일</h2>
-        {bulletin.issue && <p className={s.issue}>{bulletin.issue}</p>}
-        <p className={s.kind}>중등부 예배</p>
-      </header>
-
-      {(rows.length > 0 || bulletin.leader || hasOpening) && (
-        <section className={s.section} aria-labelledby={id('order')}>
-          <div className={s.worshipHead}>
-            <h3 className={s.heading} id={id('order')}>주일예배</h3>
-            {bulletin.leader && <p className={s.leaderName}>인도: {bulletin.leader}</p>}
-          </div>
-          {hasOpening && (
-            <p className={s.opening}>
-              {opening.text}{opening.ref && (opening.text ? ` (${opening.ref})` : opening.ref)}
-            </p>
+    <>
+      <div className={s.layout}>
+        <div className={s.main}>
+          <IllustratedCover title={<>{formatMonthDay(bulletin.date)}<br />주일예배</>} subtitle="함께 말씀을 듣고, 함께 걸어가요.">
+            <p className={s.coverMeta}><span>명지대학교교회 중등부</span>{bulletin.issue && <span>{bulletin.issue}</span>}</p>
+          </IllustratedCover>
+          <SectionJump items={[
+            ...(hasOrder ? [{ label: '예배 순서', id: id('program') }] : []),
+            ...(hasNews ? [{ label: '이번 주 소식', id: id('news') }] : []),
+            ...(information ? [{ label: '중등부 안내', id: 'church-info' }] : []),
+          ]} />
+          {(hasOrder || hymns.length > 0 || showScripture || showSermon) && (
+            <section className={s.paper} id={id('program')} tabIndex={-1} aria-labelledby={id('order')}>
+              <div className={s.worshipHead}>
+                <h2 className={s.heading} id={id('order')}>예배 순서</h2>
+                {bulletin.leader && <p className={s.leaderName}>인도: {bulletin.leader}</p>}
+              </div>
+              {hasOpening && <blockquote className={s.opening}><p>{opening.text}</p>{opening.ref && <cite>{opening.ref}</cite>}</blockquote>}
+              {rows.length > 0 && <table className={s.order} aria-label="예배 순서">
+                <colgroup><col className={s.typeCol} /><col className={s.titleCol} /><col className={s.personCol} /></colgroup>
+                <thead><tr><th scope="col">순서</th><th scope="col">내용</th><th scope="col">맡은 사람</th></tr></thead>
+                <tbody>{rows.map((r, i) => <tr key={i}>
+                  <th scope="row">{r.standing && <><span className={s.star} aria-hidden="true">* </span><span className="sr-only">일어서서 </span></>}{r.type}</th>
+                  <td>{r.from === 'sermon' ? sermonText(r.title) : r.title}</td>
+                  <td className={s.who}>{r.detail}</td>
+                </tr>)}</tbody>
+              </table>}
+              {hasStanding && <p className={s.note}>* 표가 있는 순서에는 함께 일어서요.</p>}
+              {hymns.length > 0 && <section className={s.extra} aria-labelledby={id('hymns')}><h3 id={id('hymns')}>찬양</h3><ul className={s.hymns}>{hymns.map((h, i) => <li key={i}>{h}</li>)}</ul></section>}
+              {(showScripture || showSermon) && <section className={s.extra} aria-labelledby={id('word')}><h3 id={id('word')}>말씀</h3><dl className={s.pairs}>
+                {showScripture && <div><dt>본문</dt><dd>{bulletin.scripture}</dd></div>}
+                {showSermon && <div><dt>설교</dt><dd>{sermonText(sermonTitle)}</dd></div>}
+              </dl></section>}
+            </section>
           )}
-          {rows.length > 0 && (
-            <ol className={s.order} aria-label="예배 순서">
-              {rows.map((r, i) => (
-                <li key={i} className={s.step}>
-                  <span className={s.type}>
-                    {r.standing && <><span className={s.star} aria-hidden="true">*</span><span className="sr-only">일어서서 </span></>}
-                    {r.type}
-                  </span>
-                  {r.title && <span className={s.what}>{r.from === 'sermon' ? sermonText(r.title) : r.title}</span>}
-                  {r.detail && <span className={s.who}>{r.detail}</span>}
-                </li>
-              ))}
-            </ol>
-          )}
-          {hasStanding && <p className={s.note}>*표는 일어서서</p>}
-        </section>
-      )}
-
-      {hymns.length > 0 && (
-        <Section id={id('hymns')} title="찬양">
-          <ul className={s.hymns}>
-            {hymns.map((h, i) => <li key={i}>{h}</li>)}
-          </ul>
-        </Section>
-      )}
-
-      {(showScripture || showSermon) && (
-        <Section id={id('word')} title="말씀">
-          <dl className={s.word}>
-            {showScripture && <div><dt>본문</dt><dd>{bulletin.scripture}</dd></div>}
-            {showSermon && <div><dt>설교</dt><dd>{sermonText(sermonTitle)}</dd></div>}
-          </dl>
-        </Section>
-      )}
-
-      {announcements.length > 0 && (
-        <Section id={id('news')} title="광고">
-          <AnnouncementList items={announcements} />
-        </Section>
-      )}
-
-      {servers.length > 0 && (
-        <Section id={id('servers')} title="다음 주 예배위원">
-          <dl className={s.pairs}>
-            {servers.map((x, i) => <div key={i}><dt>{x.role}</dt><dd>{x.name}</dd></div>)}
-          </dl>
-        </Section>
-      )}
-
-      {att && att.students.total > 0 && (
-        <Section id={id('attendance')} title="지난 주 출석">
-          <div className={s.counts}>
-            <p className={s.sunday}>{dotDate(att.sunday)} 주일</p>
-            <p className={s.total}>
-              <span>학생 {att.students.present}/{att.students.total}</span>
-              {att.teachers && <span>교사 {att.teachers.present}/{att.teachers.total}</span>}
-            </p>
-            {att.classes.length > 0 && (
-              <ul className={s.chips} aria-label="반별 출석">
-                {att.classes.map((c, i) => (
-                  <li key={i} className={s.chip}>
-                    <span className={s.chipName}>{c.name}</span> <span>{c.present}/{c.total}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </Section>
-      )}
-
-      {newFriends.length > 0 && (
-        <Section id={id('new')} title="새 친구">
-          <ul className={s.names}>
-            {newFriends.map((n, i) => <li key={i}>{n}</li>)}
-          </ul>
-        </Section>
-      )}
-
-      {birthdays.length > 0 && (
-        <Section id={id('birthdays')} title="이번 달 생일">
-          <ul className={s.names}>
-            {birthdays.map((b, i) => (
-              <li key={i}><span className={s.birthDate}>{dotDate(b.date)}</span> {b.name}</li>
-            ))}
-          </ul>
-        </Section>
-      )}
-    </Card>
+          {hasNews && <NewsSection items={announcements} id={id('news')}>
+            {servers.length > 0 && <Disclosure title="다음 주 예배위원" sub="미리 준비해요"><dl className={s.pairs}>{servers.map((x, i) => <div key={i}><dt>{x.role}</dt><dd>{x.name}</dd></div>)}</dl></Disclosure>}
+          </NewsSection>}
+          {(newFriends.length > 0 || birthdays.length > 0) && <section className={s.community} aria-labelledby={id('community')}>
+            <h2 className={s.heading} id={id('community')}>함께 나누는 소식</h2>
+            {newFriends.length > 0 && <section className={s.communityPart} aria-labelledby={id('new')}><h3 id={id('new')}>새 친구</h3><p>우리 중등부에 온 걸 환영해요!</p><ul className={s.names}>{newFriends.map((n, i) => <li key={i}>{n}</li>)}</ul></section>}
+            {birthdays.length > 0 && <section className={s.communityPart} aria-labelledby={id('birthdays')}><h3 id={id('birthdays')}>이번 달 생일</h3><ul className={s.birthdays}>{birthdays.map((b, i) => <li key={i}><span>{b.name}</span><span>{formatBirthday(b.date)}</span></li>)}</ul></section>}
+          </section>}
+          {att && att.students.total > 0 && <section className={s.attendance} aria-labelledby={id('attendance')}>
+            <h2 className={s.heading} id={id('attendance')}>지난 주 함께한 인원</h2><p className={s.note}>{formatMonthDay(att.sunday)} 주일</p>
+            <div className={s.counts}><p>학생 <strong>{att.students.present}</strong> / {att.students.total}명</p>{att.teachers && <p>교사 <strong>{att.teachers.present}</strong> / {att.teachers.total}명</p>}</div>
+            {(att.classes ?? []).length > 0 && <Disclosure title="반별 인원 보기"><table className={s.classCounts} aria-label="반별 출석"><thead><tr><th scope="col">반</th><th scope="col">함께한 인원</th><th scope="col">전체 인원</th></tr></thead><tbody>{att.classes.map((c, i) => <tr key={i}><th scope="row">{c.name}</th><td>{c.present}명</td><td>{c.total}명</td></tr>)}</tbody></table></Disclosure>}
+          </section>}
+        </div>
+        {information && <aside className={s.aside}>{information}</aside>}
+      </div>
+    </>
   );
 }

@@ -66,11 +66,14 @@ test('관리자가 안내를 저장하면 학생 주보 탭에 보인다', async
   const { page: student } = await openStudent(browser, `#/s/${TOKEN}/bulletin`);
   const card = student.locator('section').filter({ has: student.getByRole('heading', { name: '중등부 안내' }) });
   await expect(card.getByText('동행하는 자')).toBeVisible();
+  await card.locator('summary').filter({ hasText: '섬기는 분들' }).click();
   await expect(card.getByText('담당', { exact: true })).toBeVisible();
   await expect(card.getByText('이승열 목사', { exact: true })).toBeVisible();
+  await card.locator('summary').filter({ hasText: '예배 에티켓' }).click();
   await expect(card.getByText('예배시작은 9:30이며, 9:15부터 찬양이 시작됩니다.')).toBeVisible();
   await expect(card.getByText('휴대폰은 무음으로 해요.')).toBeVisible();
   await expect(card.getByText(/02-303-2501/)).toBeVisible();
+  await card.locator('summary').filter({ hasText: '선생님 연락처' }).click();
   await expect(card.getByText(/010-0000-0000/)).toBeVisible();
 
   // 새로고침해도 값이 남는다
@@ -100,7 +103,7 @@ test('지도 링크가 https 주소가 아니면 저장하지 않는다', async 
 
   // 아무것도 저장되지 않았다
   const before = await openStudent(browser, `#/s/${TOKEN}/bulletin`);
-  await expect(before.page.getByRole('heading', { name: '주일예배' })).toBeVisible();
+  await expect(before.page.getByRole('heading', { name: '예배 순서', exact: true })).toBeVisible();
   await expect(before.page.getByText('동행하는 자')).toHaveCount(0);
 
   await map.fill('https://example.com/map');
@@ -109,7 +112,7 @@ test('지도 링크가 https 주소가 아니면 저장하지 않는다', async 
   await expect(error).toHaveCount(0);
 
   const { page: student } = await openStudent(browser, `#/s/${TOKEN}/bulletin`);
-  await expect(student.getByRole('link', { name: '지도 열기' })).toHaveAttribute('href', 'https://example.com/map');
+  await expect(student.getByRole('link', { name: '지도 보기' })).toHaveAttribute('href', 'https://example.com/map');
 });
 
 test('저장 안 한 채 관리 메뉴로 나가려 하면 묻는다: 계속 쓰기는 그대로, 이동하면 버린다', async ({ page }) => {

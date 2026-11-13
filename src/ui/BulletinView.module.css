@@ -1,98 +1,46 @@
-/* 종이 주보 한 장 */
-.paper { padding: var(--space-6) var(--space-5); }
-
-.head { padding-bottom: var(--space-4); border-bottom: 2px solid var(--ink); }
-.date { font-size: var(--text-lg); }
-.issue { margin-top: var(--space-1); color: var(--muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
-.kind { margin-top: var(--space-1); color: var(--muted); font-size: var(--text-sm); }
-
-.section { padding: var(--space-5) 0 0; }
-.section + .section { margin-top: var(--space-5); border-top: 1px solid var(--line); }
-.heading {
-  margin-bottom: var(--space-3);
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: var(--text-md);
-  font-weight: var(--weight-bold);
-  font-synthesis: none;
-}
-
-/* 주일예배: 제목 오른쪽에 인도(좁으면 아래로) */
-.worshipHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  column-gap: var(--space-4);
-  margin-bottom: var(--space-3);
-}
-.worshipHead .heading { margin-bottom: 0; }
-.leaderName { color: var(--muted); font-size: var(--text-sm); }
-.opening { margin-bottom: var(--space-3); font-size: var(--text-sm); line-height: var(--leading-body); }
-
-/* 예배 순서: 순서 | 내용 | 맡은 사람 세 칸 */
-.order { list-style: none; margin: 0; padding: 0; }
-.step {
-  display: grid;
-  grid-template-columns: minmax(5.5em, auto) 1fr auto;
-  grid-template-areas: "type what who";
-  align-items: baseline;
-  column-gap: var(--space-3);
-  row-gap: 2px;
-  padding: var(--space-2) 0;
-  line-height: var(--leading-tight);
-}
-.step + .step { border-top: 1px solid var(--line); }
-.type { grid-area: type; font-weight: var(--weight-bold); }
-.star { margin-right: 2px; }
-.what { grid-area: what; min-width: 0; overflow-wrap: anywhere; }
-.who { grid-area: who; justify-self: end; min-width: 0; overflow-wrap: anywhere; color: var(--muted); font-size: var(--text-sm); text-align: right; }
-/* 좁은 화면: 순서·맡은 사람이 첫 줄, 내용이 둘째 줄 전체 폭 */
-/* 420/421px 경계는 BulletinEditor.module.css · PairRows.module.css · BulletinView.module.css 가 같이 쓴다(바꾸면 셋 다) */
-@media (max-width: 420px) {
-  .step {
-    grid-template-columns: 1fr auto;
-    grid-template-areas: "type who" "what what";
-  }
-}
-.note { margin-top: var(--space-2); color: var(--muted); font-size: var(--text-sm); }
-
-.hymns { margin: 0; padding: 0; list-style: none; }
-.hymns li { padding: var(--space-1) 0; }
-
-.word { margin: 0; display: flex; flex-direction: column; gap: var(--space-3); }
-.word > div { display: flex; gap: var(--space-4); align-items: baseline; }
-.word dt { flex-shrink: 0; width: 3em; color: var(--muted); font-size: var(--text-sm); }
-.word dd { margin: 0; font-weight: var(--weight-bold); }
-/* 터치 대상: 줄 높이를 44px 로 */
-.sermonLink {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--touch-min);
-  margin: calc((var(--touch-min) - 1lh) / -2) 0;
-  border-radius: var(--radius-sm);
-}
-
-/* 다음 주 예배위원: 역할 — 이름 */
-/* 맡은 일 | 이름: 두 칸 격자라 긴 맡은 일(소식나눔)이 있어도 이름이 한 줄로 맞춰 선다 */
-.pairs { margin: 0; display: grid; grid-template-columns: fit-content(50%) minmax(0, 1fr); gap: var(--space-2) var(--space-4); align-items: baseline; }
+.layout, .main { display: grid; gap: var(--space-5); min-width: 0; align-content: start; }
+.main { width: 100%; max-width: var(--content-max); justify-self: center; }
+.aside { min-width: 0; }
+.coverMeta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); color: var(--cover-muted); font-size: var(--text-sm); }
+.paper { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: var(--space-5) var(--space-4); }
+.heading { font-family: var(--font-display); font-size: var(--text-lg); font-weight: var(--weight-bold); font-synthesis: none; }
+.worshipHead { border-bottom: 2px solid var(--ink); padding-bottom: var(--space-4); }
+.leaderName { color: var(--muted); font-size: var(--text-sm); margin-top: var(--space-2); }
+.opening { margin: var(--space-5) 0; padding-left: var(--space-4); border-left: 3px solid var(--gold); font-size: var(--text-sm); }
+.opening cite { display: block; font-style: normal; color: var(--muted); margin-top: var(--space-2); }
+.order { border-collapse: collapse; table-layout: fixed; width: 100%; margin-top: var(--space-4); }
+.typeCol { width: 27%; } .titleCol { width: 46%; } .personCol { width: 27%; }
+.order th, .order td { text-align: left; vertical-align: top; padding: var(--space-3) 5px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.order thead th { font-size: var(--text-xs); color: var(--muted); font-weight: var(--weight-medium); padding-top: 0; }
+.order tbody th { font-size: var(--text-sm); font-weight: var(--weight-semibold); }
+.order td { font-size: var(--text-md); }
+.order .who { text-align: right; font-size: var(--text-sm); color: var(--muted); }
+.order thead th:last-child { text-align: right; }
+.order th:first-child { padding-left: 0; }
+.order td:last-child, .order th:last-child { padding-right: 0; }
+.star { color: var(--accent-text); }
+.note { color: var(--muted); font-size: var(--text-sm); margin-top: var(--space-3); }
+.sermonLink { display: inline-flex; min-width: var(--touch-min); min-height: var(--touch-min); align-items: center; border-radius: var(--radius-sm); }
+.extra { margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--line); }
+.extra h3 { margin-bottom: var(--space-3); }
+.hymns { padding-left: 1.2em; }
+.pairs { display: grid; grid-template-columns: minmax(3em, auto) minmax(0, 1fr); gap: var(--space-3) var(--space-4); margin: 0; }
 .pairs > div { display: contents; }
-.pairs dt { min-width: 3em; color: var(--muted); font-size: var(--text-sm); }
-.pairs dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
-
-/* 지난 주 출석: 숫자는 프리텐다드 고정폭 숫자 */
-.counts { font-family: var(--font-body); font-variant-numeric: tabular-nums; }
-.sunday { color: var(--muted); font-size: var(--text-sm); }
-.total { display: flex; flex-wrap: wrap; column-gap: var(--space-4); font-weight: var(--weight-semibold); }
-.chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
-.chip {
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
-}
-.chipName { color: var(--muted); }
-
-/* 새 친구·생일: 줄바꿈되는 이름 나열 */
-.names { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); margin: 0; padding: 0; list-style: none; }
-.birthDate { color: var(--muted); font-family: var(--font-body); font-variant-numeric: tabular-nums; }
+.pairs dt { font-size: var(--text-sm); color: var(--muted); }
+.pairs dd { margin: 0; }
+.community { padding: var(--space-5); border-radius: var(--radius-lg); background: var(--sage-bg); color: var(--sage-ink); }
+.communityPart { margin-top: var(--space-5); }
+.communityPart p { font-size: var(--text-sm); margin-top: var(--space-2); }
+.names { display: flex; gap: var(--space-2) var(--space-4); flex-wrap: wrap; list-style: none; padding: 0; margin-top: var(--space-3); font-weight: var(--weight-semibold); }
+.birthdays { list-style: none; padding: 0; margin-top: var(--space-3); display: grid; gap: var(--space-2); }
+.birthdays li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); }
+.birthdays li span:last-child { font-size: var(--text-sm); }
+.attendance { padding: var(--space-5); border: 1px solid var(--line); border-radius: var(--radius-lg); }
+.counts { font-family: var(--font-body); display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5); font-variant-numeric: tabular-nums; margin-top: var(--space-3); }
+.counts strong { font-size: var(--text-xl); font-weight: var(--weight-semibold); }
+.classCounts { width: 100%; border-collapse: collapse; font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.classCounts th, .classCounts td { padding: var(--space-2) 0; text-align: right; border-bottom: 1px solid var(--line); }
+.classCounts th:first-child { text-align: left; }
+.classCounts thead th { font-size: var(--text-xs); font-weight: var(--weight-medium); color: var(--muted); }
+@media (min-width: 600px) { .paper { padding: var(--space-6); } }
+@media (min-width: 900px) { .layout:has(.aside) { grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr); gap: var(--space-6); align-items: start; } }

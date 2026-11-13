@@ -1,6 +1,6 @@
 // 종이 주보와 같은 주보를 만드는 순수 계산(호수·순서표 채움·출석 요약·생일·입력 파싱). 타입만 import 한다.
 import type {
-  AttendanceDoc, AttendanceSummary, Birthday, ClassDoc, OrderItem, Student, Tally, WithId,
+  AttendanceDoc, AttendanceSummary, Birthday, ChurchInfo, ClassDoc, MemberInfo, OrderItem, Student, Tally, WithId,
 } from '../types';
 
 /** 호수의 마지막 숫자 묶음을 1 올린다(자릿수 유지: 09→10). 숫자가 없으면 ''. */
@@ -128,4 +128,13 @@ export function telHref(phone: string): string | null {
   const digits = t.replace(/\D/g, '');
   if (!digits) return null;
   return `tel:${t.startsWith('+') ? '+' : ''}${digits}`;
+}
+
+/** 안내 카드·바로가기 모두 실제로 보이는 내용이 있을 때만 만들어요. */
+export function hasInfoContent(info: ChurchInfo, members: MemberInfo | null): boolean {
+  return Boolean(info.motto.title || info.motto.subtitle || info.motto.verse
+    || info.place.name || info.place.address || safeHttpUrl(info.place.mapUrl) || info.churchPhone
+    || (info.etiquette ?? []).some(Boolean)
+    || (members?.servants ?? []).some((x) => x && (x.role || x.names))
+    || (members?.contacts ?? []).some((x) => x && (x.label || x.phone)));
 }

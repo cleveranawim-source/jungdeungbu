@@ -4,11 +4,12 @@ import { useLoader } from '../app/useLoader';
 import { useMemberData } from '../app/useMemberData';
 import { activeAnnouncements, getBulletin, getSermon, listBulletins } from '../data/content';
 import { getChurchInfo } from '../data/info';
+import { hasInfoContent } from '../lib/bulletin';
 import { formatMonthDay, isDateId } from '../lib/dates';
 import { db } from '../lib/firebase';
 import { BulletinView } from '../ui/BulletinView';
 import { LinkButton } from '../ui/Button';
-import { Card } from '../ui/Card';
+import { Disclosure } from '../ui/Disclosure';
 import { EmptyState } from '../ui/EmptyState';
 import { Icon } from '../ui/icons';
 import { InfoCard } from '../ui/InfoCard';
@@ -35,6 +36,9 @@ export function BulletinTab({ token, sundayId, sub, sessionState }: StudentTabPr
   // 새 친구·생일·섬기는 분·연락처는 잠긴 문서: 학생 세션이 준비된 뒤에만 읽는다
   const members = useMemberData(date, sessionState === 'ready' || sessionState === 'teacher');
 
+  const information = church.data && hasInfoContent(church.data, members.info)
+    ? <InfoCard info={church.data} members={members.info} /> : undefined;
+
   let main;
   if (one.data === undefined) {
     main = one.error ? <LoadError error={one.error} onRetry={one.reload} audience="student" /> : <Loading />;
@@ -44,7 +48,7 @@ export function BulletinTab({ token, sundayId, sub, sessionState }: StudentTabPr
         bulletin={one.data.bulletin}
         sermon={one.data.sermon}
         announcements={one.data.announcements}
-        members={members.bulletin}
+        members={members.bulletin} information={information}
         sermonHref={one.data.sermon ? studentHref(token, 'sermon', date) : undefined}
       />
     );
@@ -73,9 +77,9 @@ export function BulletinTab({ token, sundayId, sub, sessionState }: StudentTabPr
         </div>
       )}
       {main}
-      {church.data && <InfoCard info={church.data} members={members.info} />}
+      {!one.data?.bulletin && information}
       {past.data === undefined ? (past.error ? <LoadError error={past.error} onRetry={past.reload} audience="student" /> : null) : pastList.length > 0 && (
-        <Card title="지난 주보">
+        <Disclosure title="지난 주보" level={2}>
           <ul className={s.list}>
             {pastList.map((b) => (
               <li key={b.date}>
@@ -89,7 +93,7 @@ export function BulletinTab({ token, sundayId, sub, sessionState }: StudentTabPr
               </li>
             ))}
           </ul>
-        </Card>
+        </Disclosure>
       )}
     </>
   );
