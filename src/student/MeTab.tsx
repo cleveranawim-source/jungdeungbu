@@ -2,12 +2,14 @@ import { useCallback } from 'react';
 import { useLoader } from '../app/useLoader';
 import { listStudentAttendance } from '../data/attendance';
 import { getClass } from '../data/classes';
+import { emphasisParts, streakCelebration } from '../lib/celebrate';
 import { formatBirthday, semesterStart } from '../lib/dates';
 import { db } from '../lib/firebase';
 import { activeStreak } from '../lib/streak';
 import { AttendanceCalendar } from '../ui/AttendanceCalendar';
 import { Card } from '../ui/Card';
 import { JourneyLines } from '../ui/JourneyLines';
+import { Icon } from '../ui/icons';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
 import type { StudentTabProps } from './types';
@@ -19,6 +21,8 @@ export function MeTab({ student, token, classId, sundayId }: StudentTabProps) {
   const klass = useLoader(useCallback(() => getClass(db, classId), [classId]));
   const att = useLoader(useCallback(() => listStudentAttendance(db, token), [token]));
   const from = semesterStart(sundayId);
+  const streak = activeStreak(student, sundayId);
+  const celebration = streakCelebration(student, sundayId);
   const presentCount = (att.data ?? []).filter(
     (r) => r.present && r.date >= from && r.date <= sundayId,
   ).length;
@@ -47,9 +51,21 @@ export function MeTab({ student, token, classId, sundayId }: StudentTabProps) {
       </Card>
 
       <Card title="이번 학기 출석" tone="gold">
-        <p className={s.streak}>
-          연속 출석 <strong>{activeStreak(student, sundayId)}주</strong>
-        </p>
+        {streak > 0 && (
+          <div className={s.attendanceSummary}>
+            <p className={s.streak}>
+              연속 출석 <strong>{streak}주</strong>
+            </p>
+            {celebration && (
+              <p className={s.acknowledgement}>
+                <Icon name="calendar" size={20} />
+                <span>{emphasisParts(celebration).map((part, i) => (
+                  part.strong ? <strong key={i}>{part.text}</strong> : part.text
+                ))}</span>
+              </p>
+            )}
+          </div>
+        )}
         {att.data === undefined ? (
           att.error ? (
             <LoadError error={att.error} onRetry={att.reload} audience="student" />

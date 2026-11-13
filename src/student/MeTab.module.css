@@ -37,19 +37,31 @@
   font-weight: var(--weight-medium);
 }
 
+.attendanceSummary {
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
 .streak {
   font-size: var(--text-md);
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--line);
 }
 .streak strong {
   color: var(--accent-text);
   font-variant-numeric: tabular-nums;
   font-size: var(--text-xl);
 }
+.acknowledgement {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.acknowledgement > svg { flex-shrink: 0; }
+.acknowledgement strong { font-weight: var(--weight-medium); }
 .count {
   color: var(--muted);
   font-size: var(--text-sm);
