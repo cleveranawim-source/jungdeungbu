@@ -1,9 +1,14 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { doc, setDoc } from 'firebase/firestore';
 import { clear, seed, seedAdmin } from './seed';
 import { loginAsEmu } from './helpers';
 const TOKEN = 'testStudentToken_00091';
 const EMAIL = 'cross-tab-admin@example.com';
+/** 교사 첫 화면(출석)이 다시 불러오기 없이 열렸는지: 시드한 학생 이름 버튼이 보이고 불러오기 오류가 없다. */
+async function expectFirstScreen(teacher: Page): Promise<void> {
+  await expect(teacher.getByRole('button', { name: /서로운/ })).toBeVisible();
+  await expect(teacher.getByText('불러오지 못했어요')).toHaveCount(0);
+}
 test.beforeEach(async () => {
   await clear(); await seedAdmin(EMAIL);
   await seed(async db => {
@@ -19,6 +24,8 @@ test('학생 탭을 둔 채 다른 탭에서 선생님 로그인하면 재시도
   const teacher = await context.newPage();
   await loginAsEmu(teacher, EMAIL, '담당');
   await expect(teacher.getByText('로그인을 확인하지 못했어요')).toHaveCount(0);
+  // 첫 화면(출석)도 다시 불러오기 없이 열린다 — 공유 Listen 연결이 아직 익명이면 여기서 "권한이 없어요"가 뜬다.
+  await expectFirstScreen(teacher);
   await expect(student.getByText('선생님 계정으로 로그인된 기기예요')).toBeVisible();
   await expect(student.getByRole('button', { name: '올리기', exact: true })).toBeDisabled();
   // 학생 탭에서 다시 읽어도 교사 계정을 익명으로 덮어쓰지 않는다.
@@ -31,6 +38,20 @@ test('학생 탭을 둔 채 다른 탭에서 선생님 로그인하면 재시도
   await teacher.close();
 });
 
+
+test('이미 등록된 교사가 학생 탭을 둔 채 다른 탭에서 로그인해도 첫 화면이 열린다', async ({ page: student, context, browser }) => {
+  // 다른 기기(컨텍스트)에서 한 번 로그인해 teachers/{uid} 를 먼저 만들어 둔다.
+  const other = await browser.newContext({ baseURL: test.info().project.use.baseURL });
+  await loginAsEmu(await other.newPage(), EMAIL, '담당');
+  await other.close();
+  await student.goto(`#/s/${TOKEN}/prayer`);
+  await expect(student.getByRole('button', { name: '올리기', exact: true })).toBeEnabled();
+  const teacher = await context.newPage();
+  await loginAsEmu(teacher, EMAIL, '담당');
+  await expectFirstScreen(teacher);
+  await expect(student.getByText('선생님 계정으로 로그인된 기기예요')).toBeVisible();
+  await teacher.close();
+});
 
 test('이미 확인한 교사는 연결이 끊겨도 캐시로 다시 들어온다', async ({page}) => {
   test.setTimeout(45000);

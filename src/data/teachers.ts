@@ -38,26 +38,32 @@ export async function signInAsEmulatorUser(auth: Auth, email: string, name: stri
   );
 }
 
+/** 공유 연결이 새 계정으로 바뀌기를 기다리는 횟수·간격(합쳐 최대 약 3초) */
+const STALE_STREAM_TRIES = 20;
+const STALE_STREAM_GAP_MS = 150;
+
 /**
  * 로그인한 사용자의 교사 문서. 없으면 invites/{소문자 이메일}을 복사해 만든다.
  * 초대가 없으면(또는 읽을 권한이 없으면) null.
  */
 export async function ensureTeacher(db: Firestore, user: { uid: string; email: string }): Promise<Teacher | null> {
   const ref = doc(db, 'teachers', user.uid);
+  // persistentMultipleTabManager 에서는 이 탭의 getDoc·getDocs 가 primary 탭의 Listen 연결로 간다.
+  // 다른 탭(학생 링크)이 primary 이면 그 탭의 Auth 가 새 계정을 알아챌 때까지(IndexedDB 폴링, 최대 약 0.8초,
+  // 백그라운드 탭이면 더 길게) 그 연결은 옛 익명 토큰을 실어 보낸다. 그래서 본인 문서조차 permission-denied 가 난다.
+  let staleStream = false;
   try {
-    // Keep the normal cached/offline read path for existing teachers.
+    // 기존 교사는 평소 경로(서버, 오프라인이면 캐시)로 읽는다.
     const snap = await getDoc(ref);
     if (snap.exists()) return snap.data() as Teacher;
   } catch (e) {
     if (!isPermissionDenied(e)) throw e;
-    // A cross-tab auth switch can send this read on the primary tab's old
-    // anonymous stream. Below, use this tab's authenticated direct RPC instead.
+    staleStream = true;
   }
+  // transaction 은 공유 연결이 아니라 이 탭의 현재 자격으로 직접 RPC 를 보내고, 동시 등록도 원자적으로 만든다.
+  let result: Teacher | null;
   try {
-    // getDoc uses the primary tab's shared watch stream, which can still carry the
-    // previous anonymous token just after another tab logs in. A transaction uses
-    // this tab's current credentials directly and makes concurrent registration atomic.
-    return await runTransaction(db, async (transaction) => {
+    result = await runTransaction(db, async (transaction) => {
       const snap = await transaction.get(ref);
       if (snap.exists()) return snap.data() as Teacher;
       const email = inviteId(user.email);
@@ -85,6 +91,24 @@ export async function ensureTeacher(db: Firestore, user: { uid: string; email: s
     }
     throw e;
   }
+  if (result && staleStream) {
+    // 교사 확인은 끝났지만 첫 화면(출석의 listClasses 등)은 다시 공유 연결로 읽는다. 그 연결이 아직 익명이면
+    // "권한이 없어요"가 뜨고 화면은 다시 불러오지 않는다. 그래서 같은 본인 문서 읽기가 통과할 때까지 기다린다.
+    // 막무가내 재시도가 아니다: 바로 위 직접 RPC 가 이 사용자가 교사임을 이미 확인했으므로, 본인 문서가 막히는
+    // 이유는 공유 연결에 옛 자격이 남아 있다는 것뿐이다. 그 밖의 오류(오프라인 등)면 곧바로 그만두고,
+    // 시간 안에 바뀌지 않아도 교사 확인 결과는 그대로 돌려준다(화면의 "다시 불러오기"가 남는다).
+    // 이 기다림은 권한을 넓히지 않는다 — 무엇을 읽을 수 있는지는 여전히 firestore.rules 가 정한다.
+    for (let i = 0; i < STALE_STREAM_TRIES; i++) {
+      try {
+        await getDoc(ref);
+        break;
+      } catch (e) {
+        if (!isPermissionDenied(e)) break;
+      }
+      await new Promise((r) => setTimeout(r, STALE_STREAM_GAP_MS));
+    }
+  }
+  return result;
 }
 
 /**
