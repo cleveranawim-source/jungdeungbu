@@ -105,13 +105,13 @@ test('학생 주보: 종이 주보와 같은 순서표와 덧붙임이 보인다
 
   await expect(page.getByRole('heading', { name: '다음 주 예배위원' })).toBeVisible();
   await expect(page.getByText('한가람 학생')).toBeHidden();
-  await page.locator('summary').filter({ hasText: '다음 주 예배위원' }).click();
+  await page.getByRole('button', { name: /다음 주 예배위원/ }).click();
   await expect(page.getByText('한가람 학생')).toBeVisible();
   await expect(page.getByRole('heading', { name: '지난 주 함께한 인원' })).toBeVisible();
   await expect(page.getByText('학생 33 / 55명')).toBeVisible();
   await expect(page.getByText('교사 13 / 15명')).toBeVisible();
   await expect(page.getByText('1-1', { exact: true })).toBeHidden();
-  await page.locator('summary').filter({ hasText: '반별 인원 보기' }).click();
+  await page.getByRole('button', { name: /반별 인원 보기/ }).click();
   await expect(page.getByText('1-1', { exact: true })).toBeVisible();
   await expect(page.getByRole('table', { name: '반별 출석' }).getByRole('row', { name: '1-1 5명 8명' })).toBeVisible();
 
@@ -127,12 +127,12 @@ test('학생 주보: 종이 주보와 같은 순서표와 덧붙임이 보인다
   // 중등부 안내
   await expect(page.getByRole('heading', { name: '중등부 안내' })).toBeVisible();
   await expect(page.getByText('동행하는 자')).toBeVisible();
-  await page.locator('summary').filter({ hasText: '섬기는 분들' }).click();
+  await page.getByRole('button', { name: /섬기는 분들/ }).click();
   await expect(page.getByText('담당', { exact: true })).toBeVisible();
   await expect(page.getByText('이승열 목사', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: '지도 보기' })).toHaveAttribute('href', 'https://example.com/map');
   await expect(page.getByRole('link', { name: /02-303-2501/ })).toHaveAttribute('href', 'tel:023032501');
-  await page.locator('summary').filter({ hasText: '선생님 연락처' }).click();
+  await page.getByRole('button', { name: /선생님 연락처/ }).click();
   await expect(page.getByRole('link', { name: /010-0000-0000/ })).toBeVisible();
 });
 
@@ -176,7 +176,7 @@ test('선생님 주보 탭에서도 같은 내용이 보인다', async ({ page }
   await expect(page.getByRole('heading', { name: '예배 순서', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: '새 친구' })).toBeVisible();
   await expect(page.getByText('윤새봄')).toBeVisible();
-  await page.locator('summary').filter({ hasText: '선생님 연락처' }).click();
+  await page.getByRole('button', { name: /선생님 연락처/ }).click();
   await expect(page.getByText(/010-0000-0000/)).toBeVisible();
 });
 
@@ -224,7 +224,7 @@ test('360px 다크 모드에서도 세 열을 읽고 키보드로 지난 주보�
   await expect(page.getByRole('region', { name: '중등부 안내', exact: true })).toBeFocused();
   expect(page.url()).toBe(route);
 
-  const archive = page.locator('summary').filter({ hasText: '지난 주보' });
+  const archive = page.getByRole('button', { name: /지난 주보/ });
   const last = page.getByRole('link', { name: /함께 걷는 한 주/ });
   await expect(last).toBeHidden();
   await archive.focus();

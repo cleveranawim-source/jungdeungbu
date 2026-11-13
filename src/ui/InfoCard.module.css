@@ -2,21 +2,15 @@
 .heading { padding: var(--space-5); font-size: var(--text-lg); }
 .mottoPanel { position: relative; overflow: hidden; background: var(--cover-bg); color: var(--cover-ink); padding: var(--space-5); }
 .mottoPanel > p { position: relative; }
-.eyebrow { color: var(--cover-muted); font-size: var(--text-xs); letter-spacing: .08em; }
+.mottoCopy { position: relative; overflow: hidden; }
 .motto { font-family: var(--font-display); font-size: var(--text-xl); font-weight: var(--weight-bold); font-synthesis: none; margin-top: var(--space-3); line-height: var(--leading-tight); }
 .subtitle { margin-top: var(--space-3); font-size: var(--text-sm); color: var(--cover-muted); }
 .verse { font-size: var(--text-sm); }
 .ref { color: var(--cover-muted); }
 .body { padding: var(--space-5); }
-.placeName { margin-top: var(--space-3); font-weight: var(--weight-semibold); }
-.address { margin-top: var(--space-2); font-size: var(--text-sm); color: var(--muted); }
-.map { margin-top: var(--space-3); }
-.churchPhone { display: flex; flex-wrap: wrap; gap: 0 var(--space-3); align-items: center; margin-top: var(--space-3); font-size: var(--text-sm); }
-.churchPhone > span { color: var(--muted); }
 .pairs { margin: 0; display: grid; grid-template-columns: minmax(3em, auto) minmax(0, 1fr); gap: var(--space-3); align-items: baseline; font-size: var(--text-sm); }
 .pairs > div { display: contents; }
 .pairs dt { color: var(--muted); }
 .pairs dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .bullets { margin: 0; padding-left: 1.2em; font-size: var(--text-sm); }
 .bullets li + li { margin-top: var(--space-3); }
-.tel { display: inline-flex; align-items: center; min-height: var(--touch-min); font-family: var(--font-body); font-variant-numeric: tabular-nums; border-radius: var(--radius-sm); }

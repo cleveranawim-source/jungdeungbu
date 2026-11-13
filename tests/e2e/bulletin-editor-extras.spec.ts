@@ -98,7 +98,7 @@ test('불러오기 → 고치기 → 게시하면 학생에게 보인다', async
   const { page: student } = await openStudent(browser, `#/s/${TOKEN_GA}/bulletin`);
   await expect(student.getByText('인도: 정한결 선생님')).toBeVisible();
   await expect(student.getByText('요 4:24')).toBeVisible();
-  await student.locator('summary').filter({ hasText: '다음 주 예배위원' }).click();
+  await student.getByRole('button', { name: /다음 주 예배위원/ }).click();
   await expect(student.getByText('한가람 학생')).toBeVisible();
   await expect(student.getByText('학생 2 / 3명')).toBeVisible();
   await expect(student.getByText('교사 13 / 15명')).toBeVisible();

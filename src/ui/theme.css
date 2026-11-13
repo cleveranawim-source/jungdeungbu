@@ -59,6 +59,7 @@
   --reading-layout-max: 1080px;
   --radius-cover: 16px;
   --text-cover: 34px;
+  --text-cover-small: 28px;
   --text-cover-wide: 48px;
 
   /* ── 글꼴 ── */
@@ -152,14 +153,14 @@
     --focus: #8ea6ff;
     --scrim: rgb(5 8 20 / 0.6);
 
-    --cover-bg: #22304A;
-    --cover-ink: #F7F5F0;      /* cover-bg 위 12.12:1 */
-    --cover-muted: #D6DCE6;    /* cover-bg 위 9.59:1 */
-    --cover-line: #A5AFBF;     /* cover-bg 위 5.97:1 */
-    --cover-button: #F7F5F0;
-    --cover-button-ink: #1B2A41;
+    --cover-bg: #1B2A41;
+    --cover-ink: #F7F5F0;      /* cover-bg 위 13.25:1 */
+    --cover-muted: #D6DCE6;    /* cover-bg 위 10.48:1 */
+    --cover-line: #A5AFBF;     /* cover-bg 위 6.52:1 */
+    --cover-button: #F7F5F0; /* cover-button-ink 와 13.25:1 */
+    --cover-button-ink: #1B2A41; /* cover-button 위 13.25:1 */
     --cover-button-hover: #EEE4CE; /* cover-button-ink 와 11.43:1 */
-    --cover-focus: #D9BC7E;    /* cover-bg 위 7.20:1 */
+    --cover-focus: #D9BC7E;    /* cover-bg 위 7.87:1 */
     --illustration-bg: #1B2A41;
     --illustration-ink: #F7F5F0; /* illustration-bg 위 13.25:1 */
     --sage-bg: #22362C;

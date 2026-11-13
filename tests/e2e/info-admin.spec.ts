@@ -66,14 +66,14 @@ test('관리자가 안내를 저장하면 학생 주보 탭에 보인다', async
   const { page: student } = await openStudent(browser, `#/s/${TOKEN}/bulletin`);
   const card = student.locator('section').filter({ has: student.getByRole('heading', { name: '중등부 안내' }) });
   await expect(card.getByText('동행하는 자')).toBeVisible();
-  await card.locator('summary').filter({ hasText: '섬기는 분들' }).click();
+  await card.getByRole('button', { name: /섬기는 분들/ }).click();
   await expect(card.getByText('담당', { exact: true })).toBeVisible();
   await expect(card.getByText('이승열 목사', { exact: true })).toBeVisible();
-  await card.locator('summary').filter({ hasText: '예배 에티켓' }).click();
+  await card.getByRole('button', { name: /예배 에티켓/ }).click();
   await expect(card.getByText('예배시작은 9:30이며, 9:15부터 찬양이 시작됩니다.')).toBeVisible();
   await expect(card.getByText('휴대폰은 무음으로 해요.')).toBeVisible();
   await expect(card.getByText(/02-303-2501/)).toBeVisible();
-  await card.locator('summary').filter({ hasText: '선생님 연락처' }).click();
+  await card.getByRole('button', { name: /선생님 연락처/ }).click();
   await expect(card.getByText(/010-0000-0000/)).toBeVisible();
 
   // 새로고침해도 값이 남는다

@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { BULLETIN_BRAND } from '../app/brand';
 import { teacherHref } from '../app/router';
 import { useLoader } from '../app/useLoader';
 import { useMemberData } from '../app/useMemberData';
@@ -54,7 +55,7 @@ export function BulletinTab({ thisSunday, sub }: TeacherTabProps) {
             학생에게는 아직 보이지 않아요
           </p>
         )}
-        <BulletinView bulletin={one.data.bulletin} sermon={one.data.sermon} announcements={one.data.announcements} members={members.bulletin} information={information} />
+        <BulletinView coverLabel={BULLETIN_BRAND.label} coverDescription={BULLETIN_BRAND.description} bulletin={one.data.bulletin} sermon={one.data.sermon} announcements={one.data.announcements} members={members.bulletin} information={information} />
       </>
     );
   } else {
@@ -82,7 +83,7 @@ export function BulletinTab({ thisSunday, sub }: TeacherTabProps) {
         </div>
       )}
       {main}
-      {!one.data?.bulletin && information}
+      {(one.error || (one.data && !one.data.bulletin)) && information}
       {past.data === undefined ? (past.error ? <LoadError error={past.error} onRetry={past.reload} /> : null) : pastList.length > 0 && (
         <Disclosure title="지난 주보" level={2}>
           <ul className={s.list}>

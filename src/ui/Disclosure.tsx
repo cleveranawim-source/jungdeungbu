@@ -1,21 +1,55 @@
-import type { ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { Icon } from './icons';
 import s from './Disclosure.module.css';
 
-/** 네이티브 펼침: Enter/Space, 확장 상태 안내, 열린 뒤의 탭 순서를 브라우저가 제공해요. */
-export function Disclosure({ title, sub, level = 3, children, defaultOpen = false, tone = 'default' }: {
-  title: string; sub?: string; level?: 2 | 3; children: ReactNode; defaultOpen?: boolean; tone?: 'default' | 'cover';
+/** 제목은 버튼 바깥에 두어 iOS 화면 읽기에서도 제목 단계가 유지돼요. */
+export function Disclosure({
+  title,
+  sub,
+  level = 3,
+  children,
+  defaultOpen = false,
+  tone = 'default',
+  open,
+  onOpenChange,
+}: {
+  title: string;
+  sub?: string;
+  level?: 2 | 3;
+  children: ReactNode;
+  defaultOpen?: boolean;
+  tone?: 'default' | 'cover';
+  open?: boolean;
+  onOpenChange?(open: boolean): void;
 }) {
+  const id = useId();
+  const [localOpen, setLocalOpen] = useState(defaultOpen);
+  const expanded = open ?? localOpen;
   const Heading = level === 2 ? 'h2' : 'h3';
+  function toggle() {
+    if (open === undefined) setLocalOpen(!expanded);
+    onOpenChange?.(!expanded);
+  }
   return (
-    <details className={[s.disclosure, tone === 'cover' && s.onCover].filter(Boolean).join(' ')} open={defaultOpen || undefined}>
-      <summary className={s.summary}>
-        <Heading className={s.title}>
-          <span className={s.label}>{title}{sub && <span className={s.sub}>{sub}</span>}</span>
+    <div className={[s.disclosure, tone === 'cover' && s.onCover].filter(Boolean).join(' ')}>
+      <Heading className={s.title}>
+        <button
+          className={s.trigger}
+          type="button"
+          aria-expanded={expanded}
+          aria-controls={id}
+          onClick={toggle}
+        >
+          <span className={s.label}>
+            {title}
+            {sub && <span className={s.sub}>{sub}</span>}
+          </span>
           <Icon name="chevronDown" size={18} />
-        </Heading>
-      </summary>
-      <div className={s.body}>{children}</div>
-    </details>
+        </button>
+      </Heading>
+      <div id={id} hidden={!expanded} className={s.body}>
+        {children}
+      </div>
+    </div>
   );
 }

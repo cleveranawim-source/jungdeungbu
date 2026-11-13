@@ -22,3 +22,5 @@
 @media (min-width: 900px) {
   .reading { max-width: var(--reading-layout-max); padding-inline: var(--space-7); }
 }
+
+@media (min-width: 900px) { .reading:has([data-reading-columns="single"]) { max-width: var(--content-max); } }
