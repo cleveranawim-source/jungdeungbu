@@ -72,7 +72,8 @@ async function seedAll() {
       ],
       attendance: {
         sunday: ago(1),
-        classes: CLASSES.map(([classId, , short, present, total]) => ({ classId, name: short, present, total })),
+        // 공개 문서라 반 ID는 싣지 않는다(이름·인원만)
+        classes: CLASSES.map(([, , short, present, total]) => ({ name: short, present, total })),
         students: { present: 33, total: 55 }, teachers: { present: 13, total: 15 },
       },
       updatedBy: 'seed', updatedAt: Timestamp.now(),

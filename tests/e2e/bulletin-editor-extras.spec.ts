@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { doc, setDoc } from 'firebase/firestore';
 import { addDays, nearestSunday, toDateId } from '../../src/lib/dates';
 import { closeStudents, expectToast, loginAsEmu, openStudent } from './helpers';
-import { clear, seed, seedAdmin } from './seed';
+import { clear, readRaw, seed, seedAdmin } from './seed';
 
 const ADMIN = 'admin@example.com';
 const CLASS_ID = 'classA';
@@ -88,6 +88,12 @@ test('불러오기 → 고치기 → 게시하면 학생에게 보인다', async
 
   await page.getByRole('button', { name: '게시', exact: true }).click();
   await expectToast(page, '게시했어요');
+
+  // 누구나 읽는 주보 문서에는 반 이름·인원만 — 반 ID(그 반 기도 제목을 여는 열쇠)는 없다
+  const saved = JSON.stringify(await readRaw(`bulletins/${THIS_SUNDAY}`));
+  expect(saved).toContain('"name":"1-1"');
+  expect(saved).not.toContain(CLASS_ID);
+  expect(saved).not.toContain('classId');
 
   const { page: student } = await openStudent(browser, `#/s/${TOKEN_GA}/bulletin`);
   await expect(student.getByText('인도: 정한결 선생님')).toBeVisible();

@@ -58,15 +58,18 @@ test('summarizeAttendance: 활성 학생 기준, 반 순서대로, 죽은 토큰
   const students = [st('a1', 'A'), st('a2', 'A'), st('b1', 'B')];
   const classes = [cls('B', '1-2', 2), cls('A', '1-1', 1), cls('C', '1-3', 3)];
   const present = new Map([['a1', true], ['a2', false], ['b1', true], ['dead', true]]);
-  expect(summarizeAttendance('2026-11-08', students, classes, present)).toEqual({
+  const summary = summarizeAttendance('2026-11-08', students, classes, present);
+  expect(summary).toEqual({
     sunday: '2026-11-08',
     classes: [
-      { classId: 'A', name: '1-1', present: 1, total: 2 },
-      { classId: 'B', name: '1-2', present: 1, total: 1 },
+      { name: '1-1', present: 1, total: 2 },
+      { name: '1-2', present: 1, total: 1 },
     ], // 학생이 0명인 반(C)은 뺀다
     students: { present: 2, total: 3 },
     teachers: null,
   });
+  // 반 ID는 그 반 기도 제목을 여는 열쇠라 공개 주보로 가는 값에 남기지 않는다
+  for (const c of summary!.classes) expect(c).not.toHaveProperty('classId');
 });
 
 test('summarizeAttendance: 활성 학생의 출석 기록이 하나도 없으면 null', () => {

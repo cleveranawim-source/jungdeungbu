@@ -14,9 +14,8 @@ import { Field, TextArea } from '../ui/Field';
 import { Icon } from '../ui/icons';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
-import {
-  BulletinExtrasEditor, extrasFromSaved, isAttForm, readExtras, type ExtrasErrors, type ExtrasForm,
-} from './BulletinExtrasEditor';
+import { BulletinExtrasEditor } from './BulletinExtrasEditor';
+import { extrasFromSaved, isAttForm, readExtras, type ExtrasErrors, type ExtrasForm } from './bulletinExtrasForm';
 import { EditorBar, EditorHead, StateBadge } from './EditorBar';
 import { fromPairs, PairRows, toPairs, type Pair } from './PairRows';
 import { useEditorDraft } from './useEditorDraft';
@@ -34,7 +33,7 @@ interface Form extends ExtrasForm {
 }
 type Doc = Pick<Bulletin, 'order' | 'hymns' | 'scripture' | 'sermonTitle' | 'issue' | 'leader' | 'opening' | 'nextServers' | 'attendance'>;
 
-// ---------- 폼 ↔ 저장값 (출석·새 친구·생일은 BulletinExtrasEditor 의 extrasFromSaved / readExtras) ----------
+// ---------- 폼 ↔ 저장값 (출석·새 친구·생일은 bulletinExtrasForm 의 extrasFromSaved / readExtras) ----------
 
 const toRows = (order: OrderItem[]): Row[] =>
   order.map((o) => ({ type: o.type, title: o.title, detail: o.detail, standing: o.standing === true, k: newKey() }));

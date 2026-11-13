@@ -31,7 +31,7 @@ const FULL_BULLETIN = {
   hymns: [], scripture: SCRIPTURE, sermonTitle: SERMON_TITLE,
   nextServers: [{ role: '인도', name: '한가람 학생' }, { role: '기도', name: '서다온 학생' }],
   attendance: {
-    sunday: LAST_SUNDAY, classes: [{ classId: CLASS_ID, name: '1-1', present: 5, total: 8 }],
+    sunday: LAST_SUNDAY, classes: [{ name: '1-1', present: 5, total: 8 }],
     students: { present: 33, total: 55 }, teachers: { present: 13, total: 15 },
   },
 };

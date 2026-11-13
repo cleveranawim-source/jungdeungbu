@@ -1,111 +1,19 @@
 import { useState } from 'react';
 import { describeError, useToast } from '../app/Toast';
 import { loadBulletinExtras } from '../data/bulletinExtras';
-import { formatBirthdayLines, parseBirthdayLines, parseLines, parseTally } from '../lib/bulletin';
+import { formatBirthdayLines } from '../lib/bulletin';
 import { db } from '../lib/firebase';
-import type { AttendanceSummary, BulletinMembers, Tally } from '../types';
 import { Button } from '../ui/Button';
 import { TextArea } from '../ui/Field';
 import { Icon } from '../ui/icons';
-import { hasStrings, isObj } from './editorUtils';
+import {
+  attToForm, BIRTHDAY_ERROR, NUMBER_ERROR, type AttClassForm, type AttForm, type ExtrasErrors, type ExtrasForm,
+} from './bulletinExtrasForm';
 import ed from './editor.module.css';
 import s from './BulletinEditor.module.css';
 
-// ---------- 폼 모양(숫자도 입력 그대로 글자로 둔다 — 틀린 값을 조용히 0으로 바꾸지 않게) ----------
+// 폼 ↔ 저장값(readExtras 등)은 bulletinExtrasForm.ts — 반 문서 ID는 폼에도 저장값에도 없다.
 
-export interface AttClassForm { classId: string; name: string; present: string; total: string }
-export interface AttForm { sunday: string; classes: AttClassForm[]; teachersPresent: string; teachersTotal: string }
-export interface ExtrasForm {
-  att: AttForm | null;
-  /** 한 줄에 한 명 */
-  newFriends: string;
-  /** 한 줄에 "mm-dd 이름" */
-  birthdays: string;
-}
-/** 저장을 막는 칸: 틀린 반(classId), 교사 칸, 생일 칸 */
-export interface ExtrasErrors { classes: string[]; teachers: boolean; birthdays: boolean }
-
-export const NUMBER_ERROR = '0 이상의 숫자로, 출석은 전체보다 많을 수 없어요';
-export const BIRTHDAY_ERROR = '한 줄에 "11-20 이름"처럼 적어 주세요';
-
-// ---------- 폼 ↔ 저장값 (출석·새 친구·생일) ----------
-
-/** 불러온(또는 저장된) 출석 요약 → 폼. 교사 칸은 keep 이 있으면 그 입력을 그대로 둔다. */
-export function attToForm(a: AttendanceSummary, keep?: AttForm | null): AttForm {
-  return {
-    sunday: a.sunday,
-    classes: a.classes.map((c) => ({ classId: c.classId, name: c.name, present: String(c.present), total: String(c.total) })),
-    teachersPresent: keep ? keep.teachersPresent : a.teachers ? String(a.teachers.present) : '',
-    teachersTotal: keep ? keep.teachersTotal : a.teachers ? String(a.teachers.total) : '',
-  };
-}
-
-export function extrasFromSaved(attendance: AttendanceSummary | null, members: BulletinMembers | null): ExtrasForm {
-  return {
-    att: attendance ? attToForm(attendance) : null,
-    newFriends: (members?.newFriends ?? []).join('\n'),
-    birthdays: formatBirthdayLines(members?.birthdays ?? []),
-  };
-}
-
-export interface ExtrasRead {
-  attendance: AttendanceSummary | null;
-  members: BulletinMembers;
-  /** 고칠 칸이 있으면(저장 막기), 없으면 null */
-  errors: ExtrasErrors | null;
-  /** 저장 안 한 내용 비교용: 맞는 칸은 저장될 값, 틀린 칸은 입력 그대로 */
-  compare: unknown;
-}
-
-/**
- * 폼 → 저장할 값. 반 칸은 둘 다 비어도 오류(0/0 으로 저장하지 않는다 — 빼려면 "출석 지우기"),
- * 교사 칸은 둘 다 비면 뺀다. 학생 합계는 반별 값을 더해 다시 낸다.
- */
-export function readExtras(f: ExtrasForm): ExtrasRead {
-  const errors: ExtrasErrors = { classes: [], teachers: false, birthdays: false };
-  let attendance: AttendanceSummary | null = null;
-  let attCompare: unknown = null;
-  if (f.att) {
-    const att = f.att;
-    const classes = att.classes.map((c) => ({ c, t: parseTally(c.present, c.total) }));
-    for (const { c, t } of classes) if (t === null || t === 'invalid') errors.classes.push(c.classId);
-    const teachers = parseTally(att.teachersPresent, att.teachersTotal);
-    errors.teachers = teachers === 'invalid';
-    const ok = (t: Tally | null | 'invalid'): t is Tally => t !== null && t !== 'invalid';
-    const asIs = (p: string, t: string, parsed: Tally | null | 'invalid') => (parsed === 'invalid' ? [p.trim(), t.trim()] : parsed);
-    attCompare = {
-      sunday: att.sunday,
-      classes: classes.map(({ c, t }) => [c.classId, c.name, asIs(c.present, c.total, t)]),
-      teachers: asIs(att.teachersPresent, att.teachersTotal, teachers),
-    };
-    const counted = classes.flatMap(({ c, t }) => (ok(t) ? [{ classId: c.classId, name: c.name, ...t }] : []));
-    attendance = {
-      sunday: att.sunday,
-      classes: counted,
-      students: {
-        present: counted.reduce((n, c) => n + c.present, 0),
-        total: counted.reduce((n, c) => n + c.total, 0),
-      },
-      teachers: ok(teachers) ? teachers : null,
-    };
-  }
-  const birthdays = parseBirthdayLines(f.birthdays);
-  errors.birthdays = birthdays === 'invalid';
-  const newFriends = parseLines(f.newFriends);
-  const bad = errors.classes.length > 0 || errors.teachers || errors.birthdays;
-  return {
-    attendance,
-    members: { newFriends, birthdays: birthdays === 'invalid' ? [] : birthdays },
-    errors: bad ? errors : null,
-    compare: { att: attCompare, newFriends, birthdays: birthdays === 'invalid' ? parseLines(f.birthdays) : birthdays },
-  };
-}
-
-/** sessionStorage 복구본의 출석 칸 모양 검사 */
-export const isAttForm = (x: unknown): x is AttForm =>
-  hasStrings(x, ['sunday', 'teachersPresent', 'teachersTotal'])
-  && isObj(x) && Array.isArray(x.classes)
-  && x.classes.every((c) => hasStrings(c, ['classId', 'name', 'present', 'total']));
 
 // ---------- 화면 ----------
 
@@ -177,8 +85,8 @@ export function BulletinExtrasEditor({ date, value, onChange, errors }: {
           </p>
           <ul className={s.tallies}>
             {att.classes.map((c, i) => (
-              <TallyRow key={c.classId} id={`att-${c.classId}`} name={c.name}
-                present={c.present} total={c.total} error={errors?.classes.includes(c.classId) ?? false}
+              <TallyRow key={c.k} id={`att-${c.k}`} name={c.name}
+                present={c.present} total={c.total} error={errors?.classes.includes(c.k) ?? false}
                 onPresent={(v) => setClass(i, { present: v })} onTotal={(v) => setClass(i, { total: v })} />
             ))}
             <TallyRow id="att-teachers" name="교사" present={att.teachersPresent} total={att.teachersTotal}

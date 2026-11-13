@@ -1,6 +1,6 @@
 // e2e 시드: 규칙을 끄고 에뮬레이터 Firestore 를 직접 쓴다(앱과 같은 projectId).
 import { initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { doc, setDoc, type Firestore } from 'firebase/firestore';
+import { doc, getDoc, setDoc, type Firestore } from 'firebase/firestore';
 
 const PROJECT_ID = 'demo-jungdeungbu';
 
@@ -23,6 +23,16 @@ async function withEnv<T>(fn: (env: RulesTestEnvironment) => Promise<T>): Promis
 /** 규칙을 끈 채로 마음대로 쓴다(다음 시험들의 데이터 준비용). */
 export async function seed(writer: (db: Firestore) => Promise<void>): Promise<void> {
   await withEnv((env) => env.withSecurityRulesDisabled((ctx) => writer(modular(ctx.firestore()))));
+}
+
+/** 규칙을 끈 채로 문서 하나를 그대로 읽는다(앱이 실제로 무엇을 저장했는지 확인용). 없으면 undefined. */
+export async function readRaw(path: string): Promise<Record<string, unknown> | undefined> {
+  return withEnv((env) => {
+    let data: Record<string, unknown> | undefined;
+    return env.withSecurityRulesDisabled(async (ctx) => {
+      data = (await getDoc(doc(modular(ctx.firestore()), path))).data();
+    }).then(() => data);
+  });
 }
 
 /** invites/{email} 관리자 초대. 그 이메일로 로그인하면 관리자 교사 문서가 생긴다. */

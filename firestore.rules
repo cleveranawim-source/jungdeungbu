@@ -110,6 +110,12 @@ service cloud.firestore {
         && studentOf(sessionOf(request.auth.uid).data.token).data.active == true;
     }
 
+    // 주보의 출석 요약: null 또는 { sunday, classes, students, teachers } 안의 키만 든 맵.
+    function validAttendanceSummary(a) {
+      return a == null
+        || (a is map && a.keys().hasOnly(['sunday', 'classes', 'students', 'teachers']));
+    }
+
     function changedOnly(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
     }
@@ -193,9 +199,13 @@ service cloud.firestore {
       allow get: if resource == null || resource.data.published == true || isTeacher();
       allow list: if isTeacher() || resource.data.published == true;
       // 공개 문서라 허용 칸만 둔다. 이름·전화번호가 든 칸(newFriends·contacts 등)은 잠긴 문서에만 둔다.
+      // 출석(attendance)은 없거나 null 이거나 정해진 키만 든 맵. 반 줄(classes)에는 이름·인원만 둔다 —
+      // 반 ID는 그 반 기도 제목(classes/{id}/prayers)을 여는 열쇠라 공개 문서에 실리면 안 된다.
+      // 규칙은 목록(classes)의 원소를 하나하나 볼 수 없어서, 원소의 모양은 앱(saveBulletin)이 지킨다.
       allow create, update: if isAdmin() && isDateId(date)
         && request.resource.data.keys().hasOnly(['date', 'order', 'hymns', 'scripture', 'sermonTitle',
-             'published', 'updatedBy', 'updatedAt', 'issue', 'leader', 'opening', 'nextServers', 'attendance']);
+             'published', 'updatedBy', 'updatedAt', 'issue', 'leader', 'opening', 'nextServers', 'attendance'])
+        && validAttendanceSummary(request.resource.data.get('attendance', null));
       allow delete: if isAdmin() && isDateId(date);
 
       // 이름이 들어가는 정보는 여기(잠긴 문서)에만 둔다. 선생님 또는 활성 학생 세션만 get,

@@ -1,6 +1,9 @@
-import { doc, setDoc, Timestamp } from 'firebase/firestore'
+import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore'
 import { expect, test } from 'vitest'
+import { attToForm, readExtras } from '../../src/admin/bulletinExtrasForm'
 import { loadBulletinExtras } from '../../src/data/bulletinExtras'
+import { saveBulletin } from '../../src/data/content'
+import { EMPTY_BULLETIN_EXTRAS } from '../../src/types'
 import { ADMIN, asUser, seed, STUDENT_A, STUDENT_B, TOKEN_A, TOKEN_B, useRulesEnv, type TestDb } from '../rules/setup'
 
 const env = useRulesEnv()
@@ -41,8 +44,8 @@ test('가장 최근 출석 주일로 반별 인원·새 친구·이번 달 생�
   expect(r.attendance).toEqual({
     sunday: '2026-11-08',
     classes: [
-      { classId: 'classA', name: '1학년 1반', present: 2, total: 2 },
-      { classId: 'classB', name: '1학년 2반', present: 1, total: 2 },
+      { name: '1학년 1반', present: 2, total: 2 },
+      { name: '1학년 2반', present: 1, total: 2 },
     ],
     students: { present: 3, total: 4 },
     teachers: null,
@@ -78,4 +81,26 @@ test('죽은 토큰의 출석만 있는 주일은 기록 없음으로 본다', a
   })
   const r = await loadBulletinExtras(asUser(env(), ADMIN), DATE)
   expect(r.attendance).toBeNull()
+})
+
+test('불러오기 → 에디터 폼 → 저장한 공개 주보 문서에 반 문서 ID가 하나도 없다', async () => {
+  // 반 ID는 그 반 기도 제목(classes/{id}/prayers)을 여는 열쇠라 누구나 읽는 주보에 실리면 안 된다.
+  await prepare()
+  const admin = asUser(env(), ADMIN)
+  const r = await loadBulletinExtras(admin, DATE)
+  expect(r.attendance).not.toBeNull()
+  const read = readExtras({ att: attToForm(r.attendance!), newFriends: '', birthdays: '' })
+  expect(read.errors).toBeNull()
+  await saveBulletin(admin, ADMIN.uid, {
+    date: DATE, order: [], hymns: [], scripture: '', sermonTitle: '', published: true,
+    ...EMPTY_BULLETIN_EXTRAS, attendance: read.attendance,
+  }, read.members)
+
+  let raw = ''
+  await env().withSecurityRulesDisabled(async (ctx) => {
+    raw = JSON.stringify((await getDoc(doc(ctx.firestore() as unknown as TestDb, `bulletins/${DATE}`))).data())
+  })
+  expect(raw).toContain('1학년 1반') // 반 이름은 실린다
+  for (const id of ['classA', 'classB']) expect(raw).not.toContain(id)
+  expect(raw).not.toContain('classId')
 })

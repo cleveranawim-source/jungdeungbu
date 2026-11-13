@@ -20,10 +20,12 @@ import {
   DEFAULT_ORDER,
   EMPTY_BULLETIN_EXTRAS,
   type Announcement,
+  type AttendanceSummary,
   type Bulletin,
   type BulletinMembers,
   type BulletinTemplate,
   type Sermon,
+  type Tally,
   type WithId,
 } from '../types';
 
@@ -31,7 +33,25 @@ const TEMPLATE_PATH = 'settings/bulletinTemplate';
 
 // ---------- 주보 (문서 ID = 주일 날짜) ----------
 
-/** 새 칸이 생기기 전에 저장된 옛 주보도 깨지지 않게, 없는 칸을 빈 값으로 채운다(공유 객체를 건드리지 않게 복사). */
+/**
+ * 공개 주보에 실을 출석 요약. 반 줄은 이름·인원만 골라 담는다 — 반 ID(그 반 기도 제목을 여는 열쇠)나
+ * 다른 칸이 섞여 와도 버린다. 반 줄이 하나도 없으면 싣지 않는다(학생 0/0 금지).
+ */
+export function publicAttendance(a: AttendanceSummary | null | undefined): AttendanceSummary | null {
+  if (!a || !Array.isArray(a.classes) || a.classes.length === 0) return null;
+  const tally = (t: Tally): Tally => ({ present: t.present, total: t.total });
+  return {
+    sunday: a.sunday,
+    classes: a.classes.map((c) => ({ name: c.name, present: c.present, total: c.total })),
+    students: tally(a.students),
+    teachers: a.teachers ? tally(a.teachers) : null,
+  };
+}
+
+/**
+ * 새 칸이 생기기 전에 저장된 옛 주보도 깨지지 않게, 없는 칸을 빈 값으로 채운다(공유 객체를 건드리지 않게 복사).
+ * 출석의 반 줄에 옛·손으로 넣은 반 ID가 있으면 여기서 버린다(폼으로 들어가 다시 저장되지 않게).
+ */
 export function normalizeBulletin(raw: Partial<Bulletin> & Pick<Bulletin, 'date'>): Bulletin {
   const e = EMPTY_BULLETIN_EXTRAS;
   return {
@@ -47,7 +67,7 @@ export function normalizeBulletin(raw: Partial<Bulletin> & Pick<Bulletin, 'date'
     leader: raw.leader ?? e.leader,
     opening: raw.opening ?? { ...e.opening },
     nextServers: raw.nextServers ?? [],
-    attendance: raw.attendance ?? e.attendance,
+    attendance: raw.attendance ? publicAttendance(raw.attendance) : e.attendance,
   };
 }
 
@@ -76,7 +96,10 @@ export async function saveBulletin(
   members: BulletinMembers,
 ): Promise<void> {
   const batch = writeBatch(db);
-  batch.set(doc(db, 'bulletins', b.date), { ...b, updatedBy: uid, updatedAt: serverTimestamp() });
+  // 출석은 이름·인원만 다시 골라 담는다: 어느 화면에서 부르든 반 ID가 공개 문서에 실리지 않게.
+  batch.set(doc(db, 'bulletins', b.date), {
+    ...b, attendance: publicAttendance(b.attendance), updatedBy: uid, updatedAt: serverTimestamp(),
+  });
   batch.set(doc(db, 'bulletins', b.date, 'members', 'main'), members);
   await batch.commit();
 }

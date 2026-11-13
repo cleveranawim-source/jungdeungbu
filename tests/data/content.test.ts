@@ -163,3 +163,37 @@ test('교사(관리자 아님)의 saveBulletin 은 두 문서 모두 쓰이지 �
     expect((await getDoc(doc(db, 'bulletins/2026-11-15'))).exists()).toBe(false)
   })
 })
+
+test('saveBulletin: 출석 반 줄에 반 ID가 섞여 와도 이름·인원만 저장한다', async () => {
+  const sneaky = {
+    sunday: '2026-11-08',
+    classes: [{ classId: 'classA', name: '1-1', present: 5, total: 8, extra: 'x' }],
+    students: { present: 5, total: 8 },
+    teachers: null,
+  }
+  await saveBulletin(asUser(env(), ADMIN), ADMIN.uid,
+    { ...bulletin('2026-11-15', true), attendance: sneaky as never }, NO_MEMBERS)
+  let raw: Record<string, unknown> | undefined
+  await env().withSecurityRulesDisabled(async (ctx) => {
+    raw = (await getDoc(doc(ctx.firestore() as never, 'bulletins/2026-11-15'))).data()
+  })
+  expect(raw?.attendance).toEqual({
+    sunday: '2026-11-08', classes: [{ name: '1-1', present: 5, total: 8 }], students: { present: 5, total: 8 }, teachers: null,
+  })
+})
+
+test('saveBulletin: 반 줄이 하나도 없는 출석은 싣지 않는다(학생 0/0 금지)', async () => {
+  const empty = { sunday: '2026-11-08', classes: [], students: { present: 0, total: 0 }, teachers: { present: 3, total: 4 } }
+  await saveBulletin(asUser(env(), ADMIN), ADMIN.uid, { ...bulletin('2026-11-15', true), attendance: empty }, NO_MEMBERS)
+  expect((await getBulletin(asAnon(env()), '2026-11-15'))?.attendance).toBeNull()
+})
+
+test('getBulletin: 손으로 넣은 옛 문서의 반 ID는 읽을 때 버린다', async () => {
+  await seed(env(), (db) => setDoc(doc(db, 'bulletins/2026-11-15'), {
+    ...bulletin('2026-11-15', true),
+    attendance: { sunday: '2026-11-08', classes: [{ classId: 'classA', name: '1-1', present: 5, total: 8 }], students: { present: 5, total: 8 }, teachers: null },
+  }))
+  const b = await getBulletin(asAnon(env()), '2026-11-15')
+  expect(b?.attendance?.classes).toEqual([{ name: '1-1', present: 5, total: 8 }])
+  expect(JSON.stringify(b)).not.toContain('classA')
+})

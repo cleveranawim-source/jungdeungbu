@@ -39,7 +39,10 @@ export function displayOrder(order: OrderItem[], scripture: string, sermonTitle:
   return { rows, showsScripture, showsSermon };
 }
 
-/** 활성 학생 기준 반별·전체 출석 집계. 기록이 하나도 없으면 null. 교사 칸은 손으로 적으므로 null. */
+/**
+ * 활성 학생 기준 반별·전체 출석 집계. 기록이 하나도 없으면 null. 교사 칸은 손으로 적으므로 null.
+ * 반 줄은 이름·인원만(공개 주보로 가는 값이라 반 ID를 남기지 않는다).
+ */
 export function summarizeAttendance(
   sunday: string,
   students: WithId<Student>[],
@@ -52,7 +55,7 @@ export function summarizeAttendance(
   for (const c of [...classes].sort((a, b) => a.order - b.order)) {
     const mine = active.filter((s) => s.classId === c.id);
     if (mine.length === 0) continue;
-    counts.push({ classId: c.id, name: c.name, present: mine.filter((s) => present.get(s.id) === true).length, total: mine.length });
+    counts.push({ name: c.name, present: mine.filter((s) => present.get(s.id) === true).length, total: mine.length });
   }
   return {
     sunday,

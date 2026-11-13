@@ -11,7 +11,8 @@ export interface OrderItem { type: string; title: string; detail: string; standi
 export interface OpeningVerse { text: string; ref: string }
 export interface ServerRole { role: string; name: string }
 export interface Tally { present: number; total: number }
-export interface ClassCount extends Tally { classId: string; name: string }
+/** 공개 주보에 실리는 반 줄. 반 ID는 넣지 않는다(반 ID는 그 반 기도 제목을 여는 열쇠). */
+export interface ClassCount extends Tally { name: string }
 export interface AttendanceSummary { sunday: string; classes: ClassCount[]; students: Tally; teachers: Tally | null }
 export interface Bulletin {
   date: string; order: OrderItem[]; hymns: string[]; scripture: string; sermonTitle: string; published: boolean; updatedBy: string; updatedAt: Timestamp;

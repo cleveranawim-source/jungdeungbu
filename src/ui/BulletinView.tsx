@@ -128,7 +128,7 @@ export function BulletinView({ bulletin, sermon, announcements, members, sermonH
         </Section>
       )}
 
-      {att && (
+      {att && att.students.total > 0 && (
         <Section id={id('attendance')} title="지난 주 출석">
           <div className={s.counts}>
             <p className={s.sunday}>{dotDate(att.sunday)} 주일</p>
@@ -138,8 +138,8 @@ export function BulletinView({ bulletin, sermon, announcements, members, sermonH
             </p>
             {att.classes.length > 0 && (
               <ul className={s.chips} aria-label="반별 출석">
-                {att.classes.map((c) => (
-                  <li key={c.classId} className={s.chip}>
+                {att.classes.map((c, i) => (
+                  <li key={i} className={s.chip}>
                     <span className={s.chipName}>{c.name}</span> <span>{c.present}/{c.total}</span>
                   </li>
                 ))}

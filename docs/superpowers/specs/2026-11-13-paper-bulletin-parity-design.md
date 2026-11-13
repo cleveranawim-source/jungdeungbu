@@ -71,12 +71,13 @@
   ```ts
   interface AttendanceSummary {
     sunday: string;                 // 센 주일(yyyy-mm-dd)
-    classes: { classId: string; name: string; present: number; total: number }[];
+    classes: { name: string; present: number; total: number }[];  // 반 ID는 넣지 않는다(아래)
     students: { present: number; total: number };
     teachers: { present: number; total: number } | null; // 손으로 적음, 비우면 안 보임
   }
   ```
   학생 화면: "지난 주(10.25) 출석 — 학생 33/55 · 교사 13/15", 그 아래 반별 "1-1 5/8 …". **이름은 없다.**
+  **반 문서 ID도 없다.** 반 ID는 그 반의 기도 제목(`classes/{classId}/prayers`, ID를 아는 사람에게 공개)을 여는 유일한 열쇠라서, 누구나 읽는 공개 문서에는 반 ID를 절대 넣지 않는다 — 반 줄은 이름과 인원만. 앱은 `saveBulletin` 에서 이름·인원만 다시 골라 담고, 규칙은 `attendance` 의 키를 `sunday, classes, students, teachers` 로 제한한다(목록 원소는 규칙이 볼 수 없다). 반 줄이 하나도 없으면 출석을 싣지 않는다(학생 0/0 금지).
 
 ### 3. 매주 바뀌는 비공개 덧붙임(잠긴 문서)
 
