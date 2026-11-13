@@ -1,69 +1,113 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { describeError, useToast } from '../app/Toast';
 import { useLoader } from '../app/useLoader';
-import { getBulletin, getSermon, getTemplate, listBulletins, saveBulletin, saveTemplate } from '../data/content';
+import {
+  getBulletin, getBulletinMembers, getSermon, getTemplate, listBulletins, saveBulletin, saveTemplate,
+} from '../data/content';
+import { nextIssue } from '../lib/bulletin';
 import { formatAgo, formatMonthDay, shiftDateId } from '../lib/dates';
 import { db } from '../lib/firebase';
-import { EMPTY_BULLETIN_EXTRAS, type Bulletin, type OrderItem } from '../types';
+import { EMPTY_BULLETIN_EXTRAS, type Bulletin, type BulletinMembers, type OrderItem } from '../types';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
-import { Field } from '../ui/Field';
+import { Field, TextArea } from '../ui/Field';
 import { Icon } from '../ui/icons';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
+import {
+  BulletinExtrasEditor, extrasFromSaved, isAttForm, readExtras, type ExtrasErrors, type ExtrasForm,
+} from './BulletinExtrasEditor';
 import { EditorBar, EditorHead, StateBadge } from './EditorBar';
+import { fromPairs, PairRows, toPairs, type Pair } from './PairRows';
 import { useEditorDraft } from './useEditorDraft';
 import { hasStrings, isRows, newKey, useNow, useSavedBy } from './editorUtils';
 import ed from './editor.module.css';
 import s from './BulletinEditor.module.css';
 
 // 화면용 폼: 줄마다 움직여도 입력칸이 따라가도록 key 를 붙인다(저장할 때 뺀다)
-interface Row extends OrderItem { k: string }
+interface Row extends OrderItem { k: string; standing: boolean }
 interface Hymn { k: string; text: string }
-interface Form { order: Row[]; hymns: Hymn[]; scripture: string; sermonTitle: string }
-type Doc = Pick<Bulletin, 'order' | 'hymns' | 'scripture' | 'sermonTitle'>;
+interface Form extends ExtrasForm {
+  issue: string; leader: string; openingText: string; openingRef: string;
+  order: Row[]; hymns: Hymn[]; scripture: string; sermonTitle: string;
+  servers: Pair[];
+}
+type Doc = Pick<Bulletin, 'order' | 'hymns' | 'scripture' | 'sermonTitle' | 'issue' | 'leader' | 'opening' | 'nextServers' | 'attendance'>;
 
-const toRows = (order: OrderItem[]): Row[] => order.map((o) => ({ type: o.type, title: o.title, detail: o.detail, k: newKey() }));
+// ---------- 폼 ↔ 저장값 (출석·새 친구·생일은 BulletinExtrasEditor 의 extrasFromSaved / readExtras) ----------
+
+const toRows = (order: OrderItem[]): Row[] =>
+  order.map((o) => ({ type: o.type, title: o.title, detail: o.detail, standing: o.standing === true, k: newKey() }));
 const toHymns = (hymns: string[]): Hymn[] => (hymns.length ? hymns : ['']).map((text) => ({ k: newKey(), text }));
-const fromDoc = (d: Doc): Form => ({ order: toRows(d.order), hymns: toHymns(d.hymns), scripture: d.scripture, sermonTitle: d.sermonTitle });
 
-/** 저장할 모양: 앞뒤 빈칸 정리, 빈 줄·빈 찬양 빼기. 저장 안 한 내용 판단도 이 모양으로 비교한다. */
-function toDoc(f: Form): Doc {
+function fromSaved(d: Doc, members: BulletinMembers | null): Form {
   return {
-    order: f.order
-      .map((r) => ({ type: r.type.trim(), title: r.title.trim(), detail: r.detail.trim() }))
-      .filter((r) => r.type || r.title || r.detail),
-    hymns: f.hymns.map((h) => h.text.trim()).filter(Boolean),
-    scripture: f.scripture.trim(),
-    sermonTitle: f.sermonTitle.trim(),
+    issue: d.issue, leader: d.leader, openingText: d.opening.text, openingRef: d.opening.ref,
+    order: toRows(d.order), hymns: toHymns(d.hymns), scripture: d.scripture, sermonTitle: d.sermonTitle,
+    servers: toPairs(d.nextServers, (x) => x.role, (x) => x.name),
+    ...extrasFromSaved(d.attendance, members),
   };
 }
 
-/** sessionStorage 복구본이 이 폼 모양인지(깨졌으면 버린다) */
+/** 순서 줄 저장 모양: 앞뒤 빈칸 정리, 빈 줄 빼기. standing 은 true 일 때만 둔다(false 를 넣으면 저장 안 한 변경 판정이 흔들린다). */
+const toOrder = (rows: Row[]): OrderItem[] => rows
+  .map((r) => ({ type: r.type.trim(), title: r.title.trim(), detail: r.detail.trim(), ...(r.standing ? { standing: true } : {}) }))
+  .filter((r) => r.type || r.title || r.detail);
+
+/** 폼 → 저장할 주보·명단과 고칠 칸. 저장 안 한 내용 판단도 이 결과(compare)로 비교한다. */
+function readForm(f: Form): { doc: Doc; members: BulletinMembers; errors: ExtrasErrors | null; compare: unknown } {
+  const extras = readExtras(f);
+  const doc: Doc = {
+    issue: f.issue.trim(),
+    leader: f.leader.trim(),
+    opening: { text: f.openingText.trim(), ref: f.openingRef.trim() },
+    order: toOrder(f.order),
+    hymns: f.hymns.map((h) => h.text.trim()).filter(Boolean),
+    scripture: f.scripture.trim(),
+    sermonTitle: f.sermonTitle.trim(),
+    nextServers: fromPairs(f.servers).map((p) => ({ role: p.a, name: p.b })),
+    attendance: extras.attendance,
+  };
+  const { attendance: _counted, ...plain } = doc;
+  return { doc, members: extras.members, errors: extras.errors, compare: { ...plain, extras: extras.compare } };
+}
+const comparable = (f: Form): unknown => readForm(f).compare;
+
+/** sessionStorage 복구본이 이 폼 모양인지(옛 모양·깨진 값은 버린다) */
 const isForm = (x: unknown): x is Form =>
-  hasStrings(x, ['scripture', 'sermonTitle'])
+  hasStrings(x, ['scripture', 'sermonTitle', 'issue', 'leader', 'openingText', 'openingRef', 'newFriends', 'birthdays'])
   && isRows((x as Form).order, ['type', 'title', 'detail'])
-  && isRows((x as Form).hymns, ['text']);
+  && (x as Form).order.every((r) => typeof r.standing === 'boolean')
+  && isRows((x as Form).hymns, ['text'])
+  && isRows((x as Form).servers, ['a', 'b'])
+  && ((x as Form).att === null || isAttForm((x as Form).att));
 
 interface Meta { published: boolean; by: string; at: number }
 
 /**
- * 관리 → 주보 작성. 주일을 고르면 그 날 주보를 열고(없으면 템플릿 순서로 시작),
- * 예배 순서·찬양·말씀을 채워 "임시저장"(학생에게 안 보임) 또는 "게시".
+ * 관리 → 주보 작성. 주일을 고르면 그 날 주보를 열고(없으면 템플릿 순서·다음 호수로 시작),
+ * 예배 순서·찬양·말씀·예배위원·출석·새 친구·생일을 채워 "임시저장"(학생에게 안 보임) 또는 "게시".
  */
 export function BulletinEditor({ myUid, thisSunday }: { myUid: string; thisSunday: string }) {
   const { show } = useToast();
   const [date, setDate] = useState(thisSunday);
-  const draft = useEditorDraft<Form>('bulletin', date, setDate, toDoc, isForm);
+  const draft = useEditorDraft<Form>('bulletin', date, setDate, comparable, isForm);
   const [busy, setBusy] = useState<'draft' | 'publish' | 'template' | null>(null);
   const [savedMeta, setSavedMeta] = useState<{ date: string; meta: Meta } | null>(null);
   const [copied, setCopied] = useState<{ date: string; from: string; before: Pick<Form, 'order' | 'hymns'> } | null>(null);
+  // 저장이 막힌 날짜(그 뒤로는 고칠 때마다 안내가 따라 바뀐다)와, 첫 틀린 칸으로 초점을 옮길 신호
+  const [checked, setChecked] = useState<string | null>(null);
+  const [focusBad, setFocusBad] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
   const latest = shiftDateId(thisSunday, 28); // 4주 뒤 주일까지 미리 준비
 
   const one = useLoader(useCallback(async () => {
-    const [bulletin, sermon] = await Promise.all([getBulletin(db, date), getSermon(db, date)]);
-    const template = bulletin ? null : await getTemplate(db);
-    return { date, bulletin, sermon, template };
+    const [bulletin, members, sermon] = await Promise.all([getBulletin(db, date), getBulletinMembers(db, date), getSermon(db, date)]);
+    if (bulletin) return { date, bulletin, members, sermon, start: null };
+    // 새 주보: 템플릿 순서 + 바로 앞 게시 주보의 다음 호수(목록을 못 읽으면 호수만 빈칸으로 시작)
+    const [template, recent] = await Promise.all([getTemplate(db), listBulletins(db).catch(() => [])]);
+    const prev = recent.find((b) => b.date < date);
+    return { date, bulletin, members, sermon, start: { order: template.order, issue: prev ? nextIssue(prev.issue) : '' } };
   }, [date]));
   // 지난 주보 복사용(게시본, 최신순). 실패해도 편집은 된다
   const past = useLoader(useCallback(() => listBulletins(db), []));
@@ -74,8 +118,14 @@ export function BulletinEditor({ myUid, thisSunday }: { myUid: string; thisSunda
   const { open } = draft;
   useEffect(() => {
     if (!loaded) return;
-    open(fromDoc(loaded.bulletin ?? { order: loaded.template!.order, hymns: [], scripture: '', sermonTitle: '' }));
+    open(loaded.bulletin
+      ? fromSaved(loaded.bulletin, loaded.members)
+      : fromSaved({ ...EMPTY_BULLETIN_EXTRAS, order: loaded.start!.order, hymns: [], scripture: '', sermonTitle: '', issue: loaded.start!.issue }, null));
   }, [loaded, open]);
+
+  useEffect(() => {
+    if (focusBad) rootRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }, [focusBad]);
 
   const form = draft.value;
   if (!loaded || !form) {
@@ -89,15 +139,23 @@ export function BulletinEditor({ myUid, thisSunday }: { myUid: string; thisSunda
   const sermon = loaded.sermon;
   const source = past.data?.find((b) => b.date < date);
   const update = (patch: Partial<Form>) => draft.set((f) => ({ ...f, ...patch }));
+  const errors = checked === date ? readForm(form).errors : null;
 
   async function save(published: boolean) {
-    const doc = toDoc(form!);
+    const read = readForm(form!);
+    if (read.errors) {
+      setChecked(date);
+      setFocusBad((n) => n + 1);
+      show('고칠 곳이 있어요', 'error');
+      return;
+    }
     setBusy(published ? 'publish' : 'draft');
     try {
-      await saveBulletin(db, myUid, { date, ...EMPTY_BULLETIN_EXTRAS, ...doc, published }, { newFriends: [], birthdays: [] });
-      draft.saved(fromDoc(doc));
+      await saveBulletin(db, myUid, { date, ...read.doc, published }, read.members);
+      draft.saved(fromSaved(read.doc, read.members));
       setSavedMeta({ date, meta: { published, by: myUid, at: Date.now() } });
       setCopied(null);
+      setChecked(null);
       show(published ? '게시했어요' : '임시저장했어요');
       if (published) void past.reload();
     } catch (e) {
@@ -110,7 +168,7 @@ export function BulletinEditor({ myUid, thisSunday }: { myUid: string; thisSunda
   async function saveAsTemplate() {
     setBusy('template');
     try {
-      await saveTemplate(db, { order: toDoc(form!).order });
+      await saveTemplate(db, { order: toOrder(form!.order) });
       show('예배 순서를 템플릿으로 저장했어요');
     } catch (e) {
       show(describeError(e), 'error');
@@ -138,13 +196,25 @@ export function BulletinEditor({ myUid, thisSunday }: { myUid: string; thisSunda
 
   const pending = draft.pending;
   return (
-    <div className={s.stack}>
+    <div className={s.stack} ref={rootRef}>
       <EditorHead label="주보 날짜" date={date} thisSunday={thisSunday} latest={latest} disabled={busy !== null}
         onRequestDate={draft.requestDate}
         confirmDate={pending?.kind === 'date' ? { onStay: draft.stay, onLeave: draft.leave } : null}
         recovered={draft.recovered} onRevert={draft.revert} status={status} />
 
       <Card title="예배 순서">
+        <div className={s.head}>
+          <div className={s.duo}>
+            <Field label="호수" autoComplete="off" value={form.issue} placeholder="예: 2026-42호"
+              onChange={(e) => update({ issue: e.target.value })} />
+            <Field label="인도자" autoComplete="off" value={form.leader}
+              onChange={(e) => update({ leader: e.target.value })} />
+          </div>
+          <TextArea label="여는 말씀" rows={2} className={s.opening} value={form.openingText}
+            onChange={(e) => update({ openingText: e.target.value })} />
+          <Field label="말씀 출처" autoComplete="off" value={form.openingRef} placeholder="예: 요 4:24"
+            onChange={(e) => update({ openingRef: e.target.value })} />
+        </div>
         <OrderEditor rows={form.order} onChange={(order) => update({ order })} />
         <div className={s.tools}>
           <Button variant="secondary" size="sm" icon={<Icon name="copy" size={18} />} disabled={!source}
@@ -182,7 +252,10 @@ export function BulletinEditor({ myUid, thisSunday }: { myUid: string; thisSunda
             onChange={(e) => update({ scripture: e.target.value })} />
           <Field label="설교 제목" autoComplete="off" value={form.sermonTitle}
             onChange={(e) => update({ sermonTitle: e.target.value })}
-            hint={sermon ? undefined : '설교 작성에서 이 주일 설교를 쓰면 제목을 가져올 수 있어요'} />
+            hint={<>
+              {!sermon && <>설교 작성에서 이 주일 설교를 쓰면 제목을 가져올 수 있어요<br /></>}
+              순서표의 성경봉독·설교 줄을 비워 두면 여기 적은 본문과 제목이 그 줄에 보여요
+            </>} />
           {sermon && sermon.title && sermon.title !== form.sermonTitle && (
             <div className={s.fetch}>
               <Button variant="secondary" size="sm" icon={<Icon name="sermon" size={18} />}
@@ -193,6 +266,16 @@ export function BulletinEditor({ myUid, thisSunday }: { myUid: string; thisSunda
             </div>
           )}
         </div>
+      </Card>
+
+      <Card title="다음 주 예배위원">
+        <PairRows legend="다음 주 예배위원" labelA="맡은 일" labelB="이름" addLabel="예배위원 추가"
+          rows={form.servers} onChange={(servers) => update({ servers })} />
+      </Card>
+
+      <Card title="지난 주 출석·새 친구·생일">
+        <BulletinExtrasEditor date={date} value={form} errors={errors}
+          onChange={(fn) => draft.set((f) => ({ ...f, ...fn(f) }))} />
       </Card>
 
       <EditorBar dirty={draft.dirty}
@@ -226,7 +309,7 @@ function OrderEditor({ rows, onChange }: { rows: Row[]; onChange(rows: Row[]): v
     target?.focus();
   });
 
-  const set = (i: number, patch: Partial<OrderItem>) => onChange(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+  const set = (i: number, patch: Partial<Row>) => onChange(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
   function move(i: number, d: -1 | 1) {
     const next = [...rows];
     [next[i], next[i + d]] = [next[i + d], next[i]];
@@ -239,7 +322,7 @@ function OrderEditor({ rows, onChange }: { rows: Row[]; onChange(rows: Row[]): v
     onChange(rows.filter((_, j) => j !== i));
   }
   function add() {
-    const row: Row = { k: newKey(), type: '', title: '', detail: '' };
+    const row: Row = { k: newKey(), type: '', title: '', detail: '', standing: false };
     focus.current = { k: row.k, part: 'type' };
     onChange([...rows, row]);
   }
@@ -279,6 +362,10 @@ function OrderEditor({ rows, onChange }: { rows: Row[]; onChange(rows: Row[]): v
                       onChange={(e) => set(i, { detail: e.target.value })} />
                   </div>
                 </div>
+                <label className={s.stand}>
+                  <input type="checkbox" checked={r.standing} onChange={(e) => set(i, { standing: e.target.checked })} />
+                  <span><span className="sr-only">{n}번 </span>일어서서</span>
+                </label>
               </li>
             );
           })}

@@ -129,7 +129,7 @@ test('관리자가 주보를 게시하면 학생 홈에 보인다', async ({ pag
   // 주보: 템플릿 순서로 시작, 설교 제목은 설교에서 가져오기 → 게시
   await page.getByRole('link', { name: '관리 메뉴' }).click();
   await page.getByRole('link', { name: /^주보 작성/ }).click();
-  await expect(page.getByLabel('1번 순서 이름')).toHaveValue('묵도');
+  await expect(page.getByLabel('1번 순서 이름', { exact: true })).toHaveValue('경배와 찬양');
   await page.getByRole('button', { name: '설교 제목 가져오기' }).click();
   await expect(page.getByLabel('설교 제목')).toHaveValue(WALK);
   await page.getByLabel('찬양 1').fill(HYMN);
@@ -274,6 +274,6 @@ test('주보 편집: 모양이 깨진 복구본은 버리고 저장된 내용으
     sessionStorage.setItem(`jdb:draft:bulletin:${d}`, JSON.stringify({ order: null, sermonTitle: 3 }));
   }, THIS_SUNDAY);
   await openAdmin(page, '주보 작성');
-  await expect(page.getByLabel('1번 순서 이름')).toHaveValue('묵도');
+  await expect(page.getByLabel('1번 순서 이름', { exact: true })).toHaveValue('경배와 찬양');
   await expect(page.getByText('저장 안 된 내용을 복구했어요')).toHaveCount(0);
 });

@@ -9,7 +9,8 @@
   grid-template-columns: 28px minmax(0, 1fr) auto;
   grid-template-areas:
     "num type acts"
-    "pair pair pair";
+    "pair pair pair"
+    "stand stand stand";
   align-items: end;
   gap: var(--space-2);
   padding: var(--space-3) 0 var(--space-4);
@@ -20,6 +21,26 @@
 .acts { grid-area: acts; display: flex; gap: var(--space-2); }
 .pair { grid-area: pair; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
 .typeCell, .cell { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+/* 일어서서 체크: 글자까지 눌리는 44px 줄 */
+.stand {
+  grid-area: stand;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-min);
+  margin: calc(var(--space-2) * -1) 0 calc(var(--space-3) * -1);
+  padding-right: var(--space-2);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+.stand input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+
+/* 예배 순서 카드 머리: 호수·인도자(나란히), 여는 말씀·출처 */
+.head { display: flex; flex-direction: column; gap: var(--space-4); padding-bottom: var(--space-4); border-bottom: 1px dashed var(--line); }
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.head textarea.opening { min-height: 0; }
 
 .tools {
   display: flex;
@@ -41,3 +62,30 @@
 /* ---------- 말씀 ---------- */
 .fetch { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: calc(var(--space-2) * -1); }
 .fetchFrom { color: var(--muted); font-size: var(--text-sm); min-width: 0; overflow-wrap: anywhere; }
+
+/* ---------- 지난 주 출석·새 친구·생일 ---------- */
+.loadRow { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.att { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4) 0; border-block: 1px dashed var(--line); }
+.sunday { display: flex; align-items: baseline; gap: var(--space-2); font-variant-numeric: tabular-nums; }
+.tallies { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+/* 한 줄: 반 이름 | 출석 | 전체, 틀리면 아래 줄에 안내 */
+.tally {
+  display: grid;
+  grid-template-columns: minmax(48px, auto) minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
+  gap: var(--space-1) var(--space-2);
+}
+.tallyName { align-self: end; display: flex; align-items: center; min-height: var(--touch); font-weight: var(--weight-bold); overflow-wrap: anywhere; }
+.num { font-variant-numeric: tabular-nums; }
+.num[aria-invalid='true'] { border-color: var(--danger); }
+/* Field 의 오류 문구와 같은 모양(아이콘 + 글자, 색만으로 알리지 않는다) */
+.error {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: var(--space-1);
+  align-items: flex-start;
+  color: var(--danger);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+.error > svg { flex-shrink: 0; margin-top: 3px; }
