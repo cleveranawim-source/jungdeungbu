@@ -342,14 +342,6 @@ function OrderEditor({ rows, onChange }: { rows: Row[]; onChange(rows: Row[]): v
                   <input id={`${id}-type`} data-part="type" className={ed.input} autoComplete="off" value={r.type}
                     onChange={(e) => set(i, { type: e.target.value })} />
                 </div>
-                <div className={s.acts}>
-                  <button type="button" className={ed.icon} data-part="up" aria-label={`${n}번 순서 위로`}
-                    disabled={i === 0} onClick={() => move(i, -1)}><Icon name="chevronUp" /></button>
-                  <button type="button" className={ed.icon} data-part="down" aria-label={`${n}번 순서 아래로`}
-                    disabled={i === rows.length - 1} onClick={() => move(i, 1)}><Icon name="chevronDown" /></button>
-                  <button type="button" className={ed.icon} aria-label={`${n}번 순서 지우기`}
-                    onClick={() => remove(i)}><Icon name="trash" size={20} /></button>
-                </div>
                 <div className={s.pair}>
                   <div className={s.cell}>
                     <label className={ed.mini} htmlFor={`${id}-title`}><span className="sr-only">{n}번 </span>내용</label>
@@ -366,6 +358,14 @@ function OrderEditor({ rows, onChange }: { rows: Row[]; onChange(rows: Row[]): v
                   <input type="checkbox" checked={r.standing} onChange={(e) => set(i, { standing: e.target.checked })} />
                   <span><span className="sr-only">{n}번 </span>일어서서</span>
                 </label>
+                <div className={s.acts}>
+                  <button type="button" className={ed.icon} data-part="up" aria-label={`${n}번 순서 위로`}
+                    disabled={i === 0} onClick={() => move(i, -1)}><Icon name="chevronUp" /></button>
+                  <button type="button" className={ed.icon} data-part="down" aria-label={`${n}번 순서 아래로`}
+                    disabled={i === rows.length - 1} onClick={() => move(i, 1)}><Icon name="chevronDown" /></button>
+                  <button type="button" className={ed.icon} aria-label={`${n}번 순서 지우기`}
+                    onClick={() => remove(i)}><Icon name="trash" size={20} /></button>
+                </div>
               </li>
             );
           })}

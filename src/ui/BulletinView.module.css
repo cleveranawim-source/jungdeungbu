@@ -73,10 +73,11 @@
 }
 
 /* 다음 주 예배위원: 역할 — 이름 */
-.pairs { margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
-.pairs > div { display: flex; gap: var(--space-4); align-items: baseline; }
-.pairs dt { flex-shrink: 0; min-width: 3em; color: var(--muted); font-size: var(--text-sm); }
-.pairs dd { margin: 0; }
+/* 맡은 일 | 이름: 두 칸 격자라 긴 맡은 일(소식나눔)이 있어도 이름이 한 줄로 맞춰 선다 */
+.pairs { margin: 0; display: grid; grid-template-columns: fit-content(50%) minmax(0, 1fr); gap: var(--space-2) var(--space-4); align-items: baseline; }
+.pairs > div { display: contents; }
+.pairs dt { min-width: 3em; color: var(--muted); font-size: var(--text-sm); }
+.pairs dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 
 /* 지난 주 출석: 숫자는 프리텐다드 고정폭 숫자 */
 .counts { font-family: var(--font-body); font-variant-numeric: tabular-nums; }

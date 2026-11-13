@@ -2,34 +2,39 @@
 .fields { display: flex; flex-direction: column; gap: var(--space-4); }
 .hint { color: var(--muted); font-size: var(--text-sm); }
 
-/* ---------- 예배 순서: 줄마다 번호 · 순서 이름 · 옮기기/지우기 / 아래에 내용 · 맡은 사람 ---------- */
-.rows { list-style: none; margin: 0; padding: 0; }
+/* ---------- 예배 순서: 줄마다 번호 · 순서 이름 / 내용 · 맡은 사람 / 일어서서 · 옮기기/지우기 ---------- */
+/* 옮기기·지우기(44px 셋)는 맨 아래 줄 오른쪽에 둬서 순서 이름 칸이 한 줄을 다 쓴다(좁은 폰에서 "경배와 찬양"이 잘리지 않게) */
+.rows { list-style: none; margin: 0; padding: 0; container-type: inline-size; }
 .row {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr) auto;
   grid-template-areas:
-    "num type acts"
+    "num type type"
     "pair pair pair"
-    "stand stand stand";
+    "stand stand acts";
   align-items: end;
   gap: var(--space-2);
-  padding: var(--space-3) 0 var(--space-4);
+  padding: var(--space-3) 0 var(--space-2);
 }
 .row + .row { border-top: 1px solid var(--line); }
 .numCell { grid-area: num; margin-bottom: 10px; }
 .typeCell { grid-area: type; }
-.acts { grid-area: acts; display: flex; gap: var(--space-2); }
-.pair { grid-area: pair; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.acts { grid-area: acts; align-self: center; display: flex; gap: var(--space-2); }
+/* 내용·맡은 사람: 휴대폰 폭에서는 위아래로(찬양 제목 같은 긴 내용이 잘리지 않게), 넓으면 나란히 */
+.pair { grid-area: pair; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+@container (min-width: 421px) {
+  .pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .typeCell, .cell { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
 /* 일어서서 체크: 글자까지 눌리는 44px 줄 */
 .stand {
   grid-area: stand;
   justify-self: start;
+  align-self: center;
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   min-height: var(--touch-min);
-  margin: calc(var(--space-2) * -1) 0 calc(var(--space-3) * -1);
   padding-right: var(--space-2);
   color: var(--ink);
   font-size: var(--text-sm);
