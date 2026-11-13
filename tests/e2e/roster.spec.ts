@@ -191,7 +191,7 @@ test('새 친구로 등록한 학생은 처음 출석한 주의 주보에 올라
   await page.getByRole('link', { name: /^주보 작성/ }).click();
   await page.getByRole('button', { name: '출석·새 친구·생일 불러오기' }).click();
   await expectToast(page, '주일 출석을 불러왔어요');
-  await expect(page.getByLabel('새 친구')).toHaveValue('새봄');
+  await expect(page.locator('#editor-extras').getByLabel('새 친구', { exact: true })).toHaveValue('새봄');
 });
 
 test('새 친구 표시는 나중에 끄고 켤 수 있다', async ({ page }) => {

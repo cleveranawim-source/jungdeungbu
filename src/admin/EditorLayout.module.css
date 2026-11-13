@@ -1,0 +1,37 @@
+.layout { display: grid; gap: var(--space-5); align-items: start; }
+.work { min-width: 0; display: flex; flex-direction: column; gap: var(--space-5); }
+.desktopNav { display: none; }
+.links { display: grid; gap: var(--space-2); }
+.links button { text-align: left; min-height: var(--touch); border: 0; border-radius: var(--radius-sm); background: transparent; padding: var(--space-3); font-size: var(--text-sm); }
+.links button:hover, .links button:active { background: var(--accent-soft); }
+.links small { display: block; font-size: var(--text-xs); color: var(--muted); margin-top: var(--space-1); }
+.section { min-width: 0; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--card); scroll-margin-top: var(--space-5); }
+.head { padding: var(--space-5); border-bottom: 1px solid var(--line); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.head h2 { font-size: var(--text-lg); }
+.head p { font-size: var(--text-sm); margin-top: var(--space-2); color: var(--muted); }
+.gold .head { background: var(--gold-panel); color: var(--gold-panel-ink); border: 0; }
+.gold .head p { color: var(--gold-panel-ink); }
+.sage .head { background: var(--sage-bg); color: var(--sage-ink); border: 0; }
+.sage .head p { color: var(--sage-ink); }
+.body { padding: var(--space-5); min-width: 0; }
+.body > * + * { margin-top: var(--space-4); }
+.preview { display: none; min-width: 0; }
+@media (min-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
+  .mobileNav { display: none; }
+  .desktopNav { display: block; position: static; top: var(--space-6); }
+  .links { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .desktopNav h2 { font-family: var(--font-body); font-size: var(--text-md); margin: var(--space-3); }
+  .withPreview { grid-template-columns: minmax(0, 1fr) 320px; }
+  .withPreview .desktopNav { grid-column: 1 / -1; position: static; }
+  .withPreview .links { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .preview { display: block; position: sticky; top: var(--space-6); }
+}
+@media (min-width: 1200px) {
+  .layout { grid-template-columns: 160px minmax(0, 1fr); }
+  .desktopNav { position: sticky; }
+  .links { grid-template-columns: 1fr; }
+  .withPreview { grid-template-columns: 160px minmax(0, 1fr) 320px; }
+  .withPreview .desktopNav { grid-column: auto; position: sticky; }
+  .withPreview .links { grid-template-columns: 1fr; }
+}

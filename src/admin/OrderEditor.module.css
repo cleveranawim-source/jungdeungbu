@@ -1,0 +1,40 @@
+.table { display: block; width: 100%; border-collapse: collapse; }
+.table colgroup, .table thead { display: none; }
+.table tbody { display: block; }
+.summaryRow { display: block; border-bottom: 1px solid var(--line); }
+.summaryRow th { display: block; padding: 0; }
+.summary { display: flex; align-items: center; width: 100%; min-height: 72px; gap: var(--space-2); border: 0; background: transparent; padding: var(--space-3) 0; text-align: left; font-weight: var(--weight-regular); }
+.summary:hover, .summary[aria-expanded='true'] { background: var(--accent-soft); }
+.summary > svg { flex-shrink: 0; }
+.summary[aria-expanded='true'] > svg { transform: rotate(180deg); }
+.number { flex: 0 0 24px; color: var(--muted); font-size: var(--text-sm); text-align: center; font-variant-numeric: tabular-nums; }
+.summaryCopy { flex: 1; min-width: 0; }
+.summaryCopy strong, .summaryCopy > span, .person { display: block; }
+.summaryCopy strong { font-size: var(--text-md); }
+.summaryCopy > span, .summaryCopy small { color: var(--muted); font-size: var(--text-sm); }
+.summaryCopy small { color: var(--accent-text); font-size: var(--text-xs); }
+.standingMark { flex: 0 0 auto; color: var(--accent-text); font-size: var(--text-xs); }
+.editRow { display: none; }
+.editRow.expanded { display: grid; grid-template-columns: minmax(0,1fr); gap: var(--space-3); padding: var(--space-4) 0 var(--space-5); border-bottom: 1px solid var(--line); }
+.editRow td { min-width: 0; }
+.editRow label { display: block; margin-bottom: var(--space-1); }
+.rowNumber { display: none; }
+.linked { margin-top: var(--space-1); color: var(--accent-text); font-size: var(--text-xs); }
+.editRow .stand { min-height: var(--touch-min); display: flex; gap: var(--space-2); align-items: center; font-size: var(--text-sm); }
+.stand input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
+.actions { display: flex; justify-content: flex-end; }
+@media (min-width: 900px) {
+ .table { display: table; table-layout: fixed; }
+ .table colgroup { display: table-column-group; }
+ .table thead { display: table-header-group; }
+ .table tbody { display: table-row-group; }
+ .table thead th { font-size: var(--text-xs); font-weight: var(--weight-medium); color: var(--muted); text-align: left; padding: 0 4px var(--space-3); }
+ .summaryRow { display: none; }
+ .editRow, .editRow.expanded { display: table-row; }
+ .editRow td, .editRow th { display: table-cell; vertical-align: top; padding: var(--space-3) 4px; border-top: 1px solid var(--line); }
+ .editRow label:not(.stand) { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+ .rowNumber { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--muted); }
+ .numberCol { width: 28px; } .typeCol { width: 17%; } .contentCol { width: 26%; } .personCol { width: 19%; } .standCol { width: 64px; } .actionsCol { width: 132px; }
+ .stand { justify-content: center; }
+ .stand span { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
+}

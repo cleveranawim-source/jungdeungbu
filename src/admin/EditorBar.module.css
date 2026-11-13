@@ -93,3 +93,11 @@
 }
 .recovered > svg { color: var(--accent-text); }
 .recoveredText { flex: 1 1 auto; }
+
+@media (min-width: 900px) {
+  .bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: var(--space-5); }
+  .state { grid-column: 1; grid-row: 1; }
+  .buttons { grid-column: 2; grid-row: 1; min-width: 280px; }
+  .bar > button { grid-column: 1 / -1; grid-row: 2; }
+  .bar > .confirm { grid-column: 1 / -1; grid-row: 1; }
+}

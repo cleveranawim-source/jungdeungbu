@@ -60,12 +60,12 @@ async function loadExtras(page: Page): Promise<void> {
 test('새 주보: 종이 주보 순서와 다음 호수로 시작한다', async ({ page }) => {
   await openEditor(page);
   await expect(page.getByLabel('호수')).toHaveValue('2026-42호');
-  await expect(page.getByRole('list', { name: '예배 순서 줄' }).getByRole('listitem')).toHaveCount(12);
+  await expect(page.getByRole('table', { name: '예배 순서 줄' }).locator('[data-order-summary]')).toHaveCount(12);
   await expect(page.getByLabel('2번 일어서서', { exact: true })).toBeChecked();
   await expect(page.getByLabel('1번 일어서서', { exact: true })).not.toBeChecked();
   // 자동으로 불러오지 않는다(버튼만)
-  await expect(page.getByLabel('새 친구')).toHaveCount(1);
-  await expect(page.getByLabel('새 친구')).toHaveValue('');
+  await expect(page.locator('#editor-extras').getByLabel('새 친구', { exact: true })).toHaveCount(1);
+  await expect(page.locator('#editor-extras').getByLabel('새 친구', { exact: true })).toHaveValue('');
   await expect(page.getByLabel('1-1 출석')).toHaveCount(0);
 });
 
@@ -74,6 +74,7 @@ test('불러오기 → 고치기 → 게시하면 학생에게 보인다', async
   await page.getByLabel('인도자').fill('정한결 선생님');
   await page.getByLabel('여는 말씀').fill('하나님은 영이시니 예배하는 자가 영과 진리로 예배할지니라');
   await page.getByLabel('말씀 출처').fill('요 4:24');
+  await page.getByRole('button', { name: /예배위원 고치기/ }).click();
   await page.getByRole('button', { name: '예배위원 추가' }).click();
   await page.getByLabel('1번 맡은 일', { exact: true }).fill('인도');
   await page.getByLabel('1번 이름', { exact: true }).fill('한가람 학생');
@@ -81,8 +82,8 @@ test('불러오기 → 고치기 → 게시하면 학생에게 보인다', async
   await loadExtras(page);
   await expect(page.getByLabel('1-1 출석')).toHaveValue('2');
   await expect(page.getByLabel('1-1 전체')).toHaveValue('3');
-  await expect(page.getByLabel('새 친구')).toHaveValue('새봄');
-  await expect(page.getByLabel('이번 달 생일')).toHaveValue(new RegExp('새봄'));
+  await expect(page.locator('#editor-extras').getByLabel('새 친구', { exact: true })).toHaveValue('새봄');
+  await expect(page.locator('#editor-extras').getByLabel('이번 달 생일', { exact: true })).toHaveValue(new RegExp('새봄'));
   await page.getByLabel('교사 출석').fill('13');
   await page.getByLabel('교사 전체').fill('15');
 
@@ -110,18 +111,21 @@ test('숫자가 틀리면 저장하지 않고 그 칸에 알려 준다', async (
   await openEditor(page);
   await loadExtras(page);
   const present = page.getByLabel('1-1 출석');
+  await page.getByRole('button', { name: /반별 인원 고치기/ }).click();
   await present.fill('9'); // 전체 3보다 많다
 
-  await page.getByRole('button', { name: '임시저장', exact: true }).click();
+  await page.getByRole('button', { name: '초안 저장', exact: true }).click();
   await expectToast(page, '고칠 곳이 있어요', 'error');
   await expect(page.getByText(NUMBER_ERROR)).toBeVisible();
   await expect(present).toHaveAttribute('aria-invalid', 'true');
+  await expect(present).toBeFocused();
+  await page.getByRole('button', { name: '출석 인원을 확인해 주세요 — 고칠 곳으로' }).click();
   await expect(present).toBeFocused();
   await expect(page.getByText('새 주보', { exact: true })).toBeVisible(); // 저장 안 됨
 
   await present.fill('2');
   await page.getByLabel('교사 출석').fill('열');
-  await page.getByRole('button', { name: '임시저장', exact: true }).click();
+  await page.getByRole('button', { name: '초안 저장', exact: true }).click();
   await expect(page.getByText(NUMBER_ERROR)).toBeVisible();
   await expect(page.getByLabel('교사 출석')).toHaveAttribute('aria-invalid', 'true');
   await expect(present).not.toHaveAttribute('aria-invalid', 'true');
@@ -131,23 +135,24 @@ test('숫자가 틀리면 저장하지 않고 그 칸에 알려 준다', async (
   await page.getByLabel('교사 출석').fill('');
   await present.fill('');
   await page.getByLabel('1-1 전체').fill('');
-  await page.getByRole('button', { name: '임시저장', exact: true }).click();
+  await page.getByRole('button', { name: '초안 저장', exact: true }).click();
   await expect(page.getByText(NUMBER_ERROR)).toBeVisible();
   await expect(page.getByText('새 주보', { exact: true })).toBeVisible();
 
   // 생일 줄 모양이 틀려도 막는다
   await present.fill('2');
   await page.getByLabel('1-1 전체').fill('3');
-  await page.getByLabel('이번 달 생일').fill('새봄 생일');
-  await page.getByRole('button', { name: '임시저장', exact: true }).click();
+  await page.getByRole('button', { name: /새 친구·생일 고치기/ }).click();
+  await page.locator('#editor-extras').getByLabel('이번 달 생일', { exact: true }).fill('새봄 생일');
+  await page.getByRole('button', { name: '초안 저장', exact: true }).click();
   await expect(page.getByText('한 줄에 "11-20 이름"처럼 적어 주세요')).toBeVisible();
   await expect(page.getByText(NUMBER_ERROR)).toHaveCount(0);
   await expect(page.getByText('새 주보', { exact: true })).toBeVisible();
 
   // 교사 칸은 둘 다 비우면 빼고 저장한다
-  await page.getByLabel('이번 달 생일').fill(`${BIRTHDAY} 새봄`);
-  await page.getByRole('button', { name: '임시저장', exact: true }).click();
-  await expectToast(page, '임시저장했어요');
+  await page.locator('#editor-extras').getByLabel('이번 달 생일', { exact: true }).fill(`${BIRTHDAY} 새봄`);
+  await page.getByRole('button', { name: '초안 저장', exact: true }).click();
+  await expectToast(page, '초안을 저장했어요');
   await expect(page.getByText('한 줄에 "11-20 이름"처럼 적어 주세요')).toHaveCount(0);
   await expect(page.getByText('새 주보', { exact: true })).toHaveCount(0);
 });
@@ -155,7 +160,9 @@ test('숫자가 틀리면 저장하지 않고 그 칸에 알려 준다', async (
 test('다시 열어도 그대로이고, 출석 지우기로 뺄 수 있다', async ({ page, browser }) => {
   await openEditor(page);
   await page.getByLabel('인도자').fill('정한결 선생님');
+  await page.getByRole('button', { name: /^1번 .* 편집$/ }).click();
   await page.getByLabel('1번 일어서서', { exact: true }).check();
+  await page.getByRole('button', { name: /예배위원 고치기/ }).click();
   await page.getByRole('button', { name: '예배위원 추가' }).click();
   await page.getByLabel('1번 맡은 일', { exact: true }).fill('인도');
   await page.getByLabel('1번 이름', { exact: true }).fill('한가람 학생');
@@ -164,13 +171,13 @@ test('다시 열어도 그대로이고, 출석 지우기로 뺄 수 있다', asy
   await expectToast(page, '게시했어요');
 
   await page.reload();
-  await expect(page.getByLabel('새 친구')).toHaveValue('새봄');
+  await expect(page.locator('#editor-extras').getByLabel('새 친구', { exact: true })).toHaveValue('새봄');
   await expect(page.getByLabel('1-1 출석')).toHaveValue('2');
   await expect(page.getByLabel('인도자')).toHaveValue('정한결 선생님');
   await expect(page.getByLabel('호수')).toHaveValue('2026-42호');
   await expect(page.getByLabel('1번 일어서서', { exact: true })).toBeChecked();
   await expect(page.getByLabel('1번 이름', { exact: true })).toHaveValue('한가람 학생');
-  await expect(page.getByLabel('이번 달 생일')).toHaveValue(`${BIRTHDAY} 새봄`);
+  await expect(page.locator('#editor-extras').getByLabel('이번 달 생일', { exact: true })).toHaveValue(`${BIRTHDAY} 새봄`);
   await expect(page.getByText('저장된 내용과 같아요')).toBeVisible(); // 다시 열어도 바뀐 것이 없다
 
   await page.getByRole('button', { name: '출석 지우기' }).click();
@@ -182,4 +189,29 @@ test('다시 열어도 그대로이고, 출석 지우기로 뺄 수 있다', asy
   await expect(student.getByRole('region', { name: '새 친구' }).getByText('새봄')).toBeVisible();
   await expect(student.getByText('지난 주 함께한 인원')).toHaveCount(0);
   await expect(student.getByText('인도: 정한결 선생님')).toBeVisible();
+});
+
+test('지난 주 가져오기는 순서·찬양만, 기본 순서는 일어서기를 포함해 다음 새 주보에 남는다', async ({ page }) => {
+  await seed(db => setDoc(doc(db, 'bulletins', LAST_SUNDAY), {
+    order: [{ type: '기도', title: '지난 기도', detail: '서로운', standing: true }], hymns: ['지난 찬양'],
+    scripture: '지난 본문', sermonTitle: '지난 제목', leader: '지난 인도자',
+  }, { merge: true }));
+  await openEditor(page);
+  await page.getByLabel('설교 제목').fill('이번 제목');
+  await page.getByLabel('인도자').fill('이번 인도자');
+  await page.getByRole('button', { name: '지난 주에서 가져오기', exact: true }).click();
+  await expect(page.getByLabel('1번 순서 이름', { exact: true })).toHaveValue('기도');
+  await expect(page.getByLabel('1번 일어서서', { exact: true })).toBeChecked();
+  await expect(page.getByLabel('찬양 1', { exact: true })).toHaveValue('지난 찬양');
+  await expect(page.getByLabel('설교 제목')).toHaveValue('이번 제목');
+  await expect(page.getByLabel('인도자')).toHaveValue('이번 인도자');
+  await page.getByRole('button', { name: '기본 순서 저장', exact: true }).click();
+  await expectToast(page, '기본 순서를 저장했어요');
+  await page.getByRole('button', { name: '초안 저장', exact: true }).click();
+  await expectToast(page, '초안을 저장했어요');
+  await page.getByRole('group', { name: '주보 날짜' }).getByRole('button', { name: '다음 주일' }).click();
+  await expect(page.getByText('새 주보', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('1번 순서 이름', { exact: true })).toHaveValue('기도');
+  await expect(page.getByLabel('1번 일어서서', { exact: true })).toBeChecked();
+  await expect(page.getByLabel('찬양 1', { exact: true })).toHaveValue('');
 });

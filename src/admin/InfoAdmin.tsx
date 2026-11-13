@@ -3,68 +3,17 @@ import { describeError, useToast } from '../app/Toast';
 import { useLoader } from '../app/useLoader';
 import { useLeaveGuard } from '../app/leaveGuard';
 import { getChurchInfo, getMemberInfo, saveInfo } from '../data/info';
-import { parseLines, safeHttpUrl } from '../lib/bulletin';
 import { db } from '../lib/firebase';
-import type { ChurchInfo, MemberInfo } from '../types';
 import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
+import { InfoCard } from '../ui/InfoCard';
 import { Field, TextArea } from '../ui/Field';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
 import { EditorBar } from './EditorBar';
-import { fromPairs, PairRows, toPairs, type Pair } from './PairRows';
+import { PairRows } from './PairRows';
+import { EditorLayout, EditorSection } from './EditorLayout';
+import { MAP_ERROR, fromSaved, readForm, snapshot, type Form } from './infoAdminForm';
 import s from './InfoAdmin.module.css';
-
-const MAP_ERROR = 'https:// 로 시작하는 주소를 붙여 넣어 주세요';
-
-// 화면용 폼(줄 목록은 key 를 붙인 Pair, 에티켓은 한 줄에 하나인 긴 글)
-interface Form {
-  title: string; subtitle: string; verse: string; ref: string;
-  servants: Pair[];
-  etiquette: string;
-  placeName: string; address: string; mapUrl: string; churchPhone: string;
-  contacts: Pair[];
-}
-
-// ---------- 폼 ↔ 저장값 ----------
-
-function fromSaved(church: ChurchInfo, members: MemberInfo | null): Form {
-  return {
-    title: church.motto.title, subtitle: church.motto.subtitle, verse: church.motto.verse, ref: church.motto.ref,
-    servants: toPairs(members?.servants ?? [], (x) => x.role, (x) => x.names),
-    etiquette: church.etiquette.join('\n'),
-    placeName: church.place.name, address: church.place.address, mapUrl: church.place.mapUrl,
-    churchPhone: church.churchPhone,
-    contacts: toPairs(members?.contacts ?? [], (x) => x.label, (x) => x.phone),
-  };
-}
-
-/**
- * 폼 → 저장할 두 문서. settings/info(공개)에는 표어·에티켓·장소·교회 전화만,
- * 사람 이름·개인 번호는 memberInfo/main 에만 나뉘어 담긴다.
- */
-function readForm(f: Form): { church: ChurchInfo; members: MemberInfo; mapInvalid: boolean } {
-  const mapUrl = f.mapUrl.trim();
-  return {
-    church: {
-      motto: { title: f.title.trim(), subtitle: f.subtitle.trim(), verse: f.verse.trim(), ref: f.ref.trim() },
-      etiquette: parseLines(f.etiquette),
-      place: { name: f.placeName.trim(), address: f.address.trim(), mapUrl },
-      churchPhone: f.churchPhone.trim(),
-    },
-    members: {
-      servants: fromPairs(f.servants).map((p) => ({ role: p.a, names: p.b })),
-      contacts: fromPairs(f.contacts).map((p) => ({ label: p.a, phone: p.b })),
-    },
-    mapInvalid: mapUrl !== '' && safeHttpUrl(mapUrl) === null,
-  };
-}
-
-/** 저장할 모양으로 다듬은 값(바뀐 것이 있는지 비교용) */
-const snapshot = (f: Form): string => {
-  const { church, members } = readForm(f);
-  return JSON.stringify({ church, members });
-};
 
 /**
  * 관리 → 중등부 안내. 표어·섬기는 분들·예배 에티켓·오시는 길·연락처를 한 번에 저장한다.
@@ -73,10 +22,12 @@ const snapshot = (f: Form): string => {
  */
 export function InfoAdmin() {
   const { show } = useToast();
-  const loaded = useLoader(useCallback(async () => {
-    const [church, members] = await Promise.all([getChurchInfo(db), getMemberInfo(db)]);
-    return { church, members };
-  }, []));
+  const loaded = useLoader(
+    useCallback(async () => {
+      const [church, members] = await Promise.all([getChurchInfo(db), getMemberInfo(db)]);
+      return { church, members };
+    }, []),
+  );
   const [form, setForm] = useState<Form | null>(null);
   // 마지막으로 불러오거나 저장한 값(이것과 같으면 저장 버튼이 잠긴다)
   const [base, setBase] = useState('');
@@ -103,7 +54,8 @@ export function InfoAdmin() {
   useLeaveGuard(useMemo(() => (dirty ? (go: () => void) => setPending({ go }) : null), [dirty]));
 
   if (!form) {
-    if (loaded.error && !loaded.loading) return <LoadError error={loaded.error} onRetry={loaded.reload} />;
+    if (loaded.error && !loaded.loading)
+      return <LoadError error={loaded.error} onRetry={loaded.reload} />;
     return <Loading />;
   }
 
@@ -122,7 +74,7 @@ export function InfoAdmin() {
     try {
       await saveInfo(db, read.church, read.members);
       const saved = fromSaved(read.church, read.members);
-      setForm(saved);
+      setForm((current) => (current && snapshot(current) === snapshot(form!) ? saved : current));
       setBase(snapshot(saved));
       setChecked(false);
       setPending(null);
@@ -136,56 +88,171 @@ export function InfoAdmin() {
 
   return (
     <div className={s.stack} ref={rootRef}>
-      <Card title="올해 표어">
-        <div className={s.fields}>
-          <Field label="표어" autoComplete="off" value={form.title} placeholder="예: 동행하는 자"
-            onChange={(e) => update({ title: e.target.value })} />
-          <Field label="설명" autoComplete="off" value={form.subtitle}
-            onChange={(e) => update({ subtitle: e.target.value })} />
-          <TextArea label="말씀" rows={3} value={form.verse}
-            onChange={(e) => update({ verse: e.target.value })} />
-          <Field label="말씀 출처" autoComplete="off" value={form.ref} placeholder="예: 미가 6:8"
-            onChange={(e) => update({ ref: e.target.value })} />
-        </div>
-      </Card>
+      <div className={s.intro}>
+        <p className={s.kicker}>우리 중등부를 소개해요</p>
+        <h2>한 번 고치면, 모든 주보에</h2>
+        <p>저장하면 지난 주보를 포함한 모든 주보의 안내가 바뀌어요.</p>
+      </div>
+      <EditorLayout
+        sections={[
+          { id: 'info-motto', title: '올해 표어' },
+          { id: 'info-etiquette', title: '예배 시간과 에티켓' },
+          { id: 'info-place', title: '오시는 길' },
+          { id: 'info-servants', title: '섬기는 분들' },
+          { id: 'info-contacts', title: '연락처' },
+        ]}
+        preview={
+          <>
+            <h2 className={s.previewTitle}>학생에게 보일 안내</h2>
+            <p className={s.hint}>고치는 내용이 바로 보여요. 저장해야 실제 주보에 반영돼요.</p>
+            <InfoCard info={readForm(form).church} members={readForm(form).members} />
+          </>
+        }
+      >
+        <EditorSection
+          id="info-motto"
+          title="올해 표어"
+          description="누구나 볼 수 있어요"
+          tone="gold"
+        >
+          <div className={s.fields}>
+            <Field
+              label="표어"
+              autoComplete="off"
+              value={form.title}
+              placeholder="예: 동행하는 자"
+              onChange={(e) => update({ title: e.target.value })}
+            />
+            <TextArea
+              label="설명"
+              rows={2}
+              value={form.subtitle}
+              onChange={(e) => update({ subtitle: e.target.value })}
+            />
+            <TextArea
+              label="말씀"
+              rows={3}
+              value={form.verse}
+              onChange={(e) => update({ verse: e.target.value })}
+            />
+            <Field
+              label="말씀 출처"
+              autoComplete="off"
+              value={form.ref}
+              placeholder="예: 미가 6:8"
+              onChange={(e) => update({ ref: e.target.value })}
+            />
+          </div>
+        </EditorSection>
 
-      <Card title="섬기는 분들">
-        <div className={s.fields}>
-          <PairRows legend="섬기는 분들" labelA="직분" labelB="이름" addLabel="한 줄 추가"
-            rows={form.servants} onChange={(servants) => update({ servants })} />
-          <p className={s.hint}>학생 링크를 받은 사람과 선생님만 볼 수 있어요</p>
-        </div>
-      </Card>
+        <EditorSection
+          id="info-etiquette"
+          title="예배 시간과 에티켓"
+          description="누구나 볼 수 있어요"
+        >
+          <TextArea
+            label="예배 에티켓"
+            rows={5}
+            value={form.etiquette}
+            hint="한 줄에 하나씩 적어요. 예배 시간도 여기에 함께 안내해요."
+            onChange={(e) => update({ etiquette: e.target.value })}
+          />
+        </EditorSection>
 
-      <Card title="예배 에티켓">
-        <TextArea label="예배 에티켓" rows={5} value={form.etiquette}
-          hint="한 줄에 하나씩 적어요"
-          onChange={(e) => update({ etiquette: e.target.value })} />
-      </Card>
-
-      <Card title="오시는 길·연락처">
-        <div className={s.fields}>
-          <Field label="장소 이름" autoComplete="off" value={form.placeName}
-            onChange={(e) => update({ placeName: e.target.value })} />
-          <Field label="주소" autoComplete="off" value={form.address}
-            onChange={(e) => update({ address: e.target.value })} />
-          <Field label="지도 링크" autoComplete="off" inputMode="url" value={form.mapUrl} error={mapError}
-            onChange={(e) => update({ mapUrl: e.target.value })} />
-          <Field label="교회 전화" type="tel" inputMode="tel" autoComplete="off" value={form.churchPhone}
-            hint="누구나 볼 수 있어요"
-            onChange={(e) => update({ churchPhone: e.target.value })} />
-          <PairRows legend="연락처" labelA="이름" labelB="전화번호" addLabel="연락처 추가" inputModeB="tel"
-            rows={form.contacts} onChange={(contacts) => update({ contacts })} />
-          <p className={s.hint}>개인 번호는 학생 링크를 받은 사람과 선생님만 볼 수 있어요</p>
-        </div>
-      </Card>
-
-      <EditorBar dirty={dirty}
-        leave={pending ? {
-          onStay: () => setPending(null),
-          onLeave: () => { const { go } = pending; setPending(null); go(); },
-        } : null}>
-        <Button busy={busy} disabled={!dirty} onClick={save}>저장</Button>
+        <EditorSection id="info-place" title="오시는 길" description="누구나 볼 수 있어요">
+          <div className={s.fields}>
+            <Field
+              label="장소 이름"
+              autoComplete="off"
+              value={form.placeName}
+              onChange={(e) => update({ placeName: e.target.value })}
+            />
+            <Field
+              label="주소"
+              autoComplete="off"
+              value={form.address}
+              onChange={(e) => update({ address: e.target.value })}
+            />
+            <Field
+              label="지도 링크"
+              autoComplete="off"
+              inputMode="url"
+              value={form.mapUrl}
+              error={mapError}
+              onChange={(e) => update({ mapUrl: e.target.value })}
+            />
+            <Field
+              label="교회 전화"
+              type="tel"
+              inputMode="tel"
+              autoComplete="off"
+              value={form.churchPhone}
+              hint="누구나 볼 수 있어요"
+              onChange={(e) => update({ churchPhone: e.target.value })}
+            />
+          </div>
+        </EditorSection>
+        <EditorSection
+          id="info-servants"
+          title="섬기는 분들"
+          description="학생 링크를 받은 사람과 선생님만 볼 수 있어요"
+          tone="sage"
+        >
+          <PairRows
+            legend="섬기는 분들"
+            labelA="직분"
+            labelB="이름"
+            addLabel="한 줄 추가"
+            multilineB
+            rows={form.servants}
+            onChange={(servants) => update({ servants })}
+          />
+        </EditorSection>
+        <EditorSection
+          id="info-contacts"
+          title="연락처"
+          description="학생 링크를 받은 사람과 선생님만 볼 수 있어요"
+        >
+          <div className={s.fields}>
+            <PairRows
+              legend="연락처"
+              labelA="이름"
+              labelB="전화번호"
+              addLabel="연락처 추가"
+              inputModeB="tel"
+              rows={form.contacts}
+              onChange={(contacts) => update({ contacts })}
+            />
+            <p className={s.hint}>개인 번호는 학생 링크를 받은 사람과 선생님만 볼 수 있어요</p>
+          </div>
+        </EditorSection>
+      </EditorLayout>
+      <EditorBar
+        dirty={dirty}
+        note="모든 주보의 중등부 안내에 반영돼요."
+        validation={
+          mapError ? (
+            <button type="button" className={s.errorJump} onClick={() => setFocusBad((n) => n + 1)}>
+              지도 링크를 확인해 주세요 — 고칠 곳으로
+            </button>
+          ) : undefined
+        }
+        leave={
+          pending
+            ? {
+                onStay: () => setPending(null),
+                onLeave: () => {
+                  const { go } = pending;
+                  setPending(null);
+                  go();
+                },
+              }
+            : null
+        }
+      >
+        <Button busy={busy} disabled={!dirty} onClick={save}>
+          저장
+        </Button>
       </EditorBar>
     </div>
   );

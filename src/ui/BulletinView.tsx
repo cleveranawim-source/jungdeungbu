@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { Announcement, Bulletin, BulletinMembers, Sermon, WithId } from '../types';
+import type { Announcement, BulletinContent, BulletinMembers, Sermon, WithId } from '../types';
 import { displayOrder } from '../lib/bulletin';
 import { formatBirthday, formatMonthDay } from '../lib/dates';
 import { Disclosure } from './Disclosure';
@@ -9,7 +9,7 @@ import { SectionJump } from './SectionJump';
 import s from './BulletinView.module.css';
 
 export interface BulletinViewProps {
-  bulletin: Bulletin;
+  bulletin: BulletinContent;
   sermon: Sermon | null;
   announcements: WithId<Announcement>[];
   /** members가 null이면 새 친구·생일 구역을 그리지 않아요. */

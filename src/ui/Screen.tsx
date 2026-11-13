@@ -11,7 +11,7 @@ export interface ScreenProps {
   /** 하단 탭 바(<TabBar />). 넣으면 내용이 탭 바 뒤로 숨지 않게 아래 여백이 늘어난다. */
   tabBar?: ReactNode;
   /** 홈·주보처럼 읽기 면과 보조 소식을 나란히 놓는 화면만 넓혀요. */
-  layout?: 'default' | 'reading';
+  layout?: 'default' | 'reading' | 'admin';
   children?: ReactNode;
 }
 
@@ -19,7 +19,7 @@ export interface ScreenProps {
 export function Screen({ title, sub, actions, tabBar, layout = 'default', children }: ScreenProps) {
   return (
     <>
-      <div className={[s.screen, layout === 'reading' && s.reading, tabBar && s.withTabBar].filter(Boolean).join(' ')}>
+      <div className={[s.screen, layout === 'reading' && s.reading, layout === 'admin' && s.admin, tabBar && s.withTabBar].filter(Boolean).join(' ')}>
         {(title || actions) && (
           <header className={s.head}>
             <div className={s.titles}>

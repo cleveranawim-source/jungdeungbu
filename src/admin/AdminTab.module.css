@@ -50,3 +50,6 @@
 @media (hover: hover) {
   .item:hover .label { color: var(--accent-text); }
 }
+
+.wide, .standard { min-width: 0; display: flex; flex-direction: column; gap: var(--space-5); }
+@media (min-width: 900px) { .standard { width: 100%; max-width: 960px; } .list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-6); } .list > li:nth-child(2) { border-top: 0; } }

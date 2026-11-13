@@ -45,6 +45,10 @@ export interface EditorDraft<T> {
   saved(sent: T): void;
   /** 복구본 버리고 저장된 값으로 되돌리기 */
   revert(): void;
+  /** 서버 초안을 버린 뒤 게시본으로 완전히 돌아갈 때만 사용해요. */
+  replace(base: T): void;
+  /** 광고 관리에 다녀오기 전 이 기기의 복구본을 즉시 남겨요. */
+  keepLocal(): void;
   /** 날짜 바꾸기(저장 안 한 내용이 있으면 pending 으로 붙잡는다) */
   requestDate(date: string): void;
   pending: Pending | null;
@@ -100,6 +104,15 @@ export function useEditorDraft<T>(
     setState((prev) => (prev && prev.key === key ? { ...prev, value: prev.base, recovered: false } : prev));
   }, [key]);
 
+  const replace = useCallback((base: T) => {
+    clearStored(key);
+    setState({ key, base, value: base, recovered: false });
+    setPending(null);
+  }, [key]);
+  const keepLocal = useCallback(() => {
+    if (state?.key === key && !same(state.value, state.base)) writeStored(key, state.value);
+  }, [state, key, same]);
+
   const requestDate = useCallback((d: string) => {
     if (d === date) return;
     if (dirty) setPending({ kind: 'date', date: d });
@@ -134,6 +147,8 @@ export function useEditorDraft<T>(
     open,
     saved,
     revert,
+    replace,
+    keepLocal,
     requestDate,
     pending,
     stay,

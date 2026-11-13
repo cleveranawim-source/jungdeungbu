@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useGuardedLinkClick } from '../app/leaveGuard';
 import { teacherHref } from '../app/router';
 import { LinkButton } from '../ui/Button';
@@ -26,18 +27,19 @@ export interface AdminTabProps {
 
 /** 관리 탭: 메뉴 목록 → 각 화면. 제목(h1)은 TeacherApp 의 Screen 이 그린다. */
 export function AdminTab({ sub, myUid, thisSunday, onProfileChanged }: AdminTabProps) {
+  const [bulletinDate, setBulletinDate] = useState(thisSunday);
   const section = findAdminSection(sub);
   const guardedClick = useGuardedLinkClick();
   if (!section) return <AdminMenu />;
   return (
-    <>
+    <div className={section.key === 'bulletin' || section.key === 'info' ? s.wide : s.standard}>
       <div className={s.back}>
         <LinkButton href={teacherHref('admin')} variant="ghost" size="sm" icon={<Icon name="back" size={20} />}
           onClick={guardedClick}>
           관리 메뉴
         </LinkButton>
       </div>
-      {section.key === 'bulletin' && <BulletinEditor myUid={myUid} thisSunday={thisSunday} />}
+      {section.key === 'bulletin' && <BulletinEditor myUid={myUid} thisSunday={thisSunday} initialDate={bulletinDate} onDateChange={setBulletinDate} />}
       {section.key === 'sermon' && <SermonEditor thisSunday={thisSunday} />}
       {section.key === 'announcements' && <AnnouncementsAdmin thisSunday={thisSunday} />}
       {section.key === 'info' && <InfoAdmin />}
@@ -47,7 +49,7 @@ export function AdminTab({ sub, myUid, thisSunday, onProfileChanged }: AdminTabP
       {!section.ready && (
         <EmptyState icon={section.icon} title="준비 중이에요">{section.label} 화면은 곧 채워질 거예요.</EmptyState>
       )}
-    </>
+    </div>
   );
 }
 

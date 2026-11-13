@@ -132,10 +132,11 @@ test('관리자가 주보를 게시하면 학생 홈에 보인다', async ({ pag
   await expect(page.getByLabel('1번 순서 이름', { exact: true })).toHaveValue('경배와 찬양');
   await page.getByRole('button', { name: '설교 제목 가져오기' }).click();
   await expect(page.getByLabel('설교 제목')).toHaveValue(WALK);
+  await page.getByRole('button', { name: /찬양 목록 고치기/ }).click();
   await page.getByLabel('찬양 1').fill(HYMN);
   await page.getByRole('button', { name: '게시', exact: true }).click();
   await expectToast(page, '게시했어요');
-  await expect(page.getByText('관리자님이 방금 저장')).toBeVisible();
+  await expect(page.getByText('방금 게시')).toBeVisible();
 
   const { page: student } = await openStudent(browser, `#/s/${TOKEN}`);
   await expect(student.getByRole('heading', { name: WALK })).toBeVisible();
@@ -150,8 +151,8 @@ test('임시저장 주보는 학생에게 안 보인다', async ({ page, browser
   await loginAsEmu(page, ADMIN, '관리자');
   await openAdmin(page, '주보 작성');
   await page.getByLabel('설교 제목').fill('아직 비밀인 제목');
-  await page.getByRole('button', { name: '임시저장', exact: true }).click();
-  await expectToast(page, '임시저장했어요');
+  await page.getByRole('button', { name: '초안 저장', exact: true }).click();
+  await expectToast(page, '초안을 저장했어요');
 
   // 규칙이 임시저장 주보 읽기를 막고(getBulletin → null), 학생 화면은 "없음" 안내
   const { page: student } = await openStudent(browser, `#/s/${TOKEN}`);
@@ -161,10 +162,12 @@ test('임시저장 주보는 학생에게 안 보인다', async ({ page, browser
   await expect(student.getByText('이번 주 주보가 아직 없어요')).toBeVisible();
   await expectAnonymousStudent(student);
 
-  // 교사 주보 탭에서는 "임시저장" 표시와 함께 보인다
+  // 새 계약: 관리자 작성 화면에서 초안을 다시 열고, 읽기 탭에는 아직 나오지 않는다.
+  await page.reload();
+  await expect(page.getByText('초안', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('설교 제목')).toHaveValue('아직 비밀인 제목');
   await page.getByRole('tab', { name: '주보' }).click();
-  await expect(page.getByText('학생에게는 아직 보이지 않아요')).toBeVisible();
-  await expect(page.getByText('아직 비밀인 제목')).toBeVisible();
+  await expect(page.getByText('아직 비밀인 제목')).toHaveCount(0);
 });
 
 test('광고 종료일이 지나면 주보 광고란에 없다', async ({ page, browser }) => {
@@ -224,8 +227,8 @@ test('주보 편집: 저장 안 한 내용은 날짜·메뉴 이동 전에 묻�
   await expect(title).toHaveValue('쓰다 만 제목');
 
   // 저장하면 복구본은 지워진다
-  await page.getByRole('button', { name: '임시저장', exact: true }).click();
-  await expectToast(page, '임시저장했어요');
+  await page.getByRole('button', { name: '초안 저장', exact: true }).click();
+  await expectToast(page, '초안을 저장했어요');
   await page.reload();
   await expect(title).toHaveValue('쓰다 만 제목');
   await expect(page.getByText('저장 안 된 내용을 복구했어요')).toHaveCount(0);
@@ -252,10 +255,10 @@ test('주보 편집: 저장이 늦게 끝나도 그 사이 고친 내용은 남�
 
   // 오프라인: 저장은 서버에 닿을 때까지 끝나지 않는다. 그동안 더 고친다
   await context.setOffline(true);
-  await page.getByRole('button', { name: '임시저장', exact: true }).click();
+  await page.getByRole('button', { name: '초안 저장', exact: true }).click();
   await title.fill('보낸 뒤 더 고친 제목');
   await context.setOffline(false);
-  await expect(page.getByRole('status').filter({ hasText: '임시저장했어요' })).toHaveCount(1, { timeout: 20000 });
+  await expect(page.getByRole('status').filter({ hasText: '초안을 저장했어요' })).toHaveCount(1, { timeout: 20000 });
 
   // 더 고친 내용은 남고 여전히 "저장 안 한 내용", 날짜 이동 확인은 닫혔다
   await expect(title).toHaveValue('보낸 뒤 더 고친 제목');
