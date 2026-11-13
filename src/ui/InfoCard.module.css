@@ -11,8 +11,6 @@
 .pairs { margin: 0; display: grid; grid-template-columns: minmax(3em, auto) minmax(0, 1fr); gap: var(--space-3); align-items: baseline; font-size: var(--text-sm); }
 .pairs > div { display: contents; }
 .pairs dt { color: var(--muted); }
-.pairs dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.pairs dd { margin: 0; min-width: 0; overflow-wrap: anywhere; white-space: pre-line; }
 .bullets { margin: 0; padding-left: 1.2em; font-size: var(--text-sm); }
 .bullets li + li { margin-top: var(--space-3); }
-
-.pairs dd { white-space: pre-line; }

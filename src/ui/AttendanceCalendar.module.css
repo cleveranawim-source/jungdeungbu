@@ -22,24 +22,27 @@
 
 .month {
   display: flex;
-  align-items: center;
   gap: var(--space-3);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--line);
+  align-items: flex-start;
 }
 .monthLabel {
   flex-shrink: 0;
   width: 3em;
   color: var(--muted);
   font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;
+  padding-top: var(--space-2);
+  font-weight: var(--weight-bold);
 }
 .days {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
   margin: 0;
   padding: 0;
   list-style: none;
+  gap: var(--space-2);
 }
 
 /* 한 칸: 36px 동그라미. 출석이면 해가 뜬다(누르는 칸이 아니므로 버튼처럼 크지 않게) */
@@ -94,21 +97,8 @@
   top: 50%;
   margin-top: -2px;
 }
-
-.month {
-  padding-block: var(--space-3);
-  border-bottom: 1px solid var(--line);
-  align-items: flex-start;
-}
 .month:last-child {
   border-bottom: 0;
-}
-.monthLabel {
-  padding-top: var(--space-2);
-  font-weight: var(--weight-bold);
-}
-.days {
-  gap: var(--space-2);
 }
 .mark:not(.mini) {
   width: 38px;

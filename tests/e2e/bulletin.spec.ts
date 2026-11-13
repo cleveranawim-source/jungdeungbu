@@ -92,6 +92,9 @@ test('학생이 이번 주 주보·설교·광고를 본다', async ({ page }) =
 
   // 말씀: 목록 → 상세(요약·적용 질문)
   await page.getByRole('tab', { name: '말씀' }).click();
+  await expect(page.getByRole('link', { name: new RegExp(SERMON_TITLE) })).toHaveAccessibleName(
+    new RegExp(`${SUNDAY.getMonth() + 1}월 ${SUNDAY.getDate()}\\s*일`),
+  );
   await page.getByRole('link', { name: new RegExp(SERMON_TITLE) }).click();
   await expect(page.getByText(SUMMARY)).toBeVisible();
   await expect(page.getByText('요즘 내가 무서워하는 것은 무엇인가요?')).toBeVisible();

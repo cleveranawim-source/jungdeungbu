@@ -15,6 +15,7 @@
   color: var(--ink);
   text-decoration: none;
   border-radius: var(--radius-sm);
+  padding-block: var(--space-4);
 }
 .row > svg {
   color: var(--muted);
@@ -31,6 +32,7 @@
 .name {
   font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
+  font-size: var(--text-lg);
 }
 .meta {
   margin-top: 2px;
@@ -43,15 +45,8 @@
   display: grid;
   color: var(--accent-text);
 }
-
-.row {
-  padding-block: var(--space-4);
-}
 .row:hover {
   background: var(--accent-soft);
-}
-.name {
-  font-size: var(--text-lg);
 }
 @media (min-width: 900px) {
   .list {

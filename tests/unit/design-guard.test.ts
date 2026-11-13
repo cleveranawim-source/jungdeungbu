@@ -67,9 +67,13 @@ test('표지·소식·축하의 글자와 면은 지정한 색 쌍으로 쓴다'
   expect(rule('src/ui/IllustratedCover.module.css', '.cover')).toContain('var(--cover-ink)');
 });
 
-test('관리 작성 화면도 선언된 토큰만 참조한다', () => {
+test('모든 모듈 CSS가 선언된 토큰만 참조한다', () => {
   const declared = new Set([...readFileSync('src/ui/theme.css', 'utf8').matchAll(/(--[\w-]+)\s*:/g)].map(m => m[1]));
-  const paths = ['EditorLayout', 'OrderEditor', 'BulletinEditor', 'InfoAdmin'].map(n => `src/admin/${n}.module.css`);
+  // EditorBar가 측정해 선언하는 --toast-lift 같은 런타임 CSS 변수도 확인해요.
+  for (const path of src.filter(p => /\.tsx?$/.test(p))) {
+    for (const match of readFileSync(path, 'utf8').matchAll(/\.style\.setProperty\(['"](--[\w-]+)['"]/g)) declared.add(match[1]);
+  }
+  const paths = src.filter(p => p.endsWith('.module.css'));
   for (const path of paths) {
     const used = [...readFileSync(path, 'utf8').matchAll(/var\((--[\w-]+)/g)].map(m => m[1]);
     expect(used.filter(token => !declared.has(token)), path).toEqual([]);
@@ -87,4 +91,5 @@ test('새 구역 머리와 안내는 배경에 맞는 글자색을 쓴다', () =
 });
 test('화면에는 자물쇠 아이콘을 쓰지 않는다', () => {
   expect(hits(src.filter(p => p.endsWith('.tsx')), /name=["']lock["']/)).toEqual([]);
+  expect(readFileSync('src/ui/icons.tsx', 'utf8')).not.toMatch(/\block\s*:/);
 });

@@ -11,6 +11,7 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-padding-bottom: calc(var(--tabbar-h) + var(--safe-bottom) + var(--space-4));
+  scrollbar-color: var(--line-strong) var(--bg);
 }
 
 body {
@@ -121,10 +122,6 @@ button:disabled {
     transition-duration: 1ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-html {
-  scrollbar-color: var(--line-strong) var(--bg);
 }
 input,
 textarea {

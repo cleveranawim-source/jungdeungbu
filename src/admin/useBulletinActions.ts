@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { describeError, useToast } from '../app/Toast';
-import { loadBulletinForEdit, saveBulletinDraft, publishBulletin, unpublishBulletin, discardBulletinDraft } from '../data/bulletinDrafts';
+import {
+  loadBulletinForEdit,
+  saveBulletinDraft,
+  publishBulletin,
+  unpublishBulletin,
+  discardBulletinDraft,
+} from '../data/bulletinDrafts';
 import { saveTemplate } from '../data/content';
 import { db } from '../lib/firebase';
 import type { BulletinEditStatus, BulletinForEdit } from '../types';
@@ -11,11 +17,24 @@ interface Meta {
   draftAt: number | null;
   publishedAt: number | null;
 }
-export function useBulletinActions({ date, myUid, edit, draft, focusProblem, onSaved, onDestructive }: {
- date:string; myUid:string; edit?:BulletinForEdit; draft:EditorDraft<BulletinForm>;
- focusProblem():void; onSaved(published:boolean):void; onDestructive():void;
+export function useBulletinActions({
+  date,
+  myUid,
+  edit,
+  draft,
+  focusProblem,
+  onSaved,
+  onDestructive,
+}: {
+  date: string;
+  myUid: string;
+  edit?: BulletinForEdit;
+  draft: EditorDraft<BulletinForm>;
+  focusProblem(): void;
+  onSaved(published: boolean): void;
+  onDestructive(): void;
 }) {
- const {show} = useToast();
+  const { show } = useToast();
   const [busy, setBusy] = useState<
     'draft' | 'publish' | 'template' | 'unpublish' | 'discard' | null
   >(null);
@@ -101,5 +120,5 @@ export function useBulletinActions({ date, myUid, edit, draft, focusProblem, onS
       setBusy(null);
     }
   }
- return {busy,meta,hasPublished,save,saveAsTemplate,takeDown,discard};
+  return { busy, meta, hasPublished, save, saveAsTemplate, takeDown, discard };
 }

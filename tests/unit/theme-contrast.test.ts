@@ -47,6 +47,7 @@ const BODY: [fg: string, bg: string][] = [
   ['--notice-ink', '--notice-bg'], ['--danger', '--card'], ['--ok', '--card'],
   ['--danger', '--danger-soft'], ['--ink', '--danger-soft'], ['--ok', '--ok-soft'],
   ['--ink', '--card-raised'], ['--muted', '--card-raised'],
+  ['--muted', '--gold-panel'], ['--muted', '--sage-bg'], ['--danger-ink', '--danger'],
   ['--cover-ink', '--cover-bg'], ['--cover-muted', '--cover-bg'],
   ['--cover-button-ink', '--cover-button'], ['--cover-button-ink', '--cover-button-hover'],
   ['--illustration-ink', '--illustration-bg'], ['--sage-ink', '--sage-bg'], ['--gold-panel-ink', '--gold-panel'],

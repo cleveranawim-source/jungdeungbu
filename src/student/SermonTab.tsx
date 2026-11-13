@@ -44,7 +44,7 @@ function SermonList({ token, sundayId }: StudentTabProps) {
             <a className={s.row} href={studentHref(token, 'sermon', x.date)}>
               <span className={s.rowDate}>
                 <span>{Number(x.date.slice(5, 7))}월</span>
-                <strong>{Number(x.date.slice(8))}</strong>
+                <strong>{Number(x.date.slice(8))}<span className="sr-only">일</span></strong>
                 {x.date === sundayId && <span className={s.badge}>이번 주</span>}
               </span>
               <span className={s.rowCopy}>
