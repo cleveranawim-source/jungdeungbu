@@ -8,7 +8,6 @@ import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { ChoiceChips, type Choice } from '../ui/ChoiceChips';
 import { ConfirmAction } from '../ui/ConfirmAction';
-import { EmptyState } from '../ui/EmptyState';
 import { TextArea } from '../ui/Field';
 import { Icon } from '../ui/icons';
 import { LoadError } from '../ui/LoadError';
@@ -181,9 +180,13 @@ export function PrayerTab({
             <Loading />
           )
         ) : list.data.length === 0 ? (
-          <EmptyState icon="prayer" title="아직 올라온 기도 제목이 없어요">
-            위에서 기도 제목을 올리면 우리 반이 함께 볼 수 있어요.
-          </EmptyState>
+          <div className={s.empty}>
+            <Icon name="prayer" size={20} />
+            <div>
+              <h3>아직 올라온 기도 제목이 없어요</h3>
+              <p>기도 제목을 올리면 우리 반이 함께 볼 수 있어요.</p>
+            </div>
+          </div>
         ) : (
           <ul className={s.list}>
             {list.data.map((p) => {

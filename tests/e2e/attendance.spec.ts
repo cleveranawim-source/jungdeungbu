@@ -43,6 +43,7 @@ test('네 반 이상은 선택 칸에서 반을 바꾸고, 반 ID는 DOM에 남�
   await picker.selectOption({ label: '2반' });
   await expect(page.getByRole('button', { name: /이바다/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /김하늘/ })).toHaveCount(0);
+  expect(await page.locator('html').innerHTML()).not.toMatch(/\bclass[A-D]\b/);
   await picker.selectOption({ label: '4반' });
   await expect(page.getByRole('heading', { name: '이 반에는 아직 학생이 없어요' })).toBeVisible();
   await page.getByRole('tab', { name: '우리 반' }).click();

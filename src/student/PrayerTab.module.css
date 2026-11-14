@@ -4,6 +4,24 @@
   gap: var(--space-4);
 }
 .hint { color: var(--muted); font-size: var(--text-sm); }
+.empty {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+}
+.empty > svg {
+  flex-shrink: 0;
+  color: var(--accent-text);
+}
+.empty h3 {
+  font-weight: var(--weight-medium);
+}
+.empty p {
+  margin-top: var(--space-2);
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
 .fields {
   margin: 0;
   padding: 0;
