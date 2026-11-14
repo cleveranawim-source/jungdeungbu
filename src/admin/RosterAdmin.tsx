@@ -16,7 +16,6 @@ import { normalizeBirthday, parseRoster } from '../lib/roster';
 import type { ClassDoc, Student, WithId } from '../types';
 import { Button, LinkButton } from '../ui/Button';
 import { Card } from '../ui/Card';
-import { ChoiceChips } from '../ui/ChoiceChips';
 import { ConfirmAction } from '../ui/ConfirmAction';
 import { EmptyState } from '../ui/EmptyState';
 import { Field, Select, TextArea } from '../ui/Field';
@@ -123,23 +122,12 @@ export function RosterAdmin() {
   }
 
   const className = (id: string) => classes.find((c) => c.id === id)?.name ?? '지워진 반';
-  const shown = filter === ALL ? students : students.filter((x) => x.classId === filter);
-  const chip = (label: string, n: number) => (
-    <>
-      {label}
-      <span className={s.count}>{n}명</span>
-    </>
-  );
-  const filterOptions = [
-    { value: ALL, label: chip('전체', students.length) },
-    ...classes.map((c) => ({
-      value: c.id,
-      label: chip(c.name, students.filter((x) => x.classId === c.id).length),
-    })),
-  ];
+  // 다시 불러온 목록에서 반이 사라지면 선택 칸·목록·추가 폼 모두 전체를 기준으로 한다.
+  const activeFilter = classes.some((c) => c.id === filter) ? filter : ALL;
+  const shown = activeFilter === ALL ? students : students.filter((x) => x.classId === activeFilter);
 
   async function added(token: string, classId: string) {
-    if (filter !== ALL && filter !== classId) setFilter(classId);
+    if (activeFilter !== ALL && activeFilter !== classId) setFilter(classId);
     setOpen(token);
     setReveal(token);
     await reload();
@@ -147,21 +135,31 @@ export function RosterAdmin() {
 
   return (
     <div className={s.stack} aria-busy={loading || undefined}>
-      <ChoiceChips
-        legend="반 보기"
-        options={filterOptions}
-        value={filter}
-        onChange={(v) => {
-          setFilter(v);
-          setOpen(null);
-        }}
-      />
+      <div className={s.filter}>
+        <Select
+          label="반 보기"
+          value={activeFilter === ALL ? 0 : classes.findIndex((c) => c.id === activeFilter) + 1}
+          onChange={(e) => {
+            // 문서 ID 대신 순번만 DOM에 둔다(0은 전체).
+            const index = Number(e.target.value);
+            setFilter(index === 0 ? ALL : classes[index - 1].id);
+            setOpen(null);
+          }}
+        >
+          <option value={0}>전체 · {students.length}명</option>
+          {classes.map((c, index) => (
+            <option key={c.id} value={index + 1}>
+              {c.name} · {students.filter((st) => st.classId === c.id).length}명
+            </option>
+          ))}
+        </Select>
+      </div>
 
       <div className={s.columns}>
         <Card
           tone="work"
           title={
-            filter === ALL ? `학생 ${students.length}명` : `${className(filter)} ${shown.length}명`
+            activeFilter === ALL ? `학생 ${students.length}명` : `${className(activeFilter)} ${shown.length}명`
           }
         >
           {shown.length === 0 ? (
@@ -175,7 +173,7 @@ export function RosterAdmin() {
                   classes={classes}
                   meta={
                     [
-                      filter === ALL && className(st.classId),
+                      activeFilter === ALL && className(st.classId),
                       st.birthday && `생일 ${birthdayLabel(st.birthday)}`,
                       st.newcomer === true && '새 친구',
                     ]
@@ -204,7 +202,7 @@ export function RosterAdmin() {
         <aside className={s.register}>
           <NewStudent
             classes={classes}
-            defaultClassId={filter === ALL ? classes[0].id : filter}
+            defaultClassId={activeFilter === ALL ? classes[0].id : activeFilter}
             onAdded={added}
           />
           <BulkRegister classes={classes} onDone={reload} />
