@@ -122,10 +122,12 @@ export function RosterAdmin() {
   }
 
   const className = (id: string) => classes.find((c) => c.id === id)?.name ?? '지워진 반';
-  const shown = filter === ALL ? students : students.filter((x) => x.classId === filter);
+  // 다시 불러온 목록에서 반이 사라지면 선택 칸·목록·추가 폼 모두 전체를 기준으로 한다.
+  const activeFilter = classes.some((c) => c.id === filter) ? filter : ALL;
+  const shown = activeFilter === ALL ? students : students.filter((x) => x.classId === activeFilter);
 
   async function added(token: string, classId: string) {
-    if (filter !== ALL && filter !== classId) setFilter(classId);
+    if (activeFilter !== ALL && activeFilter !== classId) setFilter(classId);
     setOpen(token);
     setReveal(token);
     await reload();
@@ -136,7 +138,7 @@ export function RosterAdmin() {
       <div className={s.filter}>
         <Select
           label="반 보기"
-          value={filter === ALL ? 0 : classes.findIndex((c) => c.id === filter) + 1}
+          value={activeFilter === ALL ? 0 : classes.findIndex((c) => c.id === activeFilter) + 1}
           onChange={(e) => {
             // 문서 ID 대신 순번만 DOM에 둔다(0은 전체).
             const index = Number(e.target.value);
@@ -157,7 +159,7 @@ export function RosterAdmin() {
         <Card
           tone="work"
           title={
-            filter === ALL ? `학생 ${students.length}명` : `${className(filter)} ${shown.length}명`
+            activeFilter === ALL ? `학생 ${students.length}명` : `${className(activeFilter)} ${shown.length}명`
           }
         >
           {shown.length === 0 ? (
@@ -171,7 +173,7 @@ export function RosterAdmin() {
                   classes={classes}
                   meta={
                     [
-                      filter === ALL && className(st.classId),
+                      activeFilter === ALL && className(st.classId),
                       st.birthday && `생일 ${birthdayLabel(st.birthday)}`,
                       st.newcomer === true && '새 친구',
                     ]
@@ -200,7 +202,7 @@ export function RosterAdmin() {
         <aside className={s.register}>
           <NewStudent
             classes={classes}
-            defaultClassId={filter === ALL ? classes[0].id : filter}
+            defaultClassId={activeFilter === ALL ? classes[0].id : activeFilter}
             onAdded={added}
           />
           <BulkRegister classes={classes} onDone={reload} />

@@ -89,7 +89,8 @@ export function InfoPairRows({
                 <Icon name="chevronDown" size={20} />
               </button>
               <div id={panelId} hidden={!expanded} className={s.panel} onKeyDown={(e) => {
-                if (e.key === 'Escape' && !e.nativeEvent.isComposing) {
+                // Safari의 조합 취소 직후에는 isComposing이 false여도 keyCode가 229다.
+                if (e.key === 'Escape' && !e.nativeEvent.isComposing && e.nativeEvent.keyCode !== 229) {
                   e.preventDefault();
                   e.stopPropagation();
                   close(row.k);

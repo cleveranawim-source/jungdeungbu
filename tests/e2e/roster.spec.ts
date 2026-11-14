@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { collection, doc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, setDoc } from 'firebase/firestore';
 import { addDays, nearestSunday, toDateId } from '../../src/lib/dates';
 import { closeStudents, expectToast, loginAsEmu, openStudent, readClipboard, studentHash } from './helpers';
 import { clear, seed, seedAdmin } from './seed';
@@ -249,7 +249,12 @@ for (const width of [360, 1280]) {
     await expect(picker).toHaveValue('0');
     await expect(picker.locator('option')).toHaveText(['전체 · 3명', '1반 · 2명', '2반 · 1명', '3반 · 0명']);
     await expect(rows).toHaveCount(3);
+    const opened = page.getByRole('button', { name: /^고하람/ });
+    await opened.click();
+    await expect(opened).toHaveAttribute('aria-expanded', 'true');
     await picker.selectOption('1');
+    // 같은 학생이 남는 반으로 바꿔도 열린 줄은 접힌다.
+    await expect(opened).toHaveAttribute('aria-expanded', 'false');
     await expect(rows).toHaveCount(2);
     await expect(rows.nth(0)).toContainText('고하람');
     await expect(rows.nth(1)).toContainText('문새봄');
@@ -266,3 +271,39 @@ for (const width of [360, 1280]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }
+
+test('다시 불러온 반 목록에서 선택한 반이 없어지면 선택 칸과 학생 목록 모두 전체로 돌아간다', async ({ page }) => {
+  const token = 'compactStudent00000000';
+  await seed(async (db) => {
+    await setDoc(doc(db, 'classes/removedClass'), { name: '1반', grade: 1, order: 1 });
+    await setDoc(doc(db, 'classes/remainingClass'), { name: '2반', grade: 1, order: 2 });
+    for (const [id, name, classId] of [
+      [token, '고하람', 'removedClass'],
+      ['compactStudent00000001', '문새봄', 'remainingClass'],
+    ]) {
+      await setDoc(doc(db, 'students', id), { name, classId, birthday: null, active: true, streak: 0, lastPresent: null });
+    }
+  });
+  await loginAsEmu(page, ADMIN, '관리자');
+  await page.goto('#/t/admin/roster');
+  const picker = page.getByRole('combobox', { name: '반 보기', exact: true });
+  await picker.selectOption('1');
+  await page.getByRole('button', { name: /^고하람/ }).click();
+  // 다른 관리자가 반을 정리한 뒤, 이 화면의 저장으로 자료를 다시 불러오는 상황.
+  await seed(async (db) => {
+    await setDoc(doc(db, 'students', token), { classId: 'remainingClass' }, { merge: true });
+    await deleteDoc(doc(db, 'classes/removedClass'));
+  });
+  const form = page.getByRole('form', { name: '고하람 정보 고치기' });
+  await form.getByLabel('생일').fill('03-05');
+  await form.getByRole('button', { name: '저장', exact: true }).click();
+  await expectToast(page, '저장했어요');
+  await expect(picker.locator('option')).toHaveText(['전체 · 2명', '2반 · 2명']);
+  await expect(picker).toHaveValue('0');
+  await expect(page.getByRole('heading', { name: '학생 2명', exact: true })).toBeVisible();
+  const list = page.getByRole('list', { name: '학생 목록' });
+  await expect(list.getByRole('button', { name: /^고하람/ })).toBeVisible();
+  await expect(list.getByRole('button', { name: /^문새봄/ })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: '반', exact: true }).locator('option:checked')).toHaveText('2반');
+  for (const id of ['removedClass', 'remainingClass']) expect(await page.locator('body').innerHTML()).not.toContain(id);
+});

@@ -214,6 +214,12 @@ test('안내 행은 키보드로 한 줄씩 열고 추가·접기·삭제 뒤 �
   await expect(group.getByLabel('2번 직분', { exact: true })).toBeFocused();
   await expect(first).toHaveAttribute('aria-expanded', 'false');
   await expect(panel).toBeHidden();
+  const composing = group.getByLabel('2번 직분', { exact: true });
+  await composing.dispatchEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, isComposing: true });
+  await expect(second).toHaveAttribute('aria-expanded', 'true');
+  await composing.dispatchEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 229, isComposing: false });
+  await expect(second).toHaveAttribute('aria-expanded', 'true');
+  await expect(composing).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(second).toBeFocused();
 
@@ -277,4 +283,37 @@ test('요약 행도 한 칸만 채운 줄은 저장하고 양쪽 빈 줄만 제�
   await expect(contacts.getByRole('button', { name: /이름 없음.*010-0000-0000/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /내용 없음/ })).toHaveCount(0);
   await expect(page.getByRole('button', { name: '저장', exact: true })).toBeDisabled();
+});
+
+test('안내 행 삭제는 저장 전 변경이며 저장·새로고침 뒤에도 삭제된 목록을 유지한다', async ({ page }) => {
+  await seedPeople();
+  await openInfoAdmin(page);
+  const save = page.getByRole('button', { name: '저장', exact: true });
+  await expect(save).toBeDisabled();
+  const contactsSection = page.locator('#info-contacts');
+  await expect(contactsSection.getByText('학생 링크를 받은 사람과 선생님만 볼 수 있어요', { exact: true })).toBeVisible();
+  await expect(contactsSection.getByText(/학생 링크를 받은 사람과 선생님만 볼 수 있어요/)).toHaveCount(1);
+  const expected = {
+    servants: [{ role: '담당', names: '고하람' }, { role: '교사', names: '문새봄' }],
+    contacts: [{ label: '고하람', phone: '010-0000-0000' }],
+  };
+  for (const [legend, key] of [['섬기는 분들', 'servants'], ['연락처', 'contacts']] as const) {
+    const group = page.getByRole('group', { name: legend, exact: true });
+    await group.getByRole('button', { name: /고하람/ }).click();
+    await group.getByRole('button', { name: `${legend} 1번 지우기` }).click();
+    await expect(group.getByRole('button', { name: /고하람/ })).toHaveCount(0);
+    await expect(save).toBeEnabled();
+    expect(await readRaw('memberInfo/main')).toEqual(expected); // 삭제만으로는 서버에 쓰지 않는다.
+    expected[key].splice(0, 1);
+    await save.click();
+    await expectToast(page, '저장했어요');
+    await expect(save).toBeDisabled();
+    expect(await readRaw('memberInfo/main')).toEqual(expected);
+    await page.reload();
+    await expect(page.getByLabel('표어', { exact: true })).toBeVisible();
+    await expect(group.getByRole('button', { name: /고하람/ })).toHaveCount(0);
+    await expect(page.getByRole('group', { name: '섬기는 분들', exact: true }).getByRole('button', { name: /교사.*문새봄/ })).toBeVisible();
+    await expect(group.locator('button[aria-expanded]')).toHaveCount(expected[key].length);
+    await expect(save).toBeDisabled();
+  }
 });

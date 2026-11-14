@@ -222,19 +222,16 @@ export function InfoAdmin() {
           title="연락처"
           description="학생 링크를 받은 사람과 선생님만 볼 수 있어요"
         >
-          <div className={s.fields}>
-            <InfoPairRows
-              legend="연락처"
-              labelA="이름"
-              labelB="전화번호"
-              addLabel="연락처 추가"
-              inputModeB="tel"
-              rows={form.contacts}
-              savedRows={savedRows.contacts}
-              onChange={(contacts) => update({ contacts })}
-            />
-            <p className={s.hint}>개인 번호는 학생 링크를 받은 사람과 선생님만 볼 수 있어요</p>
-          </div>
+          <InfoPairRows
+            legend="연락처"
+            labelA="이름"
+            labelB="전화번호"
+            addLabel="연락처 추가"
+            inputModeB="tel"
+            rows={form.contacts}
+            savedRows={savedRows.contacts}
+            onChange={(contacts) => update({ contacts })}
+          />
         </EditorSection>
       </EditorLayout>
       <EditorBar
