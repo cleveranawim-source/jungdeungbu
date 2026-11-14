@@ -16,7 +16,6 @@ import { normalizeBirthday, parseRoster } from '../lib/roster';
 import type { ClassDoc, Student, WithId } from '../types';
 import { Button, LinkButton } from '../ui/Button';
 import { Card } from '../ui/Card';
-import { ChoiceChips } from '../ui/ChoiceChips';
 import { ConfirmAction } from '../ui/ConfirmAction';
 import { EmptyState } from '../ui/EmptyState';
 import { Field, Select, TextArea } from '../ui/Field';
@@ -124,19 +123,6 @@ export function RosterAdmin() {
 
   const className = (id: string) => classes.find((c) => c.id === id)?.name ?? '지워진 반';
   const shown = filter === ALL ? students : students.filter((x) => x.classId === filter);
-  const chip = (label: string, n: number) => (
-    <>
-      {label}
-      <span className={s.count}>{n}명</span>
-    </>
-  );
-  const filterOptions = [
-    { value: ALL, label: chip('전체', students.length) },
-    ...classes.map((c) => ({
-      value: c.id,
-      label: chip(c.name, students.filter((x) => x.classId === c.id).length),
-    })),
-  ];
 
   async function added(token: string, classId: string) {
     if (filter !== ALL && filter !== classId) setFilter(classId);
@@ -147,15 +133,25 @@ export function RosterAdmin() {
 
   return (
     <div className={s.stack} aria-busy={loading || undefined}>
-      <ChoiceChips
-        legend="반 보기"
-        options={filterOptions}
-        value={filter}
-        onChange={(v) => {
-          setFilter(v);
-          setOpen(null);
-        }}
-      />
+      <div className={s.filter}>
+        <Select
+          label="반 보기"
+          value={filter === ALL ? 0 : classes.findIndex((c) => c.id === filter) + 1}
+          onChange={(e) => {
+            // 문서 ID 대신 순번만 DOM에 둔다(0은 전체).
+            const index = Number(e.target.value);
+            setFilter(index === 0 ? ALL : classes[index - 1].id);
+            setOpen(null);
+          }}
+        >
+          <option value={0}>전체 · {students.length}명</option>
+          {classes.map((c, index) => (
+            <option key={c.id} value={index + 1}>
+              {c.name} · {students.filter((st) => st.classId === c.id).length}명
+            </option>
+          ))}
+        </Select>
+      </div>
 
       <div className={s.columns}>
         <Card

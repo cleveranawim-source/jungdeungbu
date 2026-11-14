@@ -46,10 +46,9 @@
   font-size: var(--text-sm);
 }
 
-.count {
-  margin-left: var(--space-1);
-  color: var(--muted);
-  font-weight: var(--weight-regular);
+.filter {
+  width: 100%;
+  max-width: 360px;
 }
 .streak {
   color: var(--accent-text);

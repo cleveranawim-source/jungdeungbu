@@ -226,3 +226,43 @@ test('새 친구 표시는 나중에 끄고 켤 수 있다', async ({ page }) =>
   await expectToast(page, '저장했어요');
   await expect(page.getByRole('button', { name: /^새봄/ })).toContainText('새 친구');
 });
+
+for (const width of [360, 1280]) {
+  test(`반 선택 칸은 인원을 보여 주고 선택한 반과 전체를 오간다 (${width}px)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    const classIds = ['compactClassA', 'compactClassB', 'compactClassC'];
+    await seed(async (db) => {
+      for (const [index, id] of classIds.entries()) {
+        await setDoc(doc(db, 'classes', id), { name: `${index + 1}반`, grade: 1, order: index });
+      }
+      for (const [index, name] of ['고하람', '문새봄', '서가온'].entries()) {
+        await setDoc(doc(db, 'students', `compactStudent${String(index).padStart(8, '0')}`), {
+          name, classId: classIds[index === 2 ? 1 : 0], birthday: null,
+          active: true, streak: 0, lastPresent: null,
+        });
+      }
+    });
+    await loginAsEmu(page, ADMIN, '관리자');
+    await page.goto('#/t/admin/roster');
+    const picker = page.getByRole('combobox', { name: '반 보기', exact: true });
+    const rows = page.getByRole('list', { name: '학생 목록' }).getByRole('button');
+    await expect(picker).toHaveValue('0');
+    await expect(picker.locator('option')).toHaveText(['전체 · 3명', '1반 · 2명', '2반 · 1명', '3반 · 0명']);
+    await expect(rows).toHaveCount(3);
+    await picker.selectOption('1');
+    await expect(rows).toHaveCount(2);
+    await expect(rows.nth(0)).toContainText('고하람');
+    await expect(rows.nth(1)).toContainText('문새봄');
+    await expect(page.getByRole('heading', { name: '1반 2명', exact: true })).toBeVisible();
+    await picker.selectOption('2');
+    await expect(rows).toHaveCount(1);
+    await expect(rows.first()).toContainText('서가온');
+    await picker.selectOption('3');
+    await expect(rows).toHaveCount(0);
+    await expect(page.getByText('이 반에는 아직 학생이 없어요. 아래에서 추가해 주세요.')).toBeVisible();
+    await picker.selectOption('0');
+    await expect(rows).toHaveCount(3);
+    for (const id of classIds) expect(await page.locator('body').innerHTML()).not.toContain(id);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  });
+}
