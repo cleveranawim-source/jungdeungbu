@@ -10,7 +10,8 @@ import { Field, TextArea } from '../ui/Field';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
 import { EditorBar, EditorErrorLink } from './EditorBar';
-import { PairRows } from './PairRows';
+import { InfoPairRows } from './InfoPairRows';
+import { savedPairRows } from './infoPairRowsState';
 import { EditorLayout, EditorSection } from './EditorLayout';
 import { MAP_ERROR, fromSaved, readForm, snapshot, type Form } from './infoAdminForm';
 import s from './InfoAdmin.module.css';
@@ -31,6 +32,7 @@ export function InfoAdmin() {
   const [form, setForm] = useState<Form | null>(null);
   // 마지막으로 불러오거나 저장한 값(이것과 같으면 저장 버튼이 잠긴다)
   const [base, setBase] = useState('');
+  const [savedRows, setSavedRows] = useState<Pick<Form, 'servants' | 'contacts'>>({ servants: [], contacts: [] });
   const [busy, setBusy] = useState(false);
   const [checked, setChecked] = useState(false);
   const [focusBad, setFocusBad] = useState(0);
@@ -44,6 +46,7 @@ export function InfoAdmin() {
     const f = fromSaved(data.church, data.members);
     setForm(f);
     setBase(snapshot(f));
+    setSavedRows(f);
   }, [data]);
 
   useEffect(() => {
@@ -73,9 +76,14 @@ export function InfoAdmin() {
     setBusy(true);
     try {
       await saveInfo(db, read.church, read.members);
-      const saved = fromSaved(read.church, read.members);
+      const saved = {
+        ...fromSaved(read.church, read.members),
+        servants: savedPairRows(form!.servants),
+        contacts: savedPairRows(form!.contacts),
+      };
       setForm((current) => (current && snapshot(current) === snapshot(form!) ? saved : current));
       setBase(snapshot(saved));
+      setSavedRows(saved);
       setChecked(false);
       setPending(null);
       show('저장했어요');
@@ -198,13 +206,14 @@ export function InfoAdmin() {
           description="학생 링크를 받은 사람과 선생님만 볼 수 있어요"
           tone="sage"
         >
-          <PairRows
+          <InfoPairRows
             legend="섬기는 분들"
             labelA="직분"
             labelB="이름"
             addLabel="한 줄 추가"
             multilineB
             rows={form.servants}
+            savedRows={savedRows.servants}
             onChange={(servants) => update({ servants })}
           />
         </EditorSection>
@@ -214,13 +223,14 @@ export function InfoAdmin() {
           description="학생 링크를 받은 사람과 선생님만 볼 수 있어요"
         >
           <div className={s.fields}>
-            <PairRows
+            <InfoPairRows
               legend="연락처"
               labelA="이름"
               labelB="전화번호"
               addLabel="연락처 추가"
               inputModeB="tel"
               rows={form.contacts}
+              savedRows={savedRows.contacts}
               onChange={(contacts) => update({ contacts })}
             />
             <p className={s.hint}>개인 번호는 학생 링크를 받은 사람과 선생님만 볼 수 있어요</p>

@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { doc, setDoc } from 'firebase/firestore';
 import { nearestSunday, toDateId } from '../../src/lib/dates';
 import { closeStudents, expectToast, loginAsEmu, openStudent } from './helpers';
-import { clear, seed, seedAdmin } from './seed';
+import { clear, readRaw, seed, seedAdmin } from './seed';
 
 const ADMIN = 'admin@example.com';
 const TOKEN = 'testStudentToken_00061'; // 22자
@@ -48,14 +48,14 @@ test('관리자가 안내를 저장하면 학생 주보 탭에 보인다', async
   const servants = page.getByRole('group', { name: '섬기는 분들', exact: true });
   await servants.getByRole('button', { name: '한 줄 추가' }).click();
   await servants.getByLabel('1번 직분', { exact: true }).fill('담당');
-  await servants.getByLabel('1번 이름', { exact: true }).fill('이승열 목사');
+  await servants.getByLabel('1번 이름', { exact: true }).fill('고하람 목사');
 
   await page.getByLabel('예배 에티켓', { exact: true }).fill('예배시작은 9:30이며, 9:15부터 찬양이 시작됩니다.\n\n휴대폰은 무음으로 해요.');
 
-  await page.getByLabel('교회 전화', { exact: true }).fill('02-303-2501');
+  await page.getByLabel('교회 전화', { exact: true }).fill('010-0000-0000');
   const contacts = page.getByRole('group', { name: '연락처', exact: true });
   await contacts.getByRole('button', { name: '연락처 추가' }).click();
-  await contacts.getByLabel('1번 이름', { exact: true }).fill('이승열 목사님');
+  await contacts.getByLabel('1번 이름', { exact: true }).fill('고하람 목사님');
   await contacts.getByLabel('1번 전화번호', { exact: true }).fill('010-0000-0000');
 
   await expect(save).toBeEnabled();
@@ -68,21 +68,23 @@ test('관리자가 안내를 저장하면 학생 주보 탭에 보인다', async
   await expect(card.getByText('동행하는 자')).toBeVisible();
   await card.getByRole('button', { name: /섬기는 분들/ }).click();
   await expect(card.getByText('담당', { exact: true })).toBeVisible();
-  await expect(card.getByText('이승열 목사', { exact: true })).toBeVisible();
+  await expect(card.getByText('고하람 목사', { exact: true })).toBeVisible();
   await card.getByRole('button', { name: /예배 에티켓/ }).click();
   await expect(card.getByText('예배시작은 9:30이며, 9:15부터 찬양이 시작됩니다.')).toBeVisible();
   await expect(card.getByText('휴대폰은 무음으로 해요.')).toBeVisible();
-  await expect(card.getByText(/02-303-2501/)).toBeVisible();
+  await expect(card.getByRole('region', { name: '오시는 길' }).getByRole('link', { name: '010-0000-0000' })).toBeVisible();
   await card.getByRole('button', { name: /선생님 연락처/ }).click();
-  await expect(card.getByText(/010-0000-0000/)).toBeVisible();
+  await expect(card.locator('dl > div').filter({ hasText: '고하람 목사님' }).getByRole('link', { name: '010-0000-0000' })).toBeVisible();
 
   // 새로고침해도 값이 남는다
   await page.reload();
   await expect(page.getByLabel('표어', { exact: true })).toHaveValue('동행하는 자');
+  await servants.getByRole('button', { name: /담당.*고하람 목사/ }).click();
   await expect(page.getByRole('group', { name: '섬기는 분들', exact: true }).getByLabel('1번 이름', { exact: true }))
-    .toHaveValue('이승열 목사');
+    .toHaveValue('고하람 목사');
   await expect(page.getByLabel('예배 에티켓', { exact: true })).toHaveValue(
     '예배시작은 9:30이며, 9:15부터 찬양이 시작됩니다.\n휴대폰은 무음으로 해요.');
+  await contacts.getByRole('button', { name: /고하람 목사님.*010-0000-0000/ }).click();
   await expect(page.getByRole('group', { name: '연락처', exact: true }).getByLabel('1번 전화번호', { exact: true }))
     .toHaveValue('010-0000-0000');
   await expect(page.getByRole('button', { name: '저장', exact: true })).toBeDisabled();
@@ -99,6 +101,10 @@ test('지도 링크가 https 주소가 아니면 저장하지 않는다', async 
   await expect(error).toBeVisible();
   await expect(map).toHaveAttribute('aria-invalid', 'true');
   await expect(map).toHaveAccessibleDescription(/https:\/\/ 로 시작하는 주소를 붙여 넣어 주세요/);
+  await expect(map).toBeFocused();
+  await page.getByLabel('표어', { exact: true }).focus();
+  await page.getByRole('button', { name: '지도 링크를 확인해 주세요 — 고칠 곳으로' }).click();
+  await expect(map).toBeFocused();
   await expect(page.getByRole('status').filter({ hasText: '저장했어요' })).toHaveCount(0);
 
   // 아무것도 저장되지 않았다
@@ -133,4 +139,142 @@ test('저장 안 한 채 관리 메뉴로 나가려 하면 묻는다: 계속 쓰
   await expect(page.getByRole('navigation', { name: '관리 메뉴' })).toBeVisible();
   await page.getByRole('link', { name: /^중등부 안내/ }).click();
   await expect(page.getByLabel('표어', { exact: true })).toHaveValue(''); // 저장하지 않았다
+});
+
+async function seedPeople() {
+  await seed((db) => setDoc(doc(db, 'memberInfo/main'), {
+    servants: [{ role: '담당', names: '고하람' }, { role: '교사', names: '문새봄' }],
+    contacts: [{ label: '고하람', phone: '010-0000-0000' }],
+  }));
+}
+
+test('요약 줄을 펼쳐 고친 내용은 접어도 남고 전체 저장·새로고침 뒤 유지된다', async ({ page }) => {
+  await seedPeople();
+  await openInfoAdmin(page);
+  const servants = page.getByRole('group', { name: '섬기는 분들', exact: true });
+  const contacts = page.getByRole('group', { name: '연락처', exact: true });
+  const summary = servants.getByRole('button', { name: /담당.*고하람/ });
+  await expect(summary).toHaveAttribute('aria-expanded', 'false');
+  await expect(servants.getByLabel('1번 이름', { exact: true })).toBeHidden();
+  await summary.click();
+  await expect(servants.getByLabel('1번 직분', { exact: true })).toBeFocused();
+  const name = servants.getByLabel('1번 이름', { exact: true });
+  await name.fill('서가온\n윤도담');
+  await expect(servants.getByText('저장 전', { exact: true })).toBeVisible();
+  await name.fill('고하람');
+  await expect(servants.getByText('저장 전', { exact: true })).toHaveCount(0);
+  await name.fill('서가온\n윤도담');
+  await servants.getByRole('button', { name: '접기', exact: true }).click();
+  const changed = servants.getByRole('button', { name: /담당.*서가온.*윤도담.*저장 전/ });
+  await expect(changed).toBeFocused();
+  await changed.click();
+  await expect(name).toHaveValue('서가온\n윤도담');
+  await contacts.getByRole('button', { name: /고하람.*010-0000-0000/ }).click();
+  await contacts.getByLabel('1번 이름', { exact: true }).fill('서가온');
+  // 두 목록은 독립적이고, 열기/접기만으로 서버에 쓰지 않는다.
+  await expect(changed).toHaveAttribute('aria-expanded', 'true');
+  expect((await readRaw('memberInfo/main'))?.servants).toEqual([
+    { role: '담당', names: '고하람' }, { role: '교사', names: '문새봄' },
+  ]);
+  await page.getByRole('button', { name: '저장', exact: true }).click();
+  await expectToast(page, '저장했어요');
+  await expect(servants.getByText('저장 전', { exact: true })).toHaveCount(0);
+  await expect(contacts.getByText('저장 전', { exact: true })).toHaveCount(0);
+  await page.reload();
+  await servants.getByRole('button', { name: /담당.*서가온.*윤도담/ }).click();
+  await expect(name).toHaveValue('서가온\n윤도담');
+  await contacts.getByRole('button', { name: /서가온.*010-0000-0000/ }).click();
+  await expect(contacts.getByLabel('1번 이름', { exact: true })).toHaveValue('서가온');
+  await expect(contacts.getByLabel('1번 전화번호', { exact: true })).toHaveValue('010-0000-0000');
+  await expect(page.getByRole('button', { name: '저장', exact: true })).toBeDisabled();
+});
+
+test('안내 행은 키보드로 한 줄씩 열고 추가·접기·삭제 뒤 초점을 돌려준다', async ({ page }) => {
+  await seedPeople();
+  await openInfoAdmin(page);
+  const group = page.getByRole('group', { name: '섬기는 분들', exact: true });
+  const first = group.getByRole('button', { name: /담당.*고하람/ });
+  const second = group.getByRole('button', { name: /교사.*문새봄/ });
+  await first.focus();
+  await page.keyboard.press('Enter');
+  await expect(group.getByLabel('1번 직분', { exact: true })).toBeFocused();
+  const panel = page.locator(`[id="${await first.getAttribute('aria-controls')}"]`);
+  await expect(panel).toBeVisible();
+  await page.keyboard.press('Tab');
+  await expect(group.getByLabel('1번 이름', { exact: true })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(group.getByRole('button', { name: '섬기는 분들 1번 지우기' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(group.getByRole('button', { name: '접기', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(first).toBeFocused();
+  await first.press('Enter');
+  await second.focus();
+  await page.keyboard.press('Space');
+  await expect(group.getByLabel('2번 직분', { exact: true })).toBeFocused();
+  await expect(first).toHaveAttribute('aria-expanded', 'false');
+  await expect(panel).toBeHidden();
+  await page.keyboard.press('Escape');
+  await expect(second).toBeFocused();
+
+  const add = group.getByRole('button', { name: '한 줄 추가' });
+  await add.focus();
+  await page.keyboard.press('Enter');
+  await expect(group.getByLabel('3번 직분', { exact: true })).toBeFocused();
+  await expect(group.getByRole('button', { name: /내용 없음.*새 줄/ })).toHaveAttribute('aria-expanded', 'true');
+  await page.keyboard.insertText('총무');
+  await page.keyboard.press('Tab');
+  await page.keyboard.insertText('서가온');
+  await page.keyboard.press('Escape');
+  const added = group.getByRole('button', { name: /총무.*서가온.*저장 전/ });
+  await expect(added).toBeFocused();
+  // 마지막 행 삭제 → 앞줄, 앞줄 삭제 → 다음 줄, 마지막 남은 줄 삭제 → 추가 버튼.
+  for (const [button, next] of [[added, second], [first, second], [second, add]]) {
+    await button.focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Enter');
+    await expect(next).toBeFocused();
+  }
+});
+
+test('요약 행도 한 칸만 채운 줄은 저장하고 양쪽 빈 줄만 제외한다', async ({ page }) => {
+  await openInfoAdmin(page);
+  const servants = page.getByRole('group', { name: '섬기는 분들', exact: true });
+  const contacts = page.getByRole('group', { name: '연락처', exact: true });
+  await servants.getByRole('button', { name: '한 줄 추가' }).click();
+  await servants.getByLabel('1번 직분', { exact: true }).fill(' 담당 ');
+  await servants.getByRole('button', { name: '한 줄 추가' }).click();
+  await servants.getByLabel('2번 이름', { exact: true }).fill(' 고하람\n문새봄 ');
+  await servants.getByRole('button', { name: '한 줄 추가' }).click();
+  await servants.getByLabel('3번 직분', { exact: true }).fill(' ');
+  await servants.getByLabel('3번 이름', { exact: true }).fill('\n');
+  await contacts.getByRole('button', { name: '연락처 추가' }).click();
+  await contacts.getByLabel('1번 이름', { exact: true }).fill(' 서가온 ');
+  await contacts.getByRole('button', { name: '연락처 추가' }).click();
+  await contacts.getByLabel('2번 전화번호', { exact: true }).fill(' 010-0000-0000 ');
+  await contacts.getByRole('button', { name: '연락처 추가' }).click();
+  await expect(servants.getByRole('button', { name: /담당.*이름 없음/ })).toBeVisible();
+  await expect(servants.getByRole('button', { name: /직분 없음.*고하람.*문새봄/ })).toBeVisible();
+  await expect(contacts.getByRole('button', { name: /서가온.*전화번호 없음/ })).toBeVisible();
+  await expect(contacts.getByRole('button', { name: /이름 없음.*010-0000-0000/ })).toBeVisible();
+  await page.getByRole('button', { name: '저장', exact: true }).click();
+  await expectToast(page, '저장했어요');
+  const expected = {
+    servants: [{ role: '담당', names: '' }, { role: '', names: '고하람\n문새봄' }],
+    contacts: [{ label: '서가온', phone: '' }, { label: '', phone: '010-0000-0000' }],
+  };
+  expect(await readRaw('memberInfo/main')).toEqual(expected);
+  const publicDoc = JSON.stringify(await readRaw('settings/info'));
+  for (const value of ['고하람', '문새봄', '서가온', '010-0000-0000', 'servants', 'contacts']) {
+    expect(publicDoc).not.toContain(value);
+  }
+  await page.reload();
+  await expect(servants.getByRole('button', { name: /담당.*이름 없음/ })).toBeVisible();
+  await expect(servants.getByRole('button', { name: /직분 없음.*고하람.*문새봄/ })).toBeVisible();
+  await expect(contacts.getByRole('button', { name: /서가온.*전화번호 없음/ })).toBeVisible();
+  await expect(contacts.getByRole('button', { name: /이름 없음.*010-0000-0000/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /내용 없음/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '저장', exact: true })).toBeDisabled();
 });
