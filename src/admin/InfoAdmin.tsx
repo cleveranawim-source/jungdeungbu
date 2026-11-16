@@ -121,7 +121,7 @@ export function InfoAdmin() {
           id="info-motto"
           title="올해 표어"
           description="누구나 볼 수 있어요"
-          tone="gold"
+          tone="tint"
         >
           <div className={s.fields}>
             <Field
@@ -204,7 +204,7 @@ export function InfoAdmin() {
           id="info-servants"
           title="섬기는 분들"
           description="학생 링크를 받은 사람과 선생님만 볼 수 있어요"
-          tone="sage"
+          tone="community"
         >
           <InfoPairRows
             legend="섬기는 분들"

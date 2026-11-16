@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import s from './Screen.module.css';
 
 export interface ScreenProps {
-  /** 화면 제목(h1, 고운바탕). 한 화면에 하나. */
+  /** 화면 제목(h1, 프리텐다드). 한 화면에 하나. */
   title?: ReactNode;
   /** 제목 아래 한 줄(날짜·반 이름 등) */
   sub?: ReactNode;

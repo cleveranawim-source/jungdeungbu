@@ -1,0 +1,26 @@
+.cover { margin: 0; overflow: hidden; border: 2px solid var(--accent); border-radius: var(--radius-cover); background: var(--card); color: var(--ink); }
+.art { position: relative; isolation: isolate; min-height: 226px; background: var(--cover-bg); overflow: hidden; }
+.copy { position: relative; padding: var(--space-6) var(--space-5); width: 86%; min-width: 0; }
+.title { display: inline; font-family: var(--font-display); font-weight: var(--weight-display); font-size: clamp(38px, 11.2vw, var(--text-cover)); line-height: 1.12; letter-spacing: -0.04em; color: var(--cover-ink); background: var(--cover-bg); box-decoration-break: clone; overflow-wrap: anywhere; text-wrap: balance; }
+.subtitle { margin-top: var(--space-4); max-width: 13em; width: fit-content; font-size: var(--text-sm); font-weight: var(--weight-semibold); line-height: 1.6; background: var(--cover-bg); color: var(--cover-muted); }
+.foot { padding: var(--space-5); border-top: 2px solid var(--accent); }
+.compact .art { min-height: 212px; }
+.compact .copy { padding: var(--space-5); width: 86%; }
+.compact .title { font-size: var(--text-cover-small); }
+.compact .subtitle { margin-top: var(--space-2); }
+.compact .foot { padding: var(--space-3) var(--space-4); }
+@media (min-width: 600px) {
+  .art { min-height: 260px; }
+  .copy { padding: var(--space-7); }
+  .title { font-size: var(--text-cover-wide); }
+  .foot { padding: var(--space-6) var(--space-7); }
+  .compact .copy { padding: var(--space-5) var(--space-6); }
+  .compact .title { font-size: var(--text-cover); }
+}
+
+/* 로그인은 같은 글꼴·선만 이어가고 큰 장식과 라임 면은 쓰지 않아요. */
+.quiet { border-width: 1px; border-color: var(--line-strong); }
+.quiet .art { min-height: 0; background: var(--section-soft); }
+.quiet .copy { width: 100%; padding: var(--space-6); }
+.quiet .title { background: var(--section-soft); color: var(--section-soft-ink); font-size: var(--text-2xl); font-weight: var(--weight-heading); }
+.quiet .foot { border-top: 1px solid var(--line); padding: var(--space-6); }

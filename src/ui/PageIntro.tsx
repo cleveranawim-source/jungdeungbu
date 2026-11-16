@@ -6,12 +6,12 @@ export function PageIntro({
   title,
   children,
   icon,
-  tone = 'sage',
+  tone = 'community',
 }: {
   title: string;
   children: ReactNode;
   icon: IconName;
-  tone?: 'sage' | 'gold';
+  tone?: 'community' | 'tint';
 }) {
   return (
     <section className={s.intro}>

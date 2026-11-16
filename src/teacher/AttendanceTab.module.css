@@ -65,16 +65,16 @@
   transform: scale(0.97);
 }
 .student[aria-pressed='true'] {
-  background: var(--accent);
+  background: var(--selected-bg);
   border-color: var(--accent);
-  color: var(--accent-ink);
+  color: var(--selected-ink);
 }
 @media (hover: hover) {
   .student[aria-pressed='false']:hover {
     background: var(--accent-soft);
   }
   .student[aria-pressed='true']:hover {
-    background: var(--accent-press);
+    background: var(--selected-bg);
     border-color: var(--accent-press);
   }
 }
@@ -89,11 +89,11 @@
   flex-shrink: 0;
   border: 2px solid var(--line-strong);
   border-radius: 50%;
-  color: var(--accent);
+  color: var(--selected-mark-ink);
 }
 .student[aria-pressed='true'] .tick {
-  background: var(--accent-ink);
-  border-color: var(--accent-ink);
+  background: var(--selected-mark);
+  border-color: var(--selected-ink);
 }
 
 /* 저장 중: 동그라미 둘레에 옅게 숨 쉬는 고리. 움직임 줄이기면 base.css 가 끝 상태(보이는 고리)로 멈춘다 */
@@ -107,7 +107,7 @@
   animation: pending calc(var(--dur-base) * 4) var(--ease-out) infinite alternate;
 }
 .student[aria-busy='true'][aria-pressed='true'] .tick::after {
-  border-color: var(--accent-ink);
+  border-color: var(--selected-ink);
 }
 @keyframes pending {
   from {
@@ -139,7 +139,7 @@
   justify-content: flex-end;
 }
 .student[aria-pressed='true'] .marks {
-  color: var(--accent-ink);
+  color: var(--selected-ink);
 }
 
 .layout {

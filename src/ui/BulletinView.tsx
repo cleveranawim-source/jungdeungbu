@@ -3,7 +3,7 @@ import type { Announcement, BulletinContent, BulletinMembers, Sermon, WithId } f
 import { displayOrder } from '../lib/bulletin';
 import { formatBirthday, formatMonthDay } from '../lib/dates';
 import { Disclosure } from './Disclosure';
-import { IllustratedCover } from './IllustratedCover';
+import { BulletinCover } from './BulletinCover';
 import { NewsSection } from './NewsSection';
 import { SectionJump } from './SectionJump';
 import s from './BulletinView.module.css';
@@ -65,7 +65,7 @@ export function BulletinView({
     <>
       <div className={s.layout} data-reading-columns={information ? 'double' : 'single'}>
         <div className={s.main}>
-          <IllustratedCover
+          <BulletinCover
             compact
             title={
               <>
@@ -79,7 +79,7 @@ export function BulletinView({
               {coverLabel && <span>{coverLabel}</span>}
               {bulletin.issue && <span>{bulletin.issue}</span>}
             </p>
-          </IllustratedCover>
+          </BulletinCover>
           <SectionJump
             items={[
               ...(hasProgram ? [{ label: '예배 순서', id: id('program') }] : []),

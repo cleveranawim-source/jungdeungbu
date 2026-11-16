@@ -32,25 +32,30 @@
   border-bottom: 1px solid var(--line);
 }
 
-.gold,
-.sage {
+.tint,
+.community,
+.feature {
   padding: 0;
   overflow: clip;
 }
-.gold > .title,
-.sage > .title {
+.tint > .title,
+.community > .title,
+.feature > .title {
   padding: var(--space-5);
   margin: 0;
 }
-.gold > .title {
-  background: var(--gold-panel);
-  color: var(--gold-panel-ink);
+.tint > .title {
+  background: var(--section-soft);
+  color: var(--section-soft-ink);
 }
-.sage > .title {
-  background: var(--sage-bg);
-  color: var(--sage-ink);
+.community > .title {
+  background: var(--community-bg);
+  color: var(--community-ink);
 }
-.gold > .body,
-.sage > .body {
+.tint > .body,
+.community > .body,
+.feature > .body {
   padding: var(--space-5);
 }
+
+.feature > .title { background: var(--section-bg); color: var(--section-ink); }

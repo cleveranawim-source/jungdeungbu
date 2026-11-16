@@ -116,7 +116,7 @@ export function PrayerTab({
 
   return (
     <div className={s.layout}>
-      <Card title="작은 마음도 함께 나눠요">
+      <Card title="작은 마음도 함께 나눠요" tone="feature">
         <form className={s.form} onSubmit={submit} noValidate>
           <p className={s.hint}>기도 제목을 적고, 함께 볼 사람을 골라요.</p>
           <fieldset className={s.fields} disabled={teacherDevice || busy}>

@@ -8,7 +8,6 @@ import { db } from '../lib/firebase';
 import { activeStreak } from '../lib/streak';
 import { AttendanceCalendar } from '../ui/AttendanceCalendar';
 import { Card } from '../ui/Card';
-import { JourneyLines } from '../ui/JourneyLines';
 import { Icon } from '../ui/icons';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
@@ -30,7 +29,6 @@ export function MeTab({ student, token, classId, sundayId }: StudentTabProps) {
   return (
     <div className={s.layout}>
       <Card as="section" className={s.me}>
-        <JourneyLines />
         <h2 className={s.name}>{student.name}</h2>
         <dl className={s.facts}>
           <div>
@@ -50,7 +48,7 @@ export function MeTab({ student, token, classId, sundayId }: StudentTabProps) {
         </dl>
       </Card>
 
-      <Card title="이번 학기 출석" tone="gold">
+      <Card title="이번 학기 출석" tone="tint">
         {streak > 0 && (
           <div className={s.attendanceSummary}>
             <p className={s.streak}>

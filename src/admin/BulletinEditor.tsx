@@ -210,7 +210,7 @@ export function BulletinEditor({
             id="editor-word"
             title="이번 주 말씀"
             description="말씀을 먼저 적고 예배를 준비해요."
-            tone="gold"
+            tone="tint"
           >
             <div className={s.fields}>
               <div className={s.wordPair}>
@@ -381,7 +381,7 @@ export function BulletinEditor({
           <EditorSection
             id="editor-extras"
             title="출석·새 친구·생일"
-            tone="sage"
+            tone="community"
             description="불러온 내용을 확인하고 필요한 곳만 고쳐요."
           >
             <BulletinExtrasEditor

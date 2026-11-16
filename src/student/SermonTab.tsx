@@ -35,7 +35,7 @@ function SermonList({ token, sundayId }: StudentTabProps) {
   }
   return (
     <>
-      <PageIntro title="말씀을 다시 마음에 담아요" icon="sermon" tone="gold">
+      <PageIntro title="말씀을 다시 마음에 담아요" icon="sermon" tone="tint">
         주일 말씀을 읽고, 한 주의 삶에 이어 가요.
       </PageIntro>
       <ul className={s.list}>

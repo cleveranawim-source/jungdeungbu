@@ -3,8 +3,8 @@
 }
 
 .me {
-  background: var(--cover-bg);
-  color: var(--cover-ink);
+  background: var(--section-soft);
+  color: var(--section-soft-ink);
   border: 0;
   padding: var(--space-6);
 }
@@ -62,12 +62,12 @@
 }
 .me .facts dt,
 .me .count {
-  color: var(--cover-muted);
+  color: var(--section-soft-ink);
 }
 .me .facts dd,
 .me .num,
 .me .cake {
-  color: var(--cover-ink);
+  color: var(--section-soft-ink);
 }
 .me .name {
   font-size: var(--text-2xl);

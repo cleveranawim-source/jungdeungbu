@@ -1,0 +1,11 @@
+.path {
+  position: absolute;
+  width: 132px;
+  height: 240px;
+  right: -24px;
+  top: 32px;
+  border: 18px solid var(--accent);
+  border-radius: 80px;
+  transform: rotate(32deg);
+  pointer-events: none;
+}

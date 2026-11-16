@@ -180,7 +180,7 @@ function PrayerSection({
   }
 
   return (
-    <Card title={heading} tone={isPrivate ? 'gold' : 'sage'}>
+    <Card title={heading} tone={isPrivate ? 'tint' : 'community'}>
       <p className={s.hint}>{hint}</p>
       {body}
     </Card>
