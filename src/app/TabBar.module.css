@@ -35,7 +35,7 @@
 }
 .tab:focus-visible { outline-offset: -3px; border-radius: var(--radius-md); }
 
-/* 선택된 탭: 채워진 아이콘(밝음 남색 / 어두움 금색) + 굵은 이름과 금색 밑줄 */
+/* 선택된 탭: 채워진 아이콘(밝음 코발트 / 어두움 라임) + 굵은 이름과 강조색 밑줄 */
 .tab::after {
   content: '';
   position: absolute;
@@ -45,11 +45,11 @@
   height: 3px;
   margin-left: -9px;
   border-radius: 2px;
-  background: var(--gold);
+  background: var(--accent-text);
   transform: scaleX(0);
   transition: transform var(--dur-fast) var(--ease-out);
 }
-.tab[aria-selected='true'] { color: var(--ink); font-weight: var(--weight-bold); }
+.tab[aria-selected='true'] { color: var(--accent-text); font-weight: var(--weight-bold); }
 .tab[aria-selected='true'] .icon { color: var(--accent); }
 .tab[aria-selected='true']::after { transform: scaleX(1); }
 .tab:active .icon { transform: scale(0.9); }

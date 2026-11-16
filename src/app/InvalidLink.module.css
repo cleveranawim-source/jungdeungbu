@@ -13,8 +13,8 @@
   width: 80px;
   height: 80px;
   border-radius: var(--radius-cover);
-  background: var(--sage-bg);
-  color: var(--sage-ink);
+  background: var(--community-bg);
+  color: var(--community-ink);
 }
 .title {
   font-size: var(--text-2xl);

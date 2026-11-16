@@ -31,13 +31,13 @@
   font-size: var(--text-sm);
 }
 .week .groupHead {
-  background: var(--cover-bg);
-  color: var(--cover-ink);
+  background: var(--section-soft);
+  color: var(--section-soft-ink);
   padding-block: var(--space-6);
 }
 .week .groupHead h2 { font-size: var(--text-xl); }
 .week .groupHead p {
-  color: var(--cover-muted);
+  color: var(--section-soft-ink);
 }
 .list {
   list-style: none;

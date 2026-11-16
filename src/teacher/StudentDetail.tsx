@@ -116,7 +116,7 @@ export function StudentDetail({ token, teacher, thisSunday }: StudentDetailProps
         </dl>
       </Card>
 
-      <Card title="이번 학기 출석" tone="gold">
+      <Card title="이번 학기 출석" tone="tint">
         {att.data === undefined ? (
           att.error ? (
             <LoadError error={att.error} onRetry={att.reload} />
@@ -131,7 +131,7 @@ export function StudentDetail({ token, teacher, thisSunday }: StudentDetailProps
         )}
       </Card>
 
-      <Card title="학생 링크" tone="sage">
+      <Card title="학생 링크" tone="community">
         <ShareLink token={token} name={student.name} />
       </Card>
     </div>

@@ -58,7 +58,7 @@ export function EditorSection({
   id: string;
   title: string;
   description?: string;
-  tone?: 'gold' | 'sage';
+  tone?: 'tint' | 'community';
   children: ReactNode;
 }) {
   return (

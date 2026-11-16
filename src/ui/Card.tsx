@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react';
 import s from './Card.module.css';
 
-export type CardTone = 'default' | 'accent' | 'quiet' | 'gold' | 'sage' | 'work';
+export type CardTone = 'default' | 'accent' | 'quiet' | 'tint' | 'community' | 'work' | 'feature';
 
 export interface CardProps {
   /** 카드 제목(h2). 화면 제목(h1)은 Screen 이 맡는다. */
   title?: ReactNode;
-  /** default = 흰 면 / accent = 은은한 베이지 면(조용한 강조) / quiet = 점선(빈 상태·개발용) */
+  /** default = 흰 면 / accent = 은은한 선택 면(조용한 강조) / quiet = 점선(빈 상태·개발용) */
   tone?: CardTone;
   as?: 'section' | 'article' | 'div' | 'li';
   className?: string;

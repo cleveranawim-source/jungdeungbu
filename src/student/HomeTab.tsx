@@ -8,7 +8,7 @@ import { db } from '../lib/firebase';
 import { CelebrationBanner } from '../ui/CelebrationBanner';
 import { EmptyState } from '../ui/EmptyState';
 import { Icon } from '../ui/icons';
-import { IllustratedCover } from '../ui/IllustratedCover';
+import { BulletinCover } from '../ui/BulletinCover';
 import { LoadError } from '../ui/LoadError';
 import { Loading } from '../ui/Loading';
 import { PlaceInfo } from '../ui/PlaceInfo';
@@ -41,7 +41,7 @@ export function HomeTab({ student, token, sundayId }: StudentTabProps) {
     <div className={s.layout} data-reading-columns={announcements.length ? 'double' : 'single'}>
       <div className={s.primary}>
         {bulletin ? (
-          <IllustratedCover
+          <BulletinCover
             titleAs="p"
             title={church?.motto.title || '함께 드리는 예배'}
             subtitle={church?.motto.subtitle}
@@ -55,7 +55,7 @@ export function HomeTab({ student, token, sundayId }: StudentTabProps) {
               <span>이번 주 주보 보기</span>
               <Icon name="chevronRight" size={20} />
             </a>
-          </IllustratedCover>
+          </BulletinCover>
         ) : (
           <EmptyState icon="bulletin" title="이번 주 주보가 아직 없어요">
             {formatMonthDay(sundayId)} 주보가 올라오면 여기서 바로 볼 수 있어요.

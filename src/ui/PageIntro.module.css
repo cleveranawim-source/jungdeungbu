@@ -22,11 +22,11 @@
   border-radius: var(--radius-md);
   flex-shrink: 0;
 }
-.sage {
-  background: var(--sage-bg);
-  color: var(--sage-ink);
+.community {
+  background: var(--community-bg);
+  color: var(--community-ink);
 }
-.gold {
-  background: var(--gold-panel);
-  color: var(--gold-panel-ink);
+.tint {
+  background: var(--section-soft);
+  color: var(--section-soft-ink);
 }

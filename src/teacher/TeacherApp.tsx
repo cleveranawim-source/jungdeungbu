@@ -18,7 +18,7 @@ import { Field } from '../ui/Field';
 import { Icon } from '../ui/icons';
 import { Loading } from '../ui/Loading';
 import { Screen } from '../ui/Screen';
-import { IllustratedCover } from '../ui/IllustratedCover';
+import { BulletinCover } from '../ui/BulletinCover';
 import { AttendanceTab } from './AttendanceTab';
 import { BulletinTab } from './BulletinTab';
 import { ClassTab } from './ClassTab';
@@ -191,7 +191,8 @@ function SignIn({
   return (
     <Screen title="선생님 로그인" sub="초대받은 Google 계정으로 들어와요" layout="reading">
       <div className={s.loginLayout}>
-        <IllustratedCover
+        <BulletinCover
+          quiet
           title={
             <>
               함께
@@ -203,7 +204,7 @@ function SignIn({
           }
         >
           <p>아이들의 예배와 한 주를 함께 준비해요.</p>
-        </IllustratedCover>
+        </BulletinCover>
         <div className={s.loginActions}>
           {inApp ? (
             <InAppNotice kakao={inApp === 'kakao'} />

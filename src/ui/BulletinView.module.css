@@ -1,10 +1,10 @@
 .layout, .main { display: grid; gap: var(--space-5); min-width: 0; align-content: start; }
 .main { width: 100%; max-width: var(--content-max); justify-self: center; }
 .aside { min-width: 0; }
-.coverMeta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); color: var(--cover-muted); font-size: var(--text-sm); }
-.paper { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: var(--space-5) var(--space-4); }
-.heading { font-family: var(--font-display); font-size: var(--text-lg); font-weight: var(--weight-bold); font-synthesis: none; }
-.worshipHead { border-bottom: 2px solid var(--ink); padding-bottom: var(--space-4); text-align: center; }
+.coverMeta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); color: var(--muted); font-size: var(--text-sm); }
+.paper { background: var(--card); border: 1px solid var(--line-strong); border-radius: var(--radius-lg); padding: var(--space-5) var(--space-4); }
+.heading { font-family: var(--font-display); font-size: var(--text-lg); font-weight: var(--weight-heading); font-synthesis: none; }
+.worshipHead { border-bottom: 3px solid var(--accent-text); padding-bottom: var(--space-4); text-align: center; }
 .leaderName { color: var(--muted); font-size: var(--text-sm); margin-top: var(--space-2); text-align: right; }
 .opening { margin: var(--space-3) 0; padding: var(--space-2) 0; font-size: var(--text-sm); text-align: center; }
 .opening cite { display: block; font-style: normal; color: var(--muted); margin-top: var(--space-2); }
@@ -20,7 +20,7 @@
 .order td:last-child, .order th:last-child { padding-right: 0; }
 .star { color: var(--accent-text); }
 .note { color: var(--muted); font-size: var(--text-sm); margin-top: var(--space-3); }
-.sermonLink { display: inline-flex; min-width: var(--touch-min); min-height: var(--touch-min); align-items: center; border-radius: var(--radius-sm); }
+.sermonLink { font-weight: var(--weight-bold); display: inline-flex; min-width: var(--touch-min); min-height: var(--touch-min); align-items: center; border-radius: var(--radius-sm); }
 .extra { margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--line); }
 .extra h3 { margin-bottom: var(--space-3); }
 .hymns { padding-left: 1.2em; }
@@ -28,7 +28,7 @@
 .pairs > div { display: contents; }
 .pairs dt { font-size: var(--text-sm); color: var(--muted); }
 .pairs dd { margin: 0; }
-.community { padding: var(--space-5); border-radius: var(--radius-lg); background: var(--sage-bg); color: var(--sage-ink); }
+.community { padding: var(--space-5); border-radius: var(--radius-lg); background: var(--community-bg); color: var(--community-ink); }
 .communityPart { margin-top: var(--space-5); }
 .communityPart p { font-size: var(--text-sm); margin-top: var(--space-2); }
 .names { display: flex; gap: var(--space-2) var(--space-4); flex-wrap: wrap; list-style: none; padding: 0; margin-top: var(--space-3); font-weight: var(--weight-semibold); }

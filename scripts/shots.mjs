@@ -152,6 +152,23 @@ const teacherRoutes = [
  ['admin-sermon-editor', '#/t/admin/sermon'],
 ];
 const keyTeacher = new Set(['teacher-attendance','teacher-prayer','admin-menu','admin-roster','admin-bulletin-editor','admin-info']);
+// 캡처에만 가명을 적용하고 즉시 복원해요. 시드·저장 자료와 화면 동작은 그대로예요.
+const anonymousCapture = () => {
+ const redact = value => value.replaceAll('이승열', '고하람').replaceAll('김형준', '문새봄').replaceAll('김하늘', '서가온').replace(/0\d{1,2}-\d{3,4}-\d{4}/g, '010-0000-0000');
+ const restore = [];
+ const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+ let node;
+ while ((node = walker.nextNode())) {
+  if (node.parentElement?.closest('script,style')) continue;
+  const before = node.textContent, after = redact(before);
+  if (before !== after) { const target = node; restore.push(() => { target.textContent = before; }); target.textContent = after; }
+ }
+ for (const input of document.querySelectorAll('input,textarea')) {
+  const before = input.value, after = redact(before);
+  if (before !== after) { restore.push(() => { input.value = before; }); input.value = after; }
+ }
+ window.__restoreCapture = () => { restore.forEach(fn => fn()); delete window.__restoreCapture; };
+};
 const checks = [];
 await seedAll();
 const browser = await chromium.launch();
@@ -175,7 +192,9 @@ try {
      await p.setViewportSize({width:vp.width,height:Math.max(vp.height,height)});
      await p.evaluate(()=>document.fonts.ready);
     }
-    await p.screenshot({path:`${outDir}/${file}`});
+    await p.evaluate(anonymousCapture);
+    try { await p.screenshot({path:`${outDir}/${file}`}); }
+    finally { await p.evaluate(() => window.__restoreCapture?.()); }
     if(full) await p.setViewportSize(vp);
    };
    const anon=await browser.newContext(opts); const a=await anon.newPage();

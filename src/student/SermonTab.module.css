@@ -56,7 +56,7 @@
 .rowTitle {
   font-family: var(--font-display);
   font-size: var(--text-lg);
-  font-weight: var(--weight-bold);
+  font-weight: var(--weight-heading);
   line-height: var(--leading-tight);
 }
 .rowScripture {
@@ -88,8 +88,8 @@
 }
 .head {
   padding: var(--space-7) var(--space-6);
-  background: var(--gold-panel);
-  color: var(--gold-panel-ink);
+  background: var(--section-soft);
+  color: var(--section-soft-ink);
 }
 .meta {
   font-size: var(--text-sm);
@@ -120,8 +120,8 @@
 }
 .questions {
   padding: var(--space-6);
-  background: var(--sage-bg);
-  color: var(--sage-ink);
+  background: var(--community-bg);
+  color: var(--community-ink);
 }
 .questions h3 {
   font-family: var(--font-display);

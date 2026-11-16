@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#1B2A41"/>
-  <!-- 금색 가는 십자: 세로 28×260, 가로 28×168, 가로 막대 중심은 위에서 40% -->
-  <rect x="242" y="126" width="28" height="260" rx="14" fill="#B08A43"/>
-  <rect x="172" y="191" width="168" height="28" rx="14" fill="#B08A43"/>
+  <rect width="512" height="512" rx="16" fill="#244DCC"/>
+  <!-- 표지와 같은 굵은 길 모양. 교회 로고가 아닌 앱 아이콘이에요. -->
+  <rect x="180" y="76" width="152" height="360" rx="76" fill="none" stroke="#DDF57F" stroke-width="36" transform="rotate(32 256 256)"/>
 </svg>

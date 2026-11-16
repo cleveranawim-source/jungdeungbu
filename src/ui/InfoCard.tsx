@@ -2,7 +2,6 @@ import type { ChurchInfo, MemberInfo } from '../types';
 import { hasInfoContent } from '../lib/bulletin';
 import { PlaceInfo, PhoneLink } from './PlaceInfo';
 import { Disclosure } from './Disclosure';
-import { JourneyLines } from './JourneyLines';
 import s from './InfoCard.module.css';
 
 /** 개인 안내는 준비된 members 에서만 그려요. 공개 안내만으로도 완결된 구성이에요. */
@@ -21,7 +20,6 @@ export function InfoCard({ info, members }: { info: ChurchInfo; members: MemberI
       {hasMotto && (
         <div className={s.mottoPanel}>
           <div className={s.mottoCopy}>
-            <JourneyLines />
             {motto.title && <p className={s.motto}>{motto.title}</p>}
             {motto.subtitle && <p className={s.subtitle}>{motto.subtitle}</p>}
           </div>

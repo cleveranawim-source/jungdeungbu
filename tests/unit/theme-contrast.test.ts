@@ -44,15 +44,17 @@ const BODY: [fg: string, bg: string][] = [
   ['--ink', '--bg'], ['--ink', '--card'], ['--muted', '--bg'], ['--muted', '--card'],
   ['--accent-ink', '--accent'], ['--accent-ink', '--accent-press'], ['--accent-text', '--bg'],
   ['--accent-text', '--card'], ['--accent-text', '--accent-soft'], ['--ink', '--accent-soft'], ['--muted', '--accent-soft'],
+  ['--accent-text', '--section-soft'], ['--accent-text', '--community-bg'],
   ['--notice-ink', '--notice-bg'], ['--danger', '--card'], ['--ok', '--card'],
   ['--danger', '--danger-soft'], ['--ink', '--danger-soft'], ['--ok', '--ok-soft'],
   ['--ink', '--card-raised'], ['--muted', '--card-raised'],
-  ['--muted', '--gold-panel'], ['--muted', '--sage-bg'], ['--danger-ink', '--danger'],
+  ['--muted', '--section-soft'], ['--muted', '--community-bg'], ['--danger-ink', '--danger'],
   ['--cover-ink', '--cover-bg'], ['--cover-muted', '--cover-bg'],
-  ['--cover-button-ink', '--cover-button'], ['--cover-button-ink', '--cover-button-hover'],
-  ['--illustration-ink', '--illustration-bg'], ['--sage-ink', '--sage-bg'], ['--gold-panel-ink', '--gold-panel'],
+  ['--section-ink', '--section-bg'], ['--selected-ink', '--selected-bg'],
+  ['--selected-mark-ink', '--selected-mark'],
+  ['--community-ink', '--community-bg'], ['--section-soft-ink', '--section-soft'],
 ];
-const UI: [fg: string, bg: string][] = [['--accent', '--card'], ['--gold-panel-ink', '--card'], ['--line-strong', '--card'], ['--gold', '--card'], ['--cover-line', '--cover-bg'], ['--cover-focus', '--cover-bg'], ['--focus', '--card'], ['--focus', '--bg']];
+const UI: [fg: string, bg: string][] = [['--accent', '--card'], ['--section-soft-ink', '--card'], ['--line-strong', '--card'], ['--line-strong', '--card-raised'], ['--accent-text', '--card'], ['--cover-line', '--cover-bg'], ['--cover-focus', '--cover-bg'], ['--focus', '--card'], ['--focus', '--bg'], ['--line-strong', '--bg'], ['--selected-mark', '--selected-bg']];
 
 function failures(mode: 'light' | 'dark', pairs: [string, string][], min: number): string[] {
   const t = readTokens(css, mode);
@@ -74,18 +76,23 @@ test('햇살 시절 토큰이 지워졌다', () => {
   for (const t of ['--sun', '--sun-halo', '--dur-slow']) expect(css).not.toContain(`${t}:`);
 });
 
-test('남색·아이보리·금색 값이 설계서대로다', () => {
+test('코발트·라임과 차분한 어두운 제목 면이 설계서대로다', () => {
   const light = readTokens(css, 'light');
-  expect(light['--bg']).toBe('#F7F5F0');
-  expect(light['--accent']).toBe('#1B2A41');
-  expect(light['--gold']).toBe('#B08A43');
-  expect(light['--accent-text']).toBe('#7F6430');
-  expect(readTokens(css, 'dark')['--accent']).toBe('#D9BC7E');
+  const dark = readTokens(css, 'dark');
+  expect(light['--bg']).toBe('#F4F7FF');
+  expect(light['--accent']).toBe('#244DCC');
+  expect(light['--cover-bg']).toBe('#DDF57F');
+  expect(light['--accent-text']).toBe('#244DCC');
+  expect(dark['--accent']).toBe('#B6F075');
+  expect(dark['--section-bg']).toBe('#293F96');
+  expect(dark['--selected-bg']).not.toBe(dark['--accent']);
 });
 
-test('제목은 고운바탕, 본문은 프리텐다드', () => {
+test('제목과 본문은 번들 프리텐다드, 제목 굵기는 850·900', () => {
   const light = readTokens(css, 'light');
-  expect(light['--font-display']).toMatch(/^"Gowun Batang"/);
+  expect(light['--font-display']).toBe('var(--font-body)');
   expect(light['--font-body']).toMatch(/^"Pretendard Variable", "Pretendard"/);
+  expect(light['--weight-heading']).toBe('850');
+  expect(light['--weight-display']).toBe('900');
   expect(css).not.toContain('Jua');
 });

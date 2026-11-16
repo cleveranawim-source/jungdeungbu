@@ -12,8 +12,8 @@
 .hero {
   display: flex;
   flex-direction: column;
-  background: var(--illustration-bg);
-  color: var(--illustration-ink);
+  background: var(--cover-bg);
+  color: var(--cover-ink);
   border-radius: var(--radius-cover);
   overflow: hidden;
 }
@@ -25,22 +25,28 @@
 }
 .church {
   font-size: var(--text-lg);
-  font-weight: var(--weight-regular);
+  font-weight: var(--weight-bold);
 }
 .group {
   font-size: var(--text-display);
+  font-weight: var(--weight-display);
+  letter-spacing: -0.04em;
   line-height: 1.1;
 }
 .art {
-  display: block;
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  object-position: center 65%;
+  position: relative;
+  overflow: hidden;
+  height: 180px;
+}
+.art > span {
+  /* 회전한 길의 위쪽 곡선을 안에 두어 오른쪽에 작은 조각이 남지 않게 해요. */
+  right: calc(var(--space-8) + var(--space-2));
+  top: auto;
+  bottom: -84px;
 }
 .lead {
   padding: 0 var(--space-6) var(--space-6);
-  color: var(--illustration-ink);
+  color: var(--cover-ink);
   font-size: var(--text-sm);
 }
 .actions {
@@ -59,8 +65,8 @@
   gap: var(--space-3);
   align-items: center;
   padding: var(--space-5);
-  background: var(--sage-bg);
-  color: var(--sage-ink);
+  background: var(--community-bg);
+  color: var(--community-ink);
   border-radius: var(--radius-lg);
 }
 .studentMark {
@@ -75,7 +81,7 @@
     align-items: center;
   }
   .art {
-    height: 320px;
+    height: 240px;
   }
   .title {
     padding: var(--space-8) var(--space-7) 0;
