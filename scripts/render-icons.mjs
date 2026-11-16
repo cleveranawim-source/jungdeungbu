@@ -7,7 +7,7 @@ const b = await chromium.launch()
 for (const [name, n] of Object.entries(sizes)) {
   const p = await b.newPage({ viewport: { width: n, height: n } })
   // iOS 가 직접 모서리를 둥글리므로 apple-touch-icon 은 꽉 찬 사각형(투명 모서리는 검게 칠해진다)
-  const art = name.startsWith('apple') ? svg.replace('rx="112"', 'rx="0"') : svg
+  const art = name.startsWith('apple') ? svg.replace('rx="16"', 'rx="0"') : svg
   await p.setContent(`<style>html,body{margin:0;background:transparent}svg{display:block;width:${n}px;height:${n}px}</style>${art}`)
   await p.screenshot({ path: `public/icons/${name}`, omitBackground: true })
   await p.close()
