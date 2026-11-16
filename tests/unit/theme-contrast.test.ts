@@ -44,6 +44,7 @@ const BODY: [fg: string, bg: string][] = [
   ['--ink', '--bg'], ['--ink', '--card'], ['--muted', '--bg'], ['--muted', '--card'],
   ['--accent-ink', '--accent'], ['--accent-ink', '--accent-press'], ['--accent-text', '--bg'],
   ['--accent-text', '--card'], ['--accent-text', '--accent-soft'], ['--ink', '--accent-soft'], ['--muted', '--accent-soft'],
+  ['--accent-text', '--section-soft'], ['--accent-text', '--community-bg'],
   ['--notice-ink', '--notice-bg'], ['--danger', '--card'], ['--ok', '--card'],
   ['--danger', '--danger-soft'], ['--ink', '--danger-soft'], ['--ok', '--ok-soft'],
   ['--ink', '--card-raised'], ['--muted', '--card-raised'],
@@ -53,7 +54,7 @@ const BODY: [fg: string, bg: string][] = [
   ['--selected-mark-ink', '--selected-mark'],
   ['--community-ink', '--community-bg'], ['--section-soft-ink', '--section-soft'],
 ];
-const UI: [fg: string, bg: string][] = [['--accent', '--card'], ['--section-soft-ink', '--card'], ['--line-strong', '--card'], ['--accent-text', '--card'], ['--cover-line', '--cover-bg'], ['--cover-focus', '--cover-bg'], ['--focus', '--card'], ['--focus', '--bg'], ['--line-strong', '--bg'], ['--selected-mark', '--selected-bg']];
+const UI: [fg: string, bg: string][] = [['--accent', '--card'], ['--section-soft-ink', '--card'], ['--line-strong', '--card'], ['--line-strong', '--card-raised'], ['--accent-text', '--card'], ['--cover-line', '--cover-bg'], ['--cover-focus', '--cover-bg'], ['--focus', '--card'], ['--focus', '--bg'], ['--line-strong', '--bg'], ['--selected-mark', '--selected-bg']];
 
 function failures(mode: 'light' | 'dark', pairs: [string, string][], min: number): string[] {
   const t = readTokens(css, mode);

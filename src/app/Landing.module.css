@@ -38,6 +38,12 @@
   overflow: hidden;
   height: 180px;
 }
+.art > span {
+  /* 회전한 길의 위쪽 곡선을 안에 두어 오른쪽에 작은 조각이 남지 않게 해요. */
+  right: calc(var(--space-8) + var(--space-2));
+  top: auto;
+  bottom: -84px;
+}
 .lead {
   padding: 0 var(--space-6) var(--space-6);
   color: var(--cover-ink);
